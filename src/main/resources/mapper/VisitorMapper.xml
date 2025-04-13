@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.conghua.tourism.mapper.VisitorMapper">
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        <include refid="com.conghua.tourism.common.mapper.BaseMapper.Base_Column_List"/>,
+        area_id, visitor_id, entry_time, exit_time, stay_duration, 
+        age, gender, source_city, visitor_type, device_id
+    </sql>
+
+    <!-- 基础查询条件 -->
+    <sql id="Base_Where_Clause">
+        <where>
+            <include refid="com.conghua.tourism.common.mapper.BaseMapper.Base_Where_Clause"/>
+            <if test="areaId != null and areaId != ''">
+                AND area_id = #{areaId}
+            </if>
+            <if test="startTime != null">
+                AND entry_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND entry_time &lt;= #{endTime}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 获取实时人数统计 -->
+    <select id="selectRealtimeCount" resultType="com.conghua.tourism.model.visitor.PeopleCountData">
+        SELECT 
+            area_id,
+            COUNT(DISTINCT visitor_id) as current_count,
+            COUNT(CASE WHEN entry_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 1 END) as hourly_entry,
+            COUNT(CASE WHEN exit_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 1 END) as hourly_exit
+        FROM t_visitor_record
+        WHERE area_id = #{areaId}
+        AND entry_time &lt;= NOW()
+        AND (exit_time IS NULL OR exit_time > NOW())
+        AND deleted = 0
+        GROUP BY area_id
+    </select>
+
+    <!-- 获取人数趋势 -->
+    <select id="selectVisitorTrends" resultType="com.conghua.tourism.model.visitor.TrendData">
+        SELECT 
+            DATE_FORMAT(entry_time, #{interval}) as time_point,
+            COUNT(DISTINCT visitor_id) as visitor_count,
+            AVG(stay_duration) as avg_stay_duration
+        FROM t_visitor_record
+        WHERE area_id = #{areaId}
+        AND entry_time BETWEEN #{startTime} AND #{endTime}
+        AND deleted = 0
+        GROUP BY DATE_FORMAT(entry_time, #{interval})
+        ORDER BY time_point
+    </select>
+
+    <!-- 获取区域概览数据 -->
+    <select id="selectAreaOverview" resultType="com.conghua.tourism.model.visitor.AreaOverview">
+        SELECT 
+            area_id,
+            COUNT(DISTINCT visitor_id) as total_visitors,
+            AVG(stay_duration) as avg_stay_duration,
+            MAX(
+                SELECT COUNT(DISTINCT visitor_id)
+                FROM t_visitor_record v2
+                WHERE v2.area_id = v1.area_id
+                AND v2.entry_time BETWEEN #{startTime} AND #{endTime}
+                GROUP BY DATE_FORMAT(entry_time, '%Y-%m-%d')
+            ) as peak_daily_visitors
+        FROM t_visitor_record v1
+        WHERE area_id = #{areaId}
+        AND entry_time BETWEEN #{startTime} AND #{endTime}
+        AND deleted = 0
+        GROUP BY area_id
+    </select>
+
+    <!-- 获取密度分布 -->
+    <select id="selectDensityDistribution" resultType="com.conghua.tourism.model.visitor.DensityDistribution">
+        SELECT 
+            area_id,
+            sub_area_id,
+            COUNT(DISTINCT visitor_id) as current_count,
+            capacity as max_capacity,
+            (COUNT(DISTINCT visitor_id) / capacity * 100) as occupancy_rate
+        FROM t_visitor_record vr
+        JOIN t_area_info ai ON vr.sub_area_id = ai.area_id
+        WHERE vr.area_id = #{areaId}
+        AND vr.entry_time &lt;= NOW()
+        AND (vr.exit_time IS NULL OR vr.exit_time > NOW())
+        AND vr.deleted = 0
+        GROUP BY area_id, sub_area_id, capacity
+    </select>
+
+    <!-- 获取历史统计数据 -->
+    <select id="selectHistoryStats" resultType="com.conghua.tourism.model.visitor.VisitorStats">
+        SELECT 
+            DATE_FORMAT(entry_time, #{groupBy}) as time_period,
+            COUNT(DISTINCT visitor_id) as visitor_count,
+            AVG(stay_duration) as avg_stay_duration,
+            COUNT(DISTINCT source_city) as source_city_count,
+            SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) as male_count,
+            SUM(CASE WHEN gender = 'F' THEN 1 ELSE 0 END) as female_count,
+            AVG(age) as avg_age
+        FROM t_visitor_record
+        WHERE area_id = #{areaId}
+        <if test="startTime != null">
+            AND entry_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND entry_time &lt;= #{endTime}
+        </if>
+        <if test="visitorType != null">
+            AND visitor_type = #{visitorType}
+        </if>
+        AND deleted = 0
+        GROUP BY DATE_FORMAT(entry_time, #{groupBy})
+        ORDER BY time_period
+    </select>
+
+    <!-- 获取来源城市分布 -->
+    <select id="selectSourceCityDistribution" resultType="java.util.Map">
+        SELECT 
+            source_city,
+            COUNT(DISTINCT visitor_id) as visitor_count,
+            ROUND(COUNT(DISTINCT visitor_id) * 100.0 / SUM(COUNT(DISTINCT visitor_id)) OVER(), 2) as percentage
+        FROM t_visitor_record
+        WHERE area_id = #{areaId}
+        AND entry_time BETWEEN #{startTime} AND #{endTime}
+        AND deleted = 0
+        GROUP BY source_city
+        ORDER BY visitor_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取年龄分布 -->
+    <select id="selectAgeDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN age &lt; 18 THEN '未成年'
+                WHEN age BETWEEN 18 AND 25 THEN '18-25岁'
+                WHEN age BETWEEN 26 AND 35 THEN '26-35岁'
+                WHEN age BETWEEN 36 AND 50 THEN '36-50岁'
+                WHEN age BETWEEN 51 AND 65 THEN '51-65岁'
+                ELSE '65岁以上'
+            END as age_group,
+            COUNT(DISTINCT visitor_id) as visitor_count,
+            ROUND(COUNT(DISTINCT visitor_id) * 100.0 / SUM(COUNT(DISTINCT visitor_id)) OVER(), 2) as percentage
+        FROM t_visitor_record
+        WHERE area_id = #{areaId}
+        AND entry_time BETWEEN #{startTime} AND #{endTime}
+        AND deleted = 0
+        GROUP BY age_group
+        ORDER BY 
+            CASE age_group
+                WHEN '未成年' THEN 1
+                WHEN '18-25岁' THEN 2
+                WHEN '26-35岁' THEN 3
+                WHEN '36-50岁' THEN 4
+                WHEN '51-65岁' THEN 5
+                ELSE 6
+            END
+    </select>
+
+    <!-- 更新监控配置 -->
+    <update id="updateMonitoringConfig">
+        UPDATE t_area_config
+        <set>
+            <if test="config.maxCapacity != null">
+                max_capacity = #{config.maxCapacity},
+            </if>
+            <if test="config.warningThreshold != null">
+                warning_threshold = #{config.warningThreshold},
+            </if>
+            <if test="config.criticalThreshold != null">
+                critical_threshold = #{config.criticalThreshold},
+            </if>
+            <if test="config.monitoringInterval != null">
+                monitoring_interval = #{config.monitoringInterval},
+            </if>
+            update_time = NOW(),
+            update_by = #{config.updatedBy}
+        </set>
+        WHERE area_id = #{areaId}
+        AND deleted = 0
+    </update>
+</mapper> 

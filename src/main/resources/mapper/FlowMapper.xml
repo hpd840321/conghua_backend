@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.conghua.tourism.mapper.FlowMapper">
+    
+    <!-- 继承基础列 -->
+    <sql id="Column_List">
+        <include refid="com.conghua.tourism.common.mapper.BaseMapper.Base_Column_List"/>,
+        scenic_spot_id, visitor_count, time_point, weather, temperature, holiday_flag
+    </sql>
+
+    <!-- 继承基础条件并扩展 -->
+    <sql id="Where_Clause">
+        <where>
+            <include refid="com.conghua.tourism.common.mapper.BaseMapper.Base_Where_Clause"/>
+            <if test="scenicSpotId != null">
+                AND scenic_spot_id = #{scenicSpotId}
+            </if>
+            <if test="timePoint != null">
+                AND time_point = #{timePoint}
+            </if>
+            <if test="holidayFlag != null">
+                AND holiday_flag = #{holidayFlag}
+            </if>
+            <if test="startTime != null">
+                AND time_point >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND time_point &lt;= #{endTime}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 插入流量记录 -->
+    <insert id="insert" parameterType="com.conghua.tourism.model.Flow" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_flow
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <include refid="com.conghua.tourism.common.mapper.BaseMapper.Base_Insert_Column"/>
+            <if test="scenicSpotId != null">scenic_spot_id,</if>
+            <if test="visitorCount != null">visitor_count,</if>
+            <if test="timePoint != null">time_point,</if>
+            <if test="weather != null">weather,</if>
+            <if test="temperature != null">temperature,</if>
+            <if test="holidayFlag != null">holiday_flag,</if>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <include refid="com.conghua.tourism.common.mapper.BaseMapper.Base_Insert_Value"/>
+            <if test="scenicSpotId != null">#{scenicSpotId},</if>
+            <if test="visitorCount != null">#{visitorCount},</if>
+            <if test="timePoint != null">#{timePoint},</if>
+            <if test="weather != null">#{weather},</if>
+            <if test="temperature != null">#{temperature},</if>
+            <if test="holidayFlag != null">#{holidayFlag},</if>
+        </trim>
+    </insert>
+
+    <!-- 查询指定时间段的流量统计 -->
+    <select id="selectFlowStats" resultType="com.conghua.tourism.model.FlowStats">
+        SELECT 
+            scenic_spot_id,
+            DATE(time_point) as date,
+            SUM(visitor_count) as total_visitors,
+            MAX(visitor_count) as peak_visitors,
+            AVG(visitor_count) as avg_visitors
+        FROM t_flow
+        WHERE deleted = 0
+        <if test="scenicSpotId != null">
+            AND scenic_spot_id = #{scenicSpotId}
+        </if>
+        <if test="startDate != null">
+            AND DATE(time_point) >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND DATE(time_point) &lt;= #{endDate}
+        </if>
+        GROUP BY scenic_spot_id, DATE(time_point)
+        ORDER BY DATE(time_point)
+    </select>
+
+    <!-- 查询实时流量 -->
+    <select id="selectRealtimeFlow" resultType="com.conghua.tourism.model.Flow">
+        SELECT
+        <include refid="Column_List"/>
+        FROM t_flow
+        WHERE deleted = 0
+        AND scenic_spot_id = #{scenicSpotId}
+        AND time_point >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+        ORDER BY time_point DESC
+        LIMIT 1
+    </select>
+</mapper> 
