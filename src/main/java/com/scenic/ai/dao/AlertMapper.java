@@ -18,7 +18,7 @@ import java.util.Map;
 public interface AlertMapper extends BaseMapper<Alert> {
 
     /**
-     * 获取告警时段分布
+     * 查询时段分布
      */
     List<Map<String, Object>> selectTimeDistribution(
             @Param("tourismName") String tourismName,
@@ -27,7 +27,7 @@ public interface AlertMapper extends BaseMapper<Alert> {
             @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 获取告警类型分布
+     * 查询类型分布
      */
     List<Map<String, Object>> selectTypeDistribution(
             @Param("tourismName") String tourismName,
@@ -36,16 +36,7 @@ public interface AlertMapper extends BaseMapper<Alert> {
             @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 获取告警级别分布
-     */
-    List<Map<String, Object>> selectLevelDistribution(
-            @Param("tourismName") String tourismName,
-            @Param("deviceCode") String deviceCode,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime);
-
-    /**
-     * 获取告警概览统计
+     * 查询告警概览
      */
     Map<String, Object> selectOverview(
             @Param("tourismName") String tourismName,
@@ -54,7 +45,7 @@ public interface AlertMapper extends BaseMapper<Alert> {
             @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 根据设备编码查询告警信息
+     * 根据设备查询告警
      */
     List<Alert> selectByDevice(
             @Param("deviceCode") String deviceCode,
@@ -62,7 +53,7 @@ public interface AlertMapper extends BaseMapper<Alert> {
             @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 根据景区名称查询告警信息
+     * 根据景区查询告警
      */
     List<Alert> selectByTourism(
             @Param("tourismName") String tourismName,
