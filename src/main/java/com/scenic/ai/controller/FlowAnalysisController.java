@@ -48,26 +48,26 @@ public class FlowAnalysisController {
 
     @ApiOperation("统计时段客流分布")
     @GetMapping("/stats/hour-distribution")
-    public ResponseEntity<List<Map<String, Object>>> getHourDistribution(
+    public ResponseEntity<List<Map<String, Object>>> getFlowHourDistribution(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
             @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        return ResponseEntity.ok(flowAnalysisService.getHourDistribution(deviceCode, tourismName, startTime, endTime));
+        return ResponseEntity.ok(flowAnalysisService.getFlowHourDistribution(deviceCode, tourismName, startTime, endTime));
     }
 
-    @ApiOperation("统计流向分布")
+    @ApiOperation("统计客流方向分布")
     @GetMapping("/stats/direction-distribution")
-    public ResponseEntity<List<Map<String, Object>>> getDirectionDistribution(
+    public ResponseEntity<List<Map<String, Object>>> getFlowDirectionDistribution(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
             @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        return ResponseEntity.ok(flowAnalysisService.getDirectionDistribution(deviceCode, tourismName, startTime, endTime));
+        return ResponseEntity.ok(flowAnalysisService.getFlowDirectionDistribution(deviceCode, tourismName, startTime, endTime));
     }
 
-    @ApiOperation("获取客流趋势")
-    @GetMapping("/stats/flow-trend")
+    @ApiOperation("获取客流趋势数据")
+    @GetMapping("/stats/trend")
     public ResponseEntity<List<Map<String, Object>>> getFlowTrend(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
@@ -88,6 +88,15 @@ public class FlowAnalysisController {
             @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         Page<FlowAnalysis> page = new Page<>(current, size);
         return ResponseEntity.ok(flowAnalysisService.pageFlowAnalysis(page, tourismName, deviceCode, flowDirection, startTime, endTime));
+    }
+
+    @ApiOperation("获取客流统计概览")
+    @GetMapping("/stats/overview")
+    public ResponseEntity<Map<String, Object>> getFlowStatistics(
+            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
+            @ApiParam("开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        return ResponseEntity.ok(flowAnalysisService.getFlowStatistics(tourismName, startTime, endTime));
     }
 
     @ApiOperation("获取设备最新客流数据")

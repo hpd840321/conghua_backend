@@ -8,9 +8,9 @@ import com.scenic.ai.model.Alert;
 import com.scenic.ai.mapper.AlertMapper;
 import com.scenic.ai.model.enums.AlertStatus;
 import com.scenic.ai.service.AlertService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -106,19 +106,17 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
     }
 
     @Override
-    public IPage<Alert> pageAlerts(Page<Alert> page, String tourismName, String deviceCode, 
-            String alertType, Integer alertLevel, Integer alertStatus, 
-            LocalDateTime startTime, LocalDateTime endTime) {
-        
+    public IPage<Alert> pageAlerts(Page<Alert> page, String tourismName, String deviceCode, String alertType,
+                                  Integer alertLevel, Integer alertStatus, LocalDateTime startTime, LocalDateTime endTime) {
         LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
         
-        if (StringUtils.isNotBlank(tourismName)) {
+        if (StringUtils.hasText(tourismName)) {
             wrapper.eq(Alert::getTourismName, tourismName);
         }
-        if (StringUtils.isNotBlank(deviceCode)) {
+        if (StringUtils.hasText(deviceCode)) {
             wrapper.eq(Alert::getDeviceCode, deviceCode);
         }
-        if (StringUtils.isNotBlank(alertType)) {
+        if (StringUtils.hasText(alertType)) {
             wrapper.eq(Alert::getAlertType, alertType);
         }
         if (alertLevel != null) {
@@ -128,14 +126,13 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
             wrapper.eq(Alert::getAlertStatus, alertStatus);
         }
         if (startTime != null) {
-            wrapper.ge(Alert::getRecordTime, startTime);
+            wrapper.ge(Alert::getCreateTime, startTime);
         }
         if (endTime != null) {
-            wrapper.le(Alert::getRecordTime, endTime);
+            wrapper.le(Alert::getCreateTime, endTime);
         }
         
-        wrapper.orderByDesc(Alert::getRecordTime);
-        
+        wrapper.orderByDesc(Alert::getCreateTime);
         return page(page, wrapper);
     }
 
@@ -199,7 +196,7 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
     public int countPendingAlerts(String tourismName) {
         LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Alert::getAlertStatus, AlertStatus.PENDING.getValue());
-        if (StringUtils.isNotBlank(tourismName)) {
+        if (StringUtils.hasText(tourismName)) {
             wrapper.eq(Alert::getTourismName, tourismName);
         }
         return Math.toIntExact(count(wrapper));
@@ -219,7 +216,7 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
 
     private LambdaQueryWrapper<Alert> buildBaseWrapper(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
         LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(tourismName)) {
+        if (StringUtils.hasText(tourismName)) {
             wrapper.eq(Alert::getTourismName, tourismName);
         }
         if (startTime != null) {
@@ -229,5 +226,20 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
             wrapper.le(Alert::getRecordTime, endTime);
         }
         return wrapper;
+    }
+
+    @Override
+    public Long countUnhandledAlerts(String deviceCode, String tourismName) {
+        LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Alert::getAlertStatus, 0); // 0表示未处理状态
+        
+        if (StringUtils.hasText(deviceCode)) {
+            wrapper.eq(Alert::getDeviceCode, deviceCode);
+        }
+        if (StringUtils.hasText(tourismName)) {
+            wrapper.eq(Alert::getTourismName, tourismName);
+        }
+        
+        return baseMapper.selectCount(wrapper);
     }
 }

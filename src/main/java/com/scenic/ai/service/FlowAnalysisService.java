@@ -1,6 +1,7 @@
 package com.scenic.ai.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.scenic.ai.model.FlowAnalysis;
 
@@ -185,7 +186,7 @@ public interface FlowAnalysisService extends IService<FlowAnalysis> {
      * @param endTime 结束时间
      * @return 统计结果
      */
-    List<Map<String, Object>> getHourDistribution(String deviceCode, String tourismName, 
+    List<Map<String, Object>> getFlowHourDistribution(String deviceCode, String tourismName, 
             LocalDateTime startTime, LocalDateTime endTime);
     
     /**
@@ -197,19 +198,7 @@ public interface FlowAnalysisService extends IService<FlowAnalysis> {
      * @param endTime 结束时间
      * @return 统计结果
      */
-    List<Map<String, Object>> getDirectionDistribution(String deviceCode, String tourismName, 
-            LocalDateTime startTime, LocalDateTime endTime);
-    
-    /**
-     * 获取客流趋势
-     *
-     * @param deviceCode 设备编码
-     * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 趋势数据
-     */
-    List<Map<String, Object>> getFlowTrend(String deviceCode, String tourismName, 
+    List<Map<String, Object>> getFlowDirectionDistribution(String deviceCode, String tourismName, 
             LocalDateTime startTime, LocalDateTime endTime);
     
     /**
@@ -290,6 +279,16 @@ public interface FlowAnalysisService extends IService<FlowAnalysis> {
      * @param endTime 结束时间
      * @return 分页结果
      */
-    IPage<FlowAnalysis> pageFlowAnalysis(IPage<FlowAnalysis> page, String tourismName,
-            String deviceCode, String flowDirection, LocalDateTime startTime, LocalDateTime endTime);
+    IPage<FlowAnalysis> pageFlowAnalysis(Page<FlowAnalysis> page, String tourismName, String deviceCode, 
+            String flowDirection, LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 获取客流统计概览
+     *
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计概览
+     */
+    Map<String, Object> getFlowStatistics(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
 } 

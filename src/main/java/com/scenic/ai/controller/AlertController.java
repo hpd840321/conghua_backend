@@ -1,5 +1,6 @@
 package com.scenic.ai.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scenic.ai.common.Result;
 import com.scenic.ai.model.Alert;
@@ -9,7 +10,7 @@ import com.scenic.ai.service.AlertHandlingRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,18 +21,17 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * 告警信息控制器
+ * 告警中心控制器
  */
-@Api(tags = "告警信息管理")
+@Api(tags = "告警中心")
 @RestController
 @RequestMapping("/api/v1/alerts")
+@RequiredArgsConstructor
 public class AlertController {
 
-    @Autowired
-    private AlertService alertService;
+    private final AlertService alertService;
 
-    @Autowired
-    private AlertHandlingRecordService alertHandlingRecordService;
+    private final AlertHandlingRecordService alertHandlingRecordService;
 
     @ApiOperation("创建告警信息")
     @PostMapping
@@ -41,17 +41,17 @@ public class AlertController {
 
     @ApiOperation("更新告警状态")
     @PutMapping("/{id}/status")
-    public ResponseEntity<Boolean> updateStatus(
+    public ResponseEntity<Boolean> updateAlertStatus(
             @ApiParam("告警ID") @PathVariable Long id,
-            @ApiParam("状态") @RequestParam Integer status) {
+            @ApiParam("告警状态") @RequestParam Integer status) {
         return ResponseEntity.ok(alertService.updateStatus(id, status));
     }
 
     @ApiOperation("批量更新告警状态")
-    @PutMapping("/batch-status")
-    public ResponseEntity<Boolean> batchUpdateStatus(
+    @PutMapping("/batch/status")
+    public ResponseEntity<Boolean> batchUpdateAlertStatus(
             @ApiParam("告警ID列表") @RequestParam List<Long> ids,
-            @ApiParam("状态") @RequestParam Integer status) {
+            @ApiParam("告警状态") @RequestParam Integer status) {
         return ResponseEntity.ok(alertService.batchUpdateStatus(ids, status));
     }
 
@@ -59,8 +59,8 @@ public class AlertController {
     @GetMapping("/by-device")
     public ResponseEntity<List<Alert>> getAlertsByDevice(
             @ApiParam("设备编码") @RequestParam String deviceCode,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         return ResponseEntity.ok(alertService.getAlertsByDevice(deviceCode, startTime, endTime));
     }
 
@@ -68,84 +68,63 @@ public class AlertController {
     @GetMapping("/by-tourism")
     public ResponseEntity<List<Alert>> getAlertsByTourism(
             @ApiParam("景区名称") @RequestParam String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         return ResponseEntity.ok(alertService.getAlertsByTourism(tourismName, startTime, endTime));
     }
 
-    @ApiOperation("统计时段告警分布")
-    @GetMapping("/stats/by-hour")
+    @ApiOperation("统计告警时段分布")
+    @GetMapping("/stats/hour-distribution")
     public ResponseEntity<List<Map<String, Object>>> getAlertHourDistribution(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         return ResponseEntity.ok(alertService.getAlertHourDistribution(deviceCode, tourismName, startTime, endTime));
     }
 
     @ApiOperation("统计告警类型分布")
-    @GetMapping("/stats/by-type")
+    @GetMapping("/stats/type-distribution")
     public ResponseEntity<List<Map<String, Object>>> getAlertTypeDistribution(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         return ResponseEntity.ok(alertService.getAlertTypeDistribution(deviceCode, tourismName, startTime, endTime));
     }
 
     @ApiOperation("统计告警级别分布")
-    @GetMapping("/stats/by-level")
+    @GetMapping("/stats/level-distribution")
     public ResponseEntity<List<Map<String, Object>>> getAlertLevelDistribution(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
         return ResponseEntity.ok(alertService.getAlertLevelDistribution(deviceCode, tourismName, startTime, endTime));
     }
 
     @ApiOperation("分页查询告警信息")
     @GetMapping
-    public ResponseEntity<Map<String, Object>> pageAlerts(
-            @ApiParam("页码") @RequestParam(defaultValue = "1") Integer pageNum,
-            @ApiParam("每页大小") @RequestParam(defaultValue = "10") Integer pageSize,
-            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
-            @ApiParam("设备名称") @RequestParam(required = false) String deviceName,
+    public ResponseEntity<IPage<Alert>> pageAlerts(
+            @ApiParam("页码") @RequestParam(defaultValue = "1") long current,
+            @ApiParam("每页大小") @RequestParam(defaultValue = "10") long size,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
+            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("告警类型") @RequestParam(required = false) String alertType,
             @ApiParam("告警级别") @RequestParam(required = false) Integer alertLevel,
             @ApiParam("告警状态") @RequestParam(required = false) Integer alertStatus,
-            @ApiParam("开始时间") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("deviceCode", deviceCode);
-        params.put("deviceName", deviceName);
-        params.put("tourismName", tourismName);
-        params.put("alertType", alertType);
-        params.put("alertLevel", alertLevel);
-        params.put("alertStatus", alertStatus);
-        params.put("startTime", startTime);
-        params.put("endTime", endTime);
-        params.put("offset", (pageNum - 1) * pageSize);
-        params.put("limit", pageSize);
-        
-        List<Alert> records = alertService.pageAlerts(params);
-        Long total = alertService.countAlerts(params);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("records", records);
-        result.put("total", total);
-        result.put("pageNum", pageNum);
-        result.put("pageSize", pageSize);
-        
-        return ResponseEntity.ok(result);
+            @ApiParam("开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        Page<Alert> page = new Page<>(current, size);
+        return ResponseEntity.ok(alertService.pageAlerts(page, tourismName, deviceCode, alertType, alertLevel, alertStatus, startTime, endTime));
     }
 
-    @ApiOperation("获取未处理的告警信息")
-    @GetMapping("/unhandled")
-    public ResponseEntity<List<Alert>> getUnhandledAlerts(
+    @ApiOperation("获取未处理告警数量")
+    @GetMapping("/count/unhandled")
+    public ResponseEntity<Long> getUnhandledAlertCount(
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName) {
-        return ResponseEntity.ok(alertService.getUnhandledAlerts(deviceCode, tourismName));
+        return ResponseEntity.ok(alertService.countUnhandledAlerts(deviceCode, tourismName));
     }
 
     /**

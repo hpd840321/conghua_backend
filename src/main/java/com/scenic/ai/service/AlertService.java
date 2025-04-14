@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 告警信息服务接口
+ * 告警服务接口
  */
 public interface AlertService extends IService<Alert> {
     
@@ -175,4 +175,9 @@ public interface AlertService extends IService<Alert> {
      * @return 统计结果
      */
     long countByLevelAndStatus(Integer alertLevel, Integer alertStatus);
+
+    /**
+     * 统计未处理告警数量
+     */
+    Long countUnhandledAlerts(String deviceCode, String tourismName);
 } 

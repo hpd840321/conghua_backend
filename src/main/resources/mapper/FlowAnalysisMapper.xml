@@ -192,9 +192,8 @@
     </select>
 
     <!-- 根据设备编码查询客流数据 -->
-    <select id="selectByDeviceCode" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
+    <select id="selectByDeviceCode" resultType="com.scenic.ai.model.FlowAnalysis">
+        SELECT *
         FROM FLOW_ANALYSIS
         WHERE DEVICE_CODE = #{deviceCode}
         <if test="startTime != null">
@@ -207,9 +206,8 @@
     </select>
     
     <!-- 根据景区名称查询客流数据 -->
-    <select id="selectByTourismName" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
+    <select id="selectByTourismName" resultType="com.scenic.ai.model.FlowAnalysis">
+        SELECT *
         FROM FLOW_ANALYSIS
         WHERE TOURISM_NAME = #{tourismName}
         <if test="startTime != null">
@@ -223,9 +221,11 @@
     
     <!-- 统计时段客流分布 -->
     <select id="countByHour" resultType="java.util.Map">
-        SELECT
+        SELECT 
             TO_CHAR(RECORD_TIME, 'HH24') AS hour,
-            SUM(FLOW_COUNT) AS count
+            SUM(FLOW_COUNT) AS total_count,
+            COUNT(1) AS record_count,
+            ROUND(AVG(FLOW_COUNT), 2) AS avg_count
         FROM FLOW_ANALYSIS
         WHERE 1=1
         <if test="deviceCode != null and deviceCode != ''">
@@ -244,11 +244,13 @@
         ORDER BY hour
     </select>
     
-    <!-- 统计流动方向分布 -->
+    <!-- 统计客流方向分布 -->
     <select id="countByDirection" resultType="java.util.Map">
-        SELECT
-            FLOW_DIRECTION AS direction,
-            SUM(FLOW_COUNT) AS count
+        SELECT 
+            FLOW_DIRECTION,
+            COUNT(1) AS count,
+            SUM(FLOW_COUNT) AS total_count,
+            ROUND(AVG(FLOW_COUNT), 2) AS avg_count
         FROM FLOW_ANALYSIS
         WHERE 1=1
         <if test="deviceCode != null and deviceCode != ''">
@@ -264,13 +266,14 @@
             AND RECORD_TIME &lt;= #{endTime}
         </if>
         GROUP BY FLOW_DIRECTION
+        ORDER BY count DESC
     </select>
     
     <!-- 获取客流趋势 -->
     <select id="getFlowTrend" resultType="java.util.Map">
-        SELECT
+        SELECT 
             TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') AS time,
-            SUM(FLOW_COUNT) AS count
+            SUM(FLOW_COUNT) AS flow_count
         FROM FLOW_ANALYSIS
         WHERE 1=1
         <if test="deviceCode != null and deviceCode != ''">
