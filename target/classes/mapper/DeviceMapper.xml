@@ -68,25 +68,56 @@
     </select>
     
     <!-- 根据景区名称查询设备列表 -->
-    <select id="findByTourismName" resultMap="BaseResultMap">
+    <select id="selectByTourismName" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.DEVICE
         WHERE TOURISM_NAME = #{tourismName}
+        ORDER BY CREATE_TIME DESC
     </select>
     
-    <!-- 根据状态查询设备列表 -->
-    <select id="findByStatus" resultMap="BaseResultMap">
+    <!-- 根据设备状态查询设备列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.DEVICE
         WHERE STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
     </select>
+    
+    <!-- 批量更新设备状态 -->
+    <update id="updateStatusBatch">
+        <foreach collection="deviceCodes" item="deviceCode" separator=";">
+            UPDATE CLOUDWALK.DEVICE 
+            SET STATUS = #{status},
+                UPDATE_TIME = SYSTIMESTAMP
+            WHERE DEVICE_CODE = #{deviceCode}
+        </foreach>
+    </update>
     
     <!-- 条件分页查询 -->
     <select id="findByConditions" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.DEVICE
-        <include refid="Query_Condition"/>
+        <where>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.deviceName != null and params.deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+            </if>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND STATUS = #{params.status}
+            </if>
+            <if test="params.startTime != null">
+                AND CREATE_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND CREATE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
         ORDER BY CREATE_TIME DESC
-        OFFSET #{params.offset} ROWS FETCH NEXT #{params.pageSize} ROWS ONLY
+        OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
     </select>
 </mapper> 

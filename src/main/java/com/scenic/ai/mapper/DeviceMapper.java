@@ -11,19 +11,67 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备Mapper接口
+ * 设备管理Mapper接口
  */
 @Mapper
 public interface DeviceMapper extends BaseMapper<Device> {
+    
+    /**
+     * 查询设备总数
+     *
+     * @param params 查询参数
+     * @return 设备总数
+     */
+    Long countDevices(@Param("params") Map<String, Object> params);
+    
+    /**
+     * 查询设备列表
+     *
+     * @param params 查询参数
+     * @return 设备列表
+     */
+    List<Device> selectDevices(@Param("params") Map<String, Object> params);
+    
+    /**
+     * 根据ID查询设备
+     *
+     * @param id 设备ID
+     * @return 设备信息
+     */
+    Device selectById(@Param("id") Long id);
+    
     /**
      * 根据景区名称查询设备列表
+     *
+     * @param tourismName 景区名称
+     * @return 设备列表
      */
-    List<Device> findByTourismName(@Param("tourismName") String tourismName);
-
+    List<Device> selectByTourismName(@Param("tourismName") String tourismName);
+    
     /**
-     * 根据状态查询设备列表
+     * 根据设备状态查询设备列表
+     *
+     * @param status 设备状态
+     * @return 设备列表
      */
-    List<Device> findByStatus(@Param("status") String status);
+    List<Device> selectByStatus(@Param("status") String status);
+    
+    /**
+     * 批量更新设备状态
+     *
+     * @param deviceCodes 设备编码列表
+     * @param status 设备状态
+     * @return 更新成功的记录数
+     */
+    int updateStatusBatch(@Param("deviceCodes") List<String> deviceCodes, @Param("status") String status);
+    
+    /**
+     * 条件分页查询
+     *
+     * @param params 查询参数
+     * @return 设备列表
+     */
+    List<Device> findByConditions(@Param("params") Map<String, Object> params);
 
     /**
      * 统计各景区设备数量
@@ -41,26 +89,6 @@ public interface DeviceMapper extends BaseMapper<Device> {
             "FROM CLOUDWALK.DEVICE " +
             "GROUP BY STATUS")
     List<Map<String, Object>> countByStatus();
-
-    /**
-     * 条件分页查询
-     */
-    List<Device> findByConditions(@Param("params") Map<String, Object> params);
-
-    /**
-     * 查询设备总数
-     */
-    Long countDevices(@Param("params") Map<String, Object> params);
-
-    /**
-     * 批量更新设备状态
-     * @param deviceCodes 设备编码列表
-     * @param status 状态
-     * @return 更新记录数
-     */
-    @Update("UPDATE CLOUDWALK.DEVICE SET STATUS = #{status}, UPDATE_TIME = SYSTIMESTAMP " +
-            "WHERE DEVICE_CODE IN (SELECT UNNEST(#{deviceCodes}))")
-    int batchUpdateStatus(@Param("deviceCodes") String[] deviceCodes, @Param("status") String status);
 
     /**
      * 更新设备名称

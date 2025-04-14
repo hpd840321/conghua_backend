@@ -1,77 +1,73 @@
 package com.scenic.ai.model;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
 
 /**
- * 警报实体类
+ * 告警信息实体类
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@TableName("ALERT")
 public class Alert {
+    
     /**
      * 主键ID
      */
+    @TableId(type = IdType.AUTO)
     private Long id;
-
+    
     /**
-     * 设备编号
+     * 设备编码
      */
     private String deviceCode;
-
+    
     /**
      * 设备名称
      */
     private String deviceName;
-
+    
     /**
      * 景区名称
      */
     private String tourismName;
-
+    
     /**
-     * 警报类型(1:人群密度过高 2:人群聚集 3:异常行为)
+     * 告警类型
      */
-    private Integer alertType;
-
+    private String alertType;
+    
     /**
-     * 警报级别(1:一般 2:重要 3:紧急)
+     * 告警级别：1-低，2-中，3-高
      */
     private Integer alertLevel;
-
+    
     /**
-     * 警报内容
+     * 状态：0-待处理，1-已处理
      */
-    private String alertContent;
-
+    private Integer alertStatus;
+    
     /**
-     * 警报图片URL
+     * 告警描述
+     */
+    private String description;
+    
+    /**
+     * 全景图URL
      */
     private String imageUrl;
-
-    /**
-     * 处理状态(0:未处理 1:已处理)
-     */
-    private Integer status;
-
-    /**
-     * 处理备注
-     */
-    private String remark;
-
+    
     /**
      * 记录时间
      */
     private LocalDateTime recordTime;
-
+    
     /**
      * 创建时间
      */
     private LocalDateTime createTime;
-
+    
     /**
      * 更新时间
      */

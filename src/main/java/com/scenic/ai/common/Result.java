@@ -1,46 +1,81 @@
 package com.scenic.ai.common;
 
 import lombok.Data;
+import org.springframework.http.HttpStatus;
 
 /**
- * 统一返回结果
+ * 统一响应对象
  */
 @Data
 public class Result<T> {
+    
+    /**
+     * 状态码
+     */
     private int code;
+    
+    /**
+     * 返回消息
+     */
     private String message;
+    
+    /**
+     * 返回数据
+     */
     private T data;
-    private boolean success;
-
-    private Result() {
+    
+    private Result(int code, String message, T data) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
     }
-
+    
+    /**
+     * 成功返回结果
+     */
     public static <T> Result<T> ok(T data) {
-        Result<T> result = new Result<>();
-        result.setCode(200);
-        result.setMessage("操作成功");
-        result.setData(data);
-        result.setSuccess(true);
-        return result;
+        return new Result<>(HttpStatus.OK.value(), "操作成功", data);
     }
-
-    public static <T> Result<T> ok() {
-        return ok(null);
+    
+    /**
+     * 成功返回结果
+     */
+    public static <T> Result<T> ok(String message, T data) {
+        return new Result<>(HttpStatus.OK.value(), message, data);
     }
-
+    
+    /**
+     * 失败返回结果
+     */
     public static <T> Result<T> error(String message) {
-        Result<T> result = new Result<>();
-        result.setCode(500);
-        result.setMessage(message);
-        result.setSuccess(false);
-        return result;
+        return new Result<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, null);
     }
-
+    
+    /**
+     * 失败返回结果
+     */
     public static <T> Result<T> error(int code, String message) {
-        Result<T> result = new Result<>();
-        result.setCode(code);
-        result.setMessage(message);
-        result.setSuccess(false);
-        return result;
+        return new Result<>(code, message, null);
+    }
+    
+    /**
+     * 参数验证失败返回结果
+     */
+    public static <T> Result<T> validateFailed(String message) {
+        return new Result<>(HttpStatus.BAD_REQUEST.value(), message, null);
+    }
+    
+    /**
+     * 未登录返回结果
+     */
+    public static <T> Result<T> unauthorized(String message) {
+        return new Result<>(HttpStatus.UNAUTHORIZED.value(), message, null);
+    }
+    
+    /**
+     * 未授权返回结果
+     */
+    public static <T> Result<T> forbidden(String message) {
+        return new Result<>(HttpStatus.FORBIDDEN.value(), message, null);
     }
 } 

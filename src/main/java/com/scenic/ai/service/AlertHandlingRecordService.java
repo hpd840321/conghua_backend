@@ -6,39 +6,35 @@ import com.scenic.ai.model.AlertHandlingRecord;
 import java.util.List;
 
 /**
- * 告警处理记录Service接口
+ * 告警处理记录服务接口
  */
 public interface AlertHandlingRecordService extends IService<AlertHandlingRecord> {
     
     /**
-     * 根据告警ID获取处理记录列表
-     *
+     * 添加告警处理记录
+     * @param record 处理记录信息
+     * @return 是否添加成功
+     */
+    boolean save(AlertHandlingRecord record);
+    
+    /**
+     * 根据告警ID查询处理记录列表
      * @param alertId 告警ID
-     * @return 处理记录列表
+     * @return 处理记录列表，按创建时间降序排序
      */
-    List<AlertHandlingRecord> getHandlingRecordsByAlertId(Long alertId);
+    List<AlertHandlingRecord> listByAlertId(Long alertId);
     
     /**
-     * 添加处理记录
-     *
-     * @param record 处理记录
-     * @return 是否成功
+     * 更新告警处理记录
+     * @param record 处理记录信息
+     * @return 是否更新成功
      */
-    boolean addHandlingRecord(AlertHandlingRecord record);
+    boolean updateById(AlertHandlingRecord record);
     
     /**
-     * 更新处理记录
-     *
-     * @param record 处理记录
-     * @return 是否成功
-     */
-    boolean updateHandlingRecord(AlertHandlingRecord record);
-    
-    /**
-     * 删除处理记录
-     *
+     * 删除告警处理记录
      * @param id 记录ID
-     * @return 是否成功
+     * @return 是否删除成功
      */
-    boolean deleteHandlingRecord(Long id);
+    boolean removeById(Long id);
 } 

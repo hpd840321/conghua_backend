@@ -1,13 +1,10 @@
 server:
   port: 8080
   servlet:
-    context-path: /scenic-ai
+    context-path: /
     encoding:
       charset: UTF-8
       force: true
-      enabled: true
-      force-request: true
-      force-response: true
   tomcat:
     max-threads: 200
     min-spare-threads: 10
@@ -25,20 +22,22 @@ server:
 
 spring:
   application:
-    name: scenic-management
+    name: scenic-ai-management
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration
   mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
     view:
       prefix: /WEB-INF/jsp/
       suffix: .jsp
     static-path-pattern: /static/**
   datasource:
     driver-class-name: dm.jdbc.driver.DmDriver
-    url: jdbc:dm://172.26.80.100:30020/CLOUDWALK?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:dm://localhost:5236/CLOUDWALK
     username: CLOUDWALK
-    password: chds1qaz@WSX
+    password: CLOUDWALK123
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       minimum-idle: 5
@@ -70,15 +69,15 @@ spring:
 
 springdoc:
   api-docs:
-    path: /api-docs
+    enabled: true
+    path: /v3/api-docs
   swagger-ui:
+    enabled: true
     path: /swagger-ui.html
-    operationsSorter: method
-    tagsSorter: alpha
-    filter: true
+    tags-sorter: alpha
+    operations-sorter: alpha
   show-actuator: true
-  default-produces-media-type: application/json
-  default-consumes-media-type: application/json
+  packages-to-scan: com.scenic.ai.controller
 
 sync:
   scheduler:
@@ -117,14 +116,16 @@ third-party:
 
 logging:
   level:
-    root: INFO
-    com.scenic.ai: DEBUG
+    root: info
+    com.scenic.ai: debug
     org.springframework.web: INFO
     org.hibernate: INFO
     com.scenic.ai.controller: DEBUG
     com.scenic.ai.config: DEBUG
   file:
     name: logs/application.log
+    max-size: 10MB
+    max-history: 30
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
@@ -145,16 +146,19 @@ ai:
       threshold: ${AI_DENSITY_THRESHOLD:0.6}
 
 mybatis-plus:
-  mapper-locations: classpath:mapper/**/*.xml
-  type-aliases-package: com.scenic.ai.model,com.scenic.ai.dto
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.scenic.ai.model
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    default-fetch-size: 100
-    default-statement-timeout: 30
+    cache-enabled: true
+    call-setters-on-nulls: true
+    jdbc-type-for-null: null
   global-config:
     db-config:
       id-type: auto
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+
+ehcache:
+  config-location: classpath:ehcache.xml

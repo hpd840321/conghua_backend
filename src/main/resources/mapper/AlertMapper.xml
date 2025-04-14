@@ -144,7 +144,7 @@
                 AND level = #{level}
             </if>
             <if test="status != null and status != ''">
-                AND status = #{status}
+                AND ALERT_STATUS = #{status}
             </if>
             <if test="deviceCode != null and deviceCode != ''">
                 AND device_code = #{deviceCode}
@@ -182,5 +182,125 @@
             AND RECORD_TIME &lt;= #{endTime}
         </if>
         ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备编码查询告警列表 -->
+    <select id="selectByDeviceCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE DEVICE_CODE = #{deviceCode}
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 根据景区名称查询告警列表 -->
+    <select id="selectByTourismName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE TOURISM_NAME = #{tourismName}
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 根据告警类型查询告警列表 -->
+    <select id="selectByAlertType" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ALERT_TYPE = #{alertType}
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 根据告警等级查询告警列表 -->
+    <select id="selectByAlertLevel" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ALERT_LEVEL = #{alertLevel}
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 根据状态查询告警列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ALERT_STATUS = #{status}
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 查询告警总数 -->
+    <select id="countAlerts" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM ALERT
+        <where>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.deviceName != null and params.deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+            </if>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.alertType != null">
+                AND ALERT_TYPE = #{params.alertType}
+            </if>
+            <if test="params.alertLevel != null">
+                AND ALERT_LEVEL = #{params.alertLevel}
+            </if>
+            <if test="params.status != null">
+                AND ALERT_STATUS = #{params.status}
+            </if>
+            <if test="params.startTime != null">
+                AND RECORD_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND RECORD_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 统计各告警类型数量 -->
+    <select id="countByAlertType" resultType="java.util.Map">
+        SELECT ALERT_TYPE, COUNT(*) as COUNT
+        FROM ALERT
+        GROUP BY ALERT_TYPE
+    </select>
+
+    <!-- 统计各告警等级数量 -->
+    <select id="countByAlertLevel" resultType="java.util.Map">
+        SELECT ALERT_LEVEL, COUNT(*) as COUNT
+        FROM ALERT
+        GROUP BY ALERT_LEVEL
+    </select>
+
+    <!-- 统计各景区告警数量 -->
+    <select id="countByTourism" resultType="java.util.Map">
+        SELECT TOURISM_NAME, COUNT(*) as COUNT
+        FROM ALERT
+        GROUP BY TOURISM_NAME
+    </select>
+
+    <!-- 获取未处理的告警信息 -->
+    <select id="selectUnhandled" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ALERT_STATUS = 0
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        ORDER BY RECORD_TIME DESC
     </select>
 </mapper> 

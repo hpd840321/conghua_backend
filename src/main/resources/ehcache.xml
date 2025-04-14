@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd">
+         xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd"
+         updateCheck="false">
 
     <!-- 磁盘缓存位置 -->
     <diskStore path="java.io.tmpdir/ehcache"/>
@@ -9,36 +10,48 @@
     <defaultCache
             maxElementsInMemory="10000"
             eternal="false"
-            timeToIdleSeconds="120"
-            timeToLiveSeconds="120"
-            maxElementsOnDisk="10000000"
+            timeToIdleSeconds="3600"
+            timeToLiveSeconds="3600"
+            overflowToDisk="true"
+            maxElementsOnDisk="100000"
+            diskPersistent="false"
             diskExpiryThreadIntervalSeconds="120"
-            memoryStoreEvictionPolicy="LRU">
-        <persistence strategy="localTempSwap"/>
-    </defaultCache>
+            memoryStoreEvictionPolicy="LRU"/>
 
-    <!-- 设备信息缓存 -->
+    <!-- 设备缓存 -->
     <cache name="deviceCache"
            maxElementsInMemory="10000"
            eternal="false"
            timeToIdleSeconds="3600"
            timeToLiveSeconds="3600"
-           maxElementsOnDisk="1000000"
+           overflowToDisk="true"
+           maxElementsOnDisk="100000"
+           diskPersistent="false"
            diskExpiryThreadIntervalSeconds="120"
-           memoryStoreEvictionPolicy="LRU">
-        <persistence strategy="localTempSwap"/>
-    </cache>
+           memoryStoreEvictionPolicy="LRU"/>
+
+    <!-- 景区缓存 -->
+    <cache name="tourismCache"
+           maxElementsInMemory="1000"
+           eternal="false"
+           timeToIdleSeconds="3600"
+           timeToLiveSeconds="3600"
+           overflowToDisk="true"
+           maxElementsOnDisk="10000"
+           diskPersistent="false"
+           diskExpiryThreadIntervalSeconds="120"
+           memoryStoreEvictionPolicy="LRU"/>
 
     <!-- 统计数据缓存 -->
     <cache name="statisticsCache"
            maxElementsInMemory="10000"
            eternal="false"
-           timeToIdleSeconds="1800"
-           timeToLiveSeconds="1800"
-           maxElementsOnDisk="1000000"
+           timeToIdleSeconds="300"
+           timeToLiveSeconds="300"
+           overflowToDisk="true"
+           maxElementsOnDisk="100000"
+           diskPersistent="false"
            diskExpiryThreadIntervalSeconds="120"
-           memoryStoreEvictionPolicy="LRU">
-        <persistence strategy="localTempSwap"/>
-    </cache>
+           memoryStoreEvictionPolicy="LRU"/>
 
 </ehcache> 

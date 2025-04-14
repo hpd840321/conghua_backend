@@ -17,18 +17,91 @@ import java.util.Map;
 public interface FlowAnalysisMapper extends BaseMapper<FlowAnalysis> {
     
     /**
-     * 获取客流量趋势数据
+     * 根据设备编码查询客流数据
+     *
+     * @param deviceCode 设备编码
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 客流数据列表
      */
-    @Select("SELECT TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time, FLOW_COUNT as value " +
-            "FROM CLOUDWALK.FLOW_ANALYSIS " +
-            "WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime} " +
-            "ORDER BY RECORD_TIME")
-    List<Map<String, Object>> getFlowTrend(@Param("deviceCode") String deviceCode,
-                                          @Param("tourismName") String tourismName,
-                                          @Param("startTime") LocalDateTime startTime,
-                                          @Param("endTime") LocalDateTime endTime);
+    List<FlowAnalysis> selectByDeviceCode(
+            @Param("deviceCode") String deviceCode,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 根据景区名称查询客流数据
+     *
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 客流数据列表
+     */
+    List<FlowAnalysis> selectByTourismName(
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 统计时段客流分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
+     */
+    List<Map<String, Object>> countByHour(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 统计流向分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
+     */
+    List<Map<String, Object>> countByDirection(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 获取客流趋势
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 趋势数据
+     */
+    List<Map<String, Object>> getFlowTrend(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 条件分页查询
+     *
+     * @param params 查询参数
+     * @return 客流数据列表
+     */
+    List<FlowAnalysis> findByConditions(@Param("params") Map<String, Object> params);
+    
+    /**
+     * 查询记录总数
+     *
+     * @param params 查询参数
+     * @return 记录总数
+     */
+    Long countRecords(@Param("params") Map<String, Object> params);
 
     /**
      * 获取客流方向分布数据
@@ -74,4 +147,25 @@ public interface FlowAnalysisMapper extends BaseMapper<FlowAnalysis> {
     int getTotalFlowCount(@Param("deviceCode") String deviceCode,
                          @Param("startTime") LocalDateTime startTime,
                          @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 根据时间范围和景区名称查询客流分析数据
+     *
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param tourismName 景区名称
+     * @return 客流分析数据列表
+     */
+    List<FlowAnalysis> selectByTimeRangeAndTourism(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("tourismName") String tourismName);
+    
+    /**
+     * 根据设备编码查询最新的客流分析数据
+     *
+     * @param deviceCode 设备编码
+     * @return 客流分析数据
+     */
+    FlowAnalysis selectLatestByDeviceCode(@Param("deviceCode") String deviceCode);
 } 

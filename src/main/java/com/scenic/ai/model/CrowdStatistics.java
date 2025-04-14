@@ -1,8 +1,8 @@
 package com.scenic.ai.model;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,10 +10,13 @@ import java.time.LocalDateTime;
  * 人群统计实体类
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@TableName("CROWD_STATISTICS")
 public class CrowdStatistics {
     
+    /**
+     * 主键ID
+     */
+    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**
@@ -32,7 +35,7 @@ public class CrowdStatistics {
     private String tourismName;
     
     /**
-     * 计数
+     * 人数
      */
     private Integer count;
     
@@ -64,10 +67,12 @@ public class CrowdStatistics {
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     
     /**
      * 更新时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 } 

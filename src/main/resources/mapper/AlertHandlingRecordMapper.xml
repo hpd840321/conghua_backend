@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.AlertHandlingRecordMapper">
+    
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.model.AlertHandlingRecord">
+        <id column="ID" property="id"/>
+        <result column="ALERT_ID" property="alertId"/>
+        <result column="HANDLER" property="handler"/>
+        <result column="HANDLE_TIME" property="handleTime"/>
+        <result column="HANDLE_RESULT" property="handleResult"/>
+        <result column="HANDLE_METHOD" property="handleMethod"/>
+        <result column="REMARK" property="remark"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, ALERT_ID, HANDLER, HANDLE_TIME, HANDLE_RESULT, HANDLE_METHOD, REMARK,
+        CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <!-- 插入处理记录 -->
+    <insert id="insert" parameterType="com.scenic.ai.model.AlertHandlingRecord">
+        INSERT INTO CLOUDWALK.ALERT_HANDLING_RECORD (
+            ALERT_ID, HANDLER, HANDLE_TIME, HANDLE_RESULT, HANDLE_METHOD, REMARK
+        ) VALUES (
+            #{alertId}, #{handler}, #{handleTime}, #{handleResult}, #{handleMethod}, #{remark}
+        )
+    </insert>
+
+    <!-- 更新处理记录 -->
+    <update id="update" parameterType="com.scenic.ai.model.AlertHandlingRecord">
+        UPDATE CLOUDWALK.ALERT_HANDLING_RECORD
+        SET HANDLE_RESULT = #{handleResult},
+            HANDLE_METHOD = #{handleMethod},
+            REMARK = #{remark},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 根据ID删除处理记录 -->
+    <delete id="deleteById">
+        DELETE FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        WHERE ID = #{id}
+    </delete>
+
+    <!-- 根据告警ID查询处理记录列表 -->
+    <select id="listByAlertId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        WHERE ALERT_ID = #{alertId}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据处理人查询处理记录 -->
+    <select id="listByHandler" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        WHERE HANDLER = #{handler}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 统计处理方法分布 -->
+    <select id="countByHandleMethod" resultType="java.util.Map">
+        SELECT 
+            HANDLE_METHOD as method,
+            COUNT(*) as count
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        WHERE HANDLE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY HANDLE_METHOD
+    </select>
+
+    <!-- 统计处理结果分布 -->
+    <select id="countByHandleResult" resultType="java.util.Map">
+        SELECT 
+            HANDLE_RESULT as result,
+            COUNT(*) as count
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        WHERE HANDLE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY HANDLE_RESULT
+    </select>
+
+    <!-- 统计处理人处理数量 -->
+    <select id="countByHandler" resultType="java.util.Map">
+        SELECT 
+            HANDLER,
+            COUNT(*) as count
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        WHERE HANDLE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY HANDLER
+    </select>
+
+    <!-- 条件分页查询 -->
+    <select id="findByConditions" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        <where>
+            <if test="params.alertId != null">
+                AND ALERT_ID = #{params.alertId}
+            </if>
+            <if test="params.handler != null and params.handler != ''">
+                AND HANDLER = #{params.handler}
+            </if>
+            <if test="params.handleResult != null and params.handleResult != ''">
+                AND HANDLE_RESULT = #{params.handleResult}
+            </if>
+            <if test="params.handleMethod != null and params.handleMethod != ''">
+                AND HANDLE_METHOD = #{params.handleMethod}
+            </if>
+            <if test="params.startTime != null">
+                AND HANDLE_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND HANDLE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+        ORDER BY CREATE_TIME DESC
+        OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
+    </select>
+
+    <!-- 查询处理记录总数 -->
+    <select id="countRecords" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM CLOUDWALK.ALERT_HANDLING_RECORD
+        <where>
+            <if test="params.alertId != null">
+                AND ALERT_ID = #{params.alertId}
+            </if>
+            <if test="params.handler != null and params.handler != ''">
+                AND HANDLER = #{params.handler}
+            </if>
+            <if test="params.handleResult != null and params.handleResult != ''">
+                AND HANDLE_RESULT = #{params.handleResult}
+            </if>
+            <if test="params.handleMethod != null and params.handleMethod != ''">
+                AND HANDLE_METHOD = #{params.handleMethod}
+            </if>
+            <if test="params.startTime != null">
+                AND HANDLE_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND HANDLE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+    </select>
+</mapper> 

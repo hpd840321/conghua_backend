@@ -12,6 +12,7 @@ D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\serv
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\common\Result.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\domain\model\AlertStatistics.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\domain\model\FlowAnalysis.java
+D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\config\MybatisPlusConfig.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\dto\request\PanoramaQueryRequest.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\SchedulerService.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\ThirdPartyApiService.java
@@ -55,6 +56,7 @@ D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\exce
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\model\RetryLog.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\impl\BaseServiceImpl.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\BaseService.java
+D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\config\SwaggerConfig.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\util\AlertConverter.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\config\TransactionConfig.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\config\WebConfig.java

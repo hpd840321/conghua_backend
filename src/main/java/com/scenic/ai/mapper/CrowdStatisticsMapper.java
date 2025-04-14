@@ -1,142 +1,144 @@
 package com.scenic.ai.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.scenic.ai.domain.model.CrowdStatistics;
+import com.scenic.ai.model.CrowdStatistics;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 人群统计数据访问接口
+ * 人群统计Mapper接口
  */
 @Mapper
 public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
+    
     /**
-     * 根据设备编码和时间范围查询统计数据
+     * 根据设备编码查询人群统计数据
+     *
+     * @param deviceCode 设备编码
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 人群统计数据列表
      */
-    List<CrowdStatistics> findByDeviceAndTime(@Param("deviceCode") String deviceCode,
-                                             @Param("startTime") LocalDateTime startTime,
-                                             @Param("endTime") LocalDateTime endTime);
-
+    List<CrowdStatistics> selectByDeviceCode(
+            @Param("deviceCode") String deviceCode,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
     /**
-     * 统计时间范围内的平均密度
+     * 根据景区名称查询人群统计数据
+     *
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 人群统计数据列表
      */
-    @Select("SELECT " +
-            "ROUND(AVG(DENSITY), 2) as avgDensity, " +
-            "MAX(DENSITY) as maxDensity, " +
-            "MIN(DENSITY) as minDensity " +
-            "FROM CLOUDWALK.CROWD_STATISTICS " +
-            "WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}")
-    Map<String, Object> calculateAverageDensity(@Param("deviceCode") String deviceCode,
-                                               @Param("tourismName") String tourismName,
-                                               @Param("startTime") LocalDateTime startTime,
-                                               @Param("endTime") LocalDateTime endTime);
-
+    List<CrowdStatistics> selectByTourismName(
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
     /**
-     * 统计时段分布
+     * 统计时段人群分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
      */
-    @Select("SELECT TO_CHAR(RECORD_TIME, 'HH24') as hour, " +
-            "ROUND(AVG(COUNT), 2) as count, " +
-            "ROUND(AVG(DENSITY), 2) as density " +
-            "FROM CLOUDWALK.CROWD_STATISTICS " +
-            "WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime} " +
-            "GROUP BY TO_CHAR(RECORD_TIME, 'HH24') " +
-            "ORDER BY hour")
-    List<Map<String, Object>> countByHour(@Param("deviceCode") String deviceCode,
-                                         @Param("tourismName") String tourismName,
-                                         @Param("startTime") LocalDateTime startTime,
-                                         @Param("endTime") LocalDateTime endTime);
-
+    List<Map<String, Object>> countByHour(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
     /**
-     * 查询最高人数记录
+     * 统计密度分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
      */
-    @Select("SELECT * FROM CLOUDWALK.CROWD_STATISTICS " +
-            "WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime} " +
-            "AND COUNT = (SELECT MAX(COUNT) FROM CLOUDWALK.CROWD_STATISTICS " +
-            "            WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "            AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "            AND RECORD_TIME BETWEEN #{startTime} AND #{endTime})")
-    CrowdStatistics findMaxCount(@Param("deviceCode") String deviceCode,
-                                @Param("tourismName") String tourismName,
-                                @Param("startTime") LocalDateTime startTime,
-                                @Param("endTime") LocalDateTime endTime);
-
+    List<Map<String, Object>> countByDensity(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 获取人群趋势
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 趋势数据
+     */
+    List<Map<String, Object>> getCrowdTrend(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
     /**
      * 条件分页查询
+     *
+     * @param params 查询参数
+     * @return 人群统计数据列表
      */
-    @Select("SELECT * FROM CLOUDWALK.CROWD_STATISTICS " +
-            "WHERE (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{algName} IS NULL OR ALG_NAME = #{algName}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime} " +
-            "ORDER BY RECORD_TIME DESC " +
-            "OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY")
-    List<CrowdStatistics> findByConditions(@Param("deviceCode") String deviceCode,
-                                          @Param("tourismName") String tourismName,
-                                          @Param("algName") String algName,
-                                          @Param("startTime") LocalDateTime startTime,
-                                          @Param("endTime") LocalDateTime endTime,
-                                          @Param("offset") Integer offset,
-                                          @Param("limit") Integer limit);
+    List<CrowdStatistics> findByConditions(@Param("params") Map<String, Object> params);
+    
+    /**
+     * 查询记录总数
+     *
+     * @param params 查询参数
+     * @return 记录总数
+     */
+    Long countRecords(@Param("params") Map<String, Object> params);
 
     /**
-     * 获取人群密度趋势数据
+     * 获取高密度区域统计
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param densityThreshold 密度阈值
+     * @return 统计结果
      */
-    @Select("SELECT TO_CHAR(RECORD_TIME, 'HH24:MI') as time, " +
-            "ROUND(AVG(DENSITY), 2) as density " +
-            "FROM CLOUDWALK.CROWD_DENSITY " +
-            "WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime} " +
-            "GROUP BY TO_CHAR(RECORD_TIME, 'HH24:MI') " +
-            "ORDER BY time")
-    List<Map<String, Object>> getDensityTrend(@Param("deviceCode") String deviceCode,
-                                             @Param("startTime") LocalDateTime startTime,
-                                             @Param("endTime") LocalDateTime endTime);
+    List<Map<String, Object>> getHighDensityStats(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("densityThreshold") BigDecimal densityThreshold);
 
     /**
-     * 获取人群数量趋势数据
+     * 根据时间范围和景区名称查询人群统计数据
+     *
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param tourismName 景区名称
+     * @return 人群统计数据列表
      */
-    @Select("SELECT TO_CHAR(RECORD_TIME, 'HH24:MI') as time, " +
-            "ROUND(AVG(COUNT), 2) as count " +
-            "FROM CLOUDWALK.CROWD_COUNT " +
-            "WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName}) " +
-            "AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode}) " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime} " +
-            "GROUP BY TO_CHAR(RECORD_TIME, 'HH24:MI') " +
-            "ORDER BY time")
-    List<Map<String, Object>> getCountTrend(@Param("deviceCode") String deviceCode,
-                                           @Param("startTime") LocalDateTime startTime,
-                                           @Param("endTime") LocalDateTime endTime);
-
+    List<CrowdStatistics> selectByTimeRangeAndTourism(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("tourismName") String tourismName);
+    
     /**
-     * 获取热力图数据
+     * 根据设备编码查询最新的人群统计数据
+     *
+     * @param deviceCode 设备编码
+     * @return 人群统计数据
      */
-    @Select("SELECT cs.DEVICE_CODE as x, cs.DEVICE_NAME as y, cs.COUNT as value " +
-            "FROM CLOUDWALK.CROWD_STATISTICS cs " +
-            "WHERE cs.TOURISM_NAME = #{tourismName} " +
-            "AND cs.RECORD_TIME = #{recordTime}")
-    List<Map<String, Object>> getHeatMapData(@Param("tourismName") String tourismName,
-                                            @Param("recordTime") LocalDateTime recordTime);
-
-    /**
-     * 获取平均人数
-     */
-    @Select("SELECT AVG(COUNT) " +
-            "FROM CLOUDWALK.CROWD_STATISTICS " +
-            "WHERE DEVICE_CODE = #{deviceCode} " +
-            "AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}")
-    double getAverageCount(@Param("deviceCode") String deviceCode,
-                          @Param("startTime") LocalDateTime startTime,
-                          @Param("endTime") LocalDateTime endTime);
+    CrowdStatistics selectLatestByDeviceCode(@Param("deviceCode") String deviceCode);
 } 

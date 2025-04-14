@@ -15,30 +15,94 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 /**
- * 告警服务实现类
+ * 告警信息服务实现类
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements AlertService {
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean createAlert(Alert alert) {
         if (alert.getCreateTime() == null) {
             alert.setCreateTime(LocalDateTime.now());
-        }
-        if (alert.getUpdateTime() == null) {
-            alert.setUpdateTime(LocalDateTime.now());
         }
         if (alert.getRecordTime() == null) {
             alert.setRecordTime(LocalDateTime.now());
         }
         if (alert.getAlertStatus() == null) {
-            alert.setAlertStatus(AlertStatus.PENDING.getValue());
+            alert.setAlertStatus(0); // 默认待处理
         }
         return save(alert);
+    }
+
+    @Override
+    public boolean updateStatus(Long id, Integer status) {
+        Alert alert = getById(id);
+        if (alert != null) {
+            alert.setAlertStatus(status);
+            alert.setUpdateTime(LocalDateTime.now());
+            return updateById(alert);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean batchUpdateStatus(List<Long> ids, Integer status) {
+        if (ids == null || ids.isEmpty() || status == null) {
+            return false;
+        }
+        return update()
+                .set("alert_status", status)
+                .set("update_time", LocalDateTime.now())
+                .in("id", ids)
+                .update();
+    }
+
+    @Override
+    public List<Alert> getAlertsByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.selectByDeviceCode(deviceCode, startTime, endTime);
+    }
+
+    @Override
+    public List<Alert> getAlertsByTourism(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.selectByTourismName(tourismName, startTime, endTime);
+    }
+
+    @Override
+    public List<Map<String, Object>> getAlertHourDistribution(String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.countByHour(deviceCode, tourismName, startTime, endTime);
+    }
+
+    @Override
+    public List<Map<String, Object>> getAlertTypeDistribution(String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.countByType(deviceCode, tourismName, startTime, endTime);
+    }
+
+    @Override
+    public List<Map<String, Object>> getAlertLevelDistribution(String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.countByLevel(deviceCode, tourismName, startTime, endTime);
+    }
+
+    @Override
+    public List<Alert> pageAlerts(Map<String, Object> params) {
+        return baseMapper.findByConditions(params);
+    }
+
+    @Override
+    public Long countAlerts(Map<String, Object> params) {
+        return baseMapper.countRecords(params);
+    }
+
+    @Override
+    public List<Alert> getUnhandledAlerts(String deviceCode, String tourismName) {
+        return baseMapper.selectUnhandled(deviceCode, tourismName);
     }
 
     @Override
@@ -48,7 +112,6 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
         
         LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
         
-        // 添加查询条件
         if (StringUtils.isNotBlank(tourismName)) {
             wrapper.eq(Alert::getTourismName, tourismName);
         }
@@ -71,67 +134,9 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
             wrapper.le(Alert::getRecordTime, endTime);
         }
         
-        // 按记录时间倒序排序
         wrapper.orderByDesc(Alert::getRecordTime);
         
         return page(page, wrapper);
-    }
-
-    @Override
-    public Map<String, Object> getAlertTypeDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        LambdaQueryWrapper<Alert> wrapper = buildBaseWrapper(tourismName, startTime, endTime);
-        List<Alert> alerts = list(wrapper);
-        
-        Map<String, Long> typeDistribution = alerts.stream()
-                .collect(Collectors.groupingBy(Alert::getAlertType, Collectors.counting()));
-        
-        Map<String, Object> result = new java.util.HashMap<>();
-        result.put("types", new java.util.ArrayList<>(typeDistribution.keySet()));
-        result.put("counts", new java.util.ArrayList<>(typeDistribution.values()));
-        return result;
-    }
-
-    @Override
-    public Map<String, Object> getAlertLevelDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        LambdaQueryWrapper<Alert> wrapper = buildBaseWrapper(tourismName, startTime, endTime);
-        List<Alert> alerts = list(wrapper);
-        
-        Map<Integer, Long> levelDistribution = alerts.stream()
-                .collect(Collectors.groupingBy(Alert::getAlertLevel, Collectors.counting()));
-        
-        Map<String, Object> result = new java.util.HashMap<>();
-        result.put("levels", java.util.Arrays.asList("低", "中", "高"));
-        java.util.List<Long> counts = java.util.Arrays.asList(
-            levelDistribution.getOrDefault(1, 0L),
-            levelDistribution.getOrDefault(2, 0L),
-            levelDistribution.getOrDefault(3, 0L)
-        );
-        result.put("counts", counts);
-        return result;
-    }
-
-    @Override
-    public Map<String, Object> getAlertTimeDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        LambdaQueryWrapper<Alert> wrapper = buildBaseWrapper(tourismName, startTime, endTime);
-        List<Alert> alerts = list(wrapper);
-        
-        Map<Integer, Long> hourDistribution = alerts.stream()
-                .collect(Collectors.groupingBy(
-                    alert -> alert.getRecordTime().getHour(),
-                    Collectors.counting()
-                ));
-        
-        java.util.List<String> hours = new java.util.ArrayList<>();
-        java.util.List<Long> counts = new java.util.ArrayList<>();
-        for (int i = 0; i < 24; i++) {
-            hours.add(String.format("%02d:00", i));
-            counts.add(hourDistribution.getOrDefault(i, 0L));
-        }
-        
-        Map<String, Object> result = new java.util.HashMap<>();
-        result.put("hours", hours);
-        result.put("counts", counts);
-        return result;
     }
 
     @Override
@@ -139,7 +144,7 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
         LambdaQueryWrapper<Alert> wrapper = buildBaseWrapper(tourismName, startTime, endTime);
         List<Alert> alerts = list(wrapper);
         
-        Map<String, Object> result = new java.util.HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         
         // 总告警数
         result.put("totalAlerts", alerts.size());
@@ -167,7 +172,6 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean handleAlert(Long id) {
         Alert alert = getById(id);
         if (alert != null) {
@@ -179,7 +183,6 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean batchHandleAlerts(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return false;
@@ -200,22 +203,6 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
             wrapper.eq(Alert::getTourismName, tourismName);
         }
         return Math.toIntExact(count(wrapper));
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public int batchUpdateStatus(List<Long> ids, Integer status) {
-        if (ids == null || ids.isEmpty() || status == null) {
-            return 0;
-        }
-        
-        boolean success = update()
-                .set("alert_status", status)
-                .set("update_time", LocalDateTime.now())
-                .in("id", ids)
-                .update();
-                
-        return success ? ids.size() : 0;
     }
 
     @Override

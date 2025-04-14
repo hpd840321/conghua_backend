@@ -10,14 +10,116 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 告警服务接口
+ * 告警信息服务接口
  */
 public interface AlertService extends IService<Alert> {
     
     /**
-     * 创建告警
+     * 创建告警信息
+     *
+     * @param alert 告警信息
+     * @return 是否成功
      */
     boolean createAlert(Alert alert);
+    
+    /**
+     * 更新告警状态
+     *
+     * @param id 告警ID
+     * @param status 状态
+     * @return 是否成功
+     */
+    boolean updateStatus(Long id, Integer status);
+    
+    /**
+     * 批量更新告警状态
+     *
+     * @param ids ID列表
+     * @param status 状态
+     * @return 是否成功
+     */
+    boolean batchUpdateStatus(List<Long> ids, Integer status);
+    
+    /**
+     * 根据设备编码查询告警信息
+     *
+     * @param deviceCode 设备编码
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 告警信息列表
+     */
+    List<Alert> getAlertsByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 根据景区名称查询告警信息
+     *
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 告警信息列表
+     */
+    List<Alert> getAlertsByTourism(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 统计时段告警分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
+     */
+    List<Map<String, Object>> getAlertHourDistribution(String deviceCode, String tourismName, 
+            LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 统计告警类型分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
+     */
+    List<Map<String, Object>> getAlertTypeDistribution(String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 统计告警级别分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计结果
+     */
+    List<Map<String, Object>> getAlertLevelDistribution(String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 分页查询告警信息
+     *
+     * @param params 查询参数
+     * @return 告警信息列表
+     */
+    List<Alert> pageAlerts(Map<String, Object> params);
+    
+    /**
+     * 查询记录总数
+     *
+     * @param params 查询参数
+     * @return 记录总数
+     */
+    Long countAlerts(Map<String, Object> params);
+    
+    /**
+     * 获取未处理的告警信息
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @return 未处理的告警信息列表
+     */
+    List<Alert> getUnhandledAlerts(String deviceCode, String tourismName);
 
     /**
      * 分页查询告警信息
@@ -34,33 +136,6 @@ public interface AlertService extends IService<Alert> {
     IPage<Alert> pageAlerts(Page<Alert> page, String tourismName, String deviceCode, 
             String alertType, Integer alertLevel, Integer alertStatus, 
             LocalDateTime startTime, LocalDateTime endTime);
-
-    /**
-     * 获取告警类型分布
-     * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 类型-数量映射
-     */
-    Map<String, Object> getAlertTypeDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
-
-    /**
-     * 获取告警级别分布
-     * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 级别-数量映射
-     */
-    Map<String, Object> getAlertLevelDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
-
-    /**
-     * 获取告警时段分布
-     * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 时段-数量映射
-     */
-    Map<String, Object> getAlertTimeDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
 
     /**
      * 获取告警统计概览
@@ -91,15 +166,6 @@ public interface AlertService extends IService<Alert> {
      * @return 未处理告警数量
      */
     int countPendingAlerts(String tourismName);
-
-    /**
-     * 批量更新告警状态
-     *
-     * @param ids 告警ID列表
-     * @param status 目标状态
-     * @return 更新成功的记录数
-     */
-    int batchUpdateStatus(List<Long> ids, Integer status);
 
     /**
      * 根据告警级别和状态统计数量
