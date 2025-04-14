@@ -1,4 +1,4 @@
-package com.conghua.tourism.common.mapper;
+package com.scenic.ai.common.mapper;
 
 import org.apache.ibatis.annotations.Param;
 

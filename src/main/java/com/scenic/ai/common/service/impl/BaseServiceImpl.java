@@ -1,7 +1,7 @@
-package com.conghua.tourism.common.service.impl;
+package com.scenic.ai.common.service.impl;
 
-import com.conghua.tourism.common.mapper.BaseMapper;
-import com.conghua.tourism.common.service.IBaseService;
+import com.scenic.ai.common.mapper.BaseMapper;
+import com.scenic.ai.common.service.IBaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;

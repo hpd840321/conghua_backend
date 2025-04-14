@@ -1,10 +1,11 @@
-package com.conghua.tourism.controller.visitor;
+package com.scenic.ai.controller.visitor;
 
-import com.conghua.tourism.service.visitor.VisitorStatsService;
-import com.conghua.tourism.model.visitor.VisitorStats;
-import org.springframework.web.bind.annotation.*;
+import com.scenic.ai.model.visitor.VisitorStats;
+import com.scenic.ai.service.visitor.VisitorStatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;

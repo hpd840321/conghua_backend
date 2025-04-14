@@ -1,4 +1,4 @@
-package com.conghua.tourism.common.exception;
+package com.scenic.ai.common.exception;
 
 public class ServiceException extends RuntimeException {
     

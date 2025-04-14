@@ -1,4 +1,4 @@
-package com.conghua.tourism.mapper.handler;
+package com.scenic.ai.mapper.handler;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;

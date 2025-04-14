@@ -1,4 +1,4 @@
-package com.conghua.tourism.model.alarm;
+package com.scenic.ai.model.alarm;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,4 +1,4 @@
-package com.conghua.tourism.common.service;
+package com.scenic.ai.common.service;
 
 import java.util.List;
 

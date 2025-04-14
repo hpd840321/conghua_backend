@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.DensityMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.domain.model.DensityRecord">
+        <id column="id" property="id"/>
+        <result column="area_id" property="areaId"/>
+        <result column="area_name" property="areaName"/>
+        <result column="density" property="density"/>
+        <result column="level" property="level"/>
+        <result column="record_time" property="recordTime"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="tourism_name" property="tourismName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 通用列 -->
+    <sql id="Base_Column_List">
+        id, area_id, area_name, density, level, record_time, device_code, device_name, 
+        tourism_name, create_time, update_time
+    </sql>
+    
+    <!-- 插入记录 -->
+    <insert id="insert" parameterType="com.scenic.ai.domain.model.DensityRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO density_record (
+            area_id, area_name, density, level, record_time, device_code, device_name, 
+            tourism_name, create_time, update_time
+        ) VALUES (
+            #{areaId}, #{areaName}, #{density}, #{level}, #{recordTime}, #{deviceCode}, 
+            #{deviceName}, #{tourismName}, #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <!-- 批量插入记录 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO density_record (
+            area_id, area_name, density, level, record_time, device_code, device_name, 
+            tourism_name, create_time, update_time
+        ) VALUES 
+        <foreach collection="records" item="record" separator=",">
+            (
+                #{record.areaId}, #{record.areaName}, #{record.density}, #{record.level}, 
+                #{record.recordTime}, #{record.deviceCode}, #{record.deviceName}, 
+                #{record.tourismName}, #{record.createTime}, #{record.updateTime}
+            )
+        </foreach>
+    </insert>
+    
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM density_record
+        WHERE id = #{id}
+    </select>
+    
+    <!-- 查询最新记录 -->
+    <select id="selectLatestByAreaId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM density_record
+        WHERE area_id = #{areaId}
+        ORDER BY record_time DESC
+        LIMIT 1
+    </select>
+    
+    <!-- 查询时间范围内的记录 -->
+    <select id="selectByAreaIdAndTimeRange" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM density_record
+        WHERE area_id = #{areaId}
+        AND record_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY record_time ASC
+    </select>
+    
+    <!-- 更新记录 -->
+    <update id="update" parameterType="com.scenic.ai.domain.model.DensityRecord">
+        UPDATE density_record
+        <set>
+            <if test="areaName != null">area_name = #{areaName},</if>
+            <if test="density != null">density = #{density},</if>
+            <if test="level != null">level = #{level},</if>
+            <if test="recordTime != null">record_time = #{recordTime},</if>
+            <if test="deviceCode != null">device_code = #{deviceCode},</if>
+            <if test="deviceName != null">device_name = #{deviceName},</if>
+            <if test="tourismName != null">tourism_name = #{tourismName},</if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除记录 -->
+    <delete id="deleteById">
+        DELETE FROM density_record
+        WHERE id = #{id}
+    </delete>
+    
+</mapper> 

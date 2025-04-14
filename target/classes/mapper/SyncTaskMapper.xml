@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.SyncTaskMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="SyncTaskMap" type="com.scenic.ai.domain.model.sync.SyncTask">
+        <id property="id" column="id"/>
+        <result property="taskCode" column="task_code"/>
+        <result property="taskType" column="task_type"/>
+        <result property="status" column="status"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, task_code, task_type, status, start_time, end_time,
+        error_message, create_time, update_time
+    </sql>
+
+    <!-- 查询单个任务 -->
+    <select id="findById" resultMap="SyncTaskMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM sync_task
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询任务列表 -->
+    <select id="findByCondition" resultMap="SyncTaskMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM sync_task
+        <where>
+            <if test="taskType != null and taskType != ''">
+                AND task_type = #{taskType}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="startTime != null">
+                AND create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND create_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入任务 -->
+    <insert id="insert" parameterType="com.scenic.ai.domain.model.sync.SyncTask">
+        INSERT INTO sync_task (
+            task_code, task_type, status, start_time,
+            end_time, error_message, create_time, update_time
+        )
+        VALUES (
+            #{taskCode}, #{taskType}, #{status}, #{startTime},
+            #{endTime}, #{errorMessage}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 更新任务状态 -->
+    <update id="updateStatus">
+        UPDATE sync_task
+        SET status = #{status},
+            error_message = #{errorMessage},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+</mapper> 

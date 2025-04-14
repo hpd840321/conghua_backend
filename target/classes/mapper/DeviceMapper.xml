@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.DeviceMapper">
+    
+    <!-- 通用查询列 -->
+    <sql id="Base_Column_List">
+        id, device_code, device_name, device_type, status, location, stream_url,
+        tourism_name, ip_address, create_time, update_time, remark
+    </sql>
+    
+    <!-- 查询条件 -->
+    <sql id="Query_Condition">
+        <where>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND device_code = #{params.deviceCode}
+            </if>
+            <if test="params.deviceName != null and params.deviceName != ''">
+                AND device_name LIKE CONCAT('%', #{params.deviceName}, '%')
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND status = #{params.status}
+            </if>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND tourism_name = #{params.tourismName}
+            </if>
+            <if test="params.startTime != null and params.startTime != ''">
+                AND create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 查询设备总数 -->
+    <select id="countDevices" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM device
+        <include refid="Query_Condition"/>
+    </select>
+    
+    <!-- 查询设备列表 -->
+    <select id="selectDevices" resultType="com.scenic.ai.dto.DeviceDTO">
+        SELECT <include refid="Base_Column_List"/>
+        FROM device
+        <include refid="Query_Condition"/>
+        <if test="params.sortField != null and params.sortField != ''">
+            ORDER BY ${params.sortField} ${params.sortOrder}
+        </if>
+        LIMIT #{params.pageSize} OFFSET #{params.current}
+    </select>
+    
+    <!-- 根据ID查询设备 -->
+    <select id="selectById" resultType="com.scenic.ai.dto.DeviceDTO">
+        SELECT <include refid="Base_Column_List"/>
+        FROM device
+        WHERE id = #{id}
+    </select>
+    
+</mapper> 

@@ -1,7 +1,7 @@
-package com.conghua.tourism.model.alarm;
+package com.scenic.ai.model.alarm;
 
-import lombok.Getter;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * 告警级别枚举

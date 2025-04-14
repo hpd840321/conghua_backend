@@ -1,4 +1,4 @@
-package com.scenic.ai.domain.model;
+package com.scenic.ai.service;
 
 import lombok.Getter;
 import lombok.Setter;

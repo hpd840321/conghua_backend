@@ -1,4 +1,4 @@
-package com.conghua.tourism.common.model;
+package com.scenic.ai.common.model;
 
 import lombok.Data;
 

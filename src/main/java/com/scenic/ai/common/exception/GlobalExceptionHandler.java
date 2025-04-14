@@ -1,6 +1,6 @@
-package com.conghua.tourism.common.exception;
+package com.scenic.ai.common.exception;
 
-import com.conghua.tourism.common.api.ApiResult;
+import com.scenic.ai.common.api.ApiResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;

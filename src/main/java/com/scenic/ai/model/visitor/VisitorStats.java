@@ -1,9 +1,10 @@
-package com.conghua.tourism.model.visitor;
+package com.scenic.ai.model.visitor;
 
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 

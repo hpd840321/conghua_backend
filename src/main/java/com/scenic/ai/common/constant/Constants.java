@@ -1,4 +1,4 @@
-package com.conghua.tourism.common.constant;
+package com.scenic.ai.common.constant;
 
 public interface Constants {
     /**

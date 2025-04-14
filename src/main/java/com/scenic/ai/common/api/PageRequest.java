@@ -1,8 +1,8 @@
-package com.conghua.tourism.common.api;
+package com.scenic.ai.common.api;
 
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
 
 @Data
 public class PageRequest {

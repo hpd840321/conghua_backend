@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.SyncRecordMapper">
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, sync_type, sync_time, status, error_message, data_count, create_time, update_time
+    </sql>
+    
+    <!-- 插入同步记录 -->
+    <insert id="insert" parameterType="map">
+        INSERT INTO sync_record (
+            sync_type,
+            sync_time,
+            status,
+            error_message,
+            processed_count
+        ) VALUES (
+            #{syncType},
+            #{syncTime},
+            #{status},
+            #{errorMessage},
+            #{processedCount}
+        )
+    </insert>
+    
+    <!-- 批量插入同步记录 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO sync_record (
+            sync_type, sync_time, status,
+            error_message, data_count, create_time, update_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.syncType}, #{item.syncTime}, #{item.status},
+                #{item.errorMessage}, #{item.dataCount}, NOW(), NOW()
+            )
+        </foreach>
+    </insert>
+    
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultType="java.util.Map">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sync_record
+        WHERE id = #{id}
+    </select>
+    
+    <!-- 查询所有同步记录 -->
+    <select id="selectAll" resultType="java.util.Map">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sync_record
+        ORDER BY sync_time DESC
+    </select>
+    
+    <!-- 根据同步类型查询 -->
+    <select id="selectBySyncType" resultType="java.util.Map">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sync_record
+        WHERE sync_type = #{syncType}
+        ORDER BY sync_time DESC
+    </select>
+    
+    <!-- 查询指定同步类型的最近同步记录 -->
+    <select id="findLatestByType" resultType="map">
+        SELECT 
+            id,
+            sync_type as syncType,
+            sync_time as syncTime,
+            status,
+            error_message as errorMessage,
+            processed_count as processedCount
+        FROM sync_record
+        WHERE sync_type = #{syncType}
+        ORDER BY sync_time DESC
+        LIMIT 1
+    </select>
+    
+    <!-- 根据同步状态查询 -->
+    <select id="selectByStatus" resultType="java.util.Map">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sync_record
+        WHERE status = #{status}
+        ORDER BY sync_time DESC
+    </select>
+    
+    <!-- 根据时间范围查询 -->
+    <select id="findBySyncTimeBetween" resultType="java.util.Map">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sync_record
+        WHERE sync_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY sync_time DESC
+    </select>
+    
+    <!-- 根据同步类型和状态查询 -->
+    <select id="findBySyncTypeAndStatus" resultType="java.util.Map">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sync_record
+        WHERE sync_type = #{syncType}
+        AND status = #{status}
+        ORDER BY sync_time DESC
+    </select>
+    
+    <!-- 更新同步记录 -->
+    <update id="update" parameterType="map">
+        UPDATE sync_record
+        <set>
+            <if test="syncType != null">sync_type = #{syncType},</if>
+            <if test="syncTime != null">sync_time = #{syncTime},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage},</if>
+            <if test="processedCount != null">processed_count = #{processedCount}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除同步记录 -->
+    <delete id="deleteById">
+        DELETE FROM sync_record
+        WHERE id = #{id}
+    </delete>
+    
+    <!-- 删除所有同步记录 -->
+    <delete id="deleteAll">
+        DELETE FROM sync_record
+    </delete>
+</mapper> 

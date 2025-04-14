@@ -1,4 +1,4 @@
-package com.conghua.tourism.common.api;
+package com.scenic.ai.common.api;
 
 import lombok.Data;
 
