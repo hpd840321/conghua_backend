@@ -455,18 +455,18 @@
     <!-- 查询小时分布数据 -->
     <select id="selectHourDistribution" resultType="java.util.Map">
         SELECT 
-            EXTRACT(HOUR FROM RECORD_TIME) as hour,
-            COUNT(*) as record_count,
+            TO_CHAR(RECORD_TIME, 'HH24') as hour,
             SUM(COUNT) as total_count,
-            AVG(COUNT) as avg_count,
-            AVG(DENSITY) as avg_density
+            COUNT(*) as record_count,
+            ROUND(AVG(COUNT), 2) as avg_count,
+            ROUND(AVG(DENSITY), 2) as avg_density
         FROM CROWD_STATISTICS
         WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
         </if>
         <if test="startTime != null">
             AND RECORD_TIME >= #{startTime}
@@ -474,7 +474,7 @@
         <if test="endTime != null">
             AND RECORD_TIME &lt;= #{endTime}
         </if>
-        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
+        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
         ORDER BY hour
     </select>
 
@@ -482,20 +482,20 @@
     <select id="selectDensityDistribution" resultType="java.util.Map">
         SELECT 
             CASE 
-                WHEN DENSITY >= 0.7 THEN '高密度'
-                WHEN DENSITY >= 0.4 THEN '中密度'
-                ELSE '低密度'
+                WHEN DENSITY &lt; 0.3 THEN '低密度'
+                WHEN DENSITY &lt; 0.7 THEN '中密度'
+                ELSE '高密度'
             END as density_level,
             COUNT(*) as count,
-            AVG(COUNT) as avg_count,
-            AVG(DENSITY) as avg_density
+            ROUND(AVG(COUNT), 2) as avg_count,
+            ROUND(AVG(DENSITY), 2) as avg_density
         FROM CROWD_STATISTICS
         WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
         </if>
         <if test="startTime != null">
             AND RECORD_TIME >= #{startTime}
@@ -505,31 +505,26 @@
         </if>
         GROUP BY 
             CASE 
-                WHEN DENSITY >= 0.7 THEN '高密度'
-                WHEN DENSITY >= 0.4 THEN '中密度'
-                ELSE '低密度'
+                WHEN DENSITY &lt; 0.3 THEN '低密度'
+                WHEN DENSITY &lt; 0.7 THEN '中密度'
+                ELSE '高密度'
             END
-        ORDER BY 
-            CASE density_level
-                WHEN '低密度' THEN 1
-                WHEN '中密度' THEN 2
-                WHEN '高密度' THEN 3
-            END
+        ORDER BY avg_density
     </select>
 
     <!-- 查询趋势数据 -->
     <select id="selectTrend" resultType="java.util.Map">
         SELECT 
-            RECORD_TIME as time,
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
             SUM(COUNT) as total_count,
-            AVG(DENSITY) as avg_density
+            ROUND(AVG(DENSITY), 2) as avg_density
         FROM CROWD_STATISTICS
         WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
         </if>
         <if test="startTime != null">
             AND RECORD_TIME >= #{startTime}
@@ -544,11 +539,12 @@
     <!-- 查询概览数据 -->
     <select id="selectOverview" resultType="java.util.Map">
         SELECT 
-            COUNT(*) as totalCount,
-            AVG(DENSITY) as avgDensity,
-            MAX(COUNT) as maxCount,
-            MAX(DENSITY) as maxDensity,
-            COUNT(DISTINCT DEVICE_CODE) as deviceCount
+            SUM(COUNT) as total_count,
+            ROUND(AVG(DENSITY), 2) as avg_density,
+            MAX(COUNT) as max_count,
+            ROUND(MAX(DENSITY), 2) as max_density,
+            COUNT(*) as record_count,
+            COUNT(DISTINCT DEVICE_CODE) as device_count
         FROM CROWD_STATISTICS
         WHERE 1=1
         <if test="tourismName != null and tourismName != ''">
@@ -565,19 +561,19 @@
     <!-- 查询高密度区域数据 -->
     <select id="selectHighDensity" resultType="java.util.Map">
         SELECT 
-            DEVICE_CODE as deviceCode,
-            DEVICE_NAME as deviceName,
+            DEVICE_CODE,
+            DEVICE_NAME,
             COUNT(*) as occurrences,
-            AVG(DENSITY) as avgDensity,
-            MAX(DENSITY) as maxDensity,
-            MIN(DENSITY) as minDensity
+            ROUND(AVG(DENSITY), 2) as avg_density,
+            ROUND(MAX(DENSITY), 2) as max_density,
+            ROUND(MIN(DENSITY), 2) as min_density
         FROM CROWD_STATISTICS
         WHERE DENSITY >= #{densityThreshold}
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
         </if>
         <if test="startTime != null">
             AND RECORD_TIME >= #{startTime}
@@ -586,6 +582,31 @@
             AND RECORD_TIME &lt;= #{endTime}
         </if>
         GROUP BY DEVICE_CODE, DEVICE_NAME
-        ORDER BY occurrences DESC
+        ORDER BY avg_density DESC
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM CROWD_STATISTICS
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{deviceName} || '%'
+            </if>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY RECORD_TIME DESC
     </select>
 </mapper> 

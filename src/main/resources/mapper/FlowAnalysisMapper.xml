@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.scenic.ai.mapper.FlowAnalysisMapper">
+<mapper namespace="com.scenic.ai.dao.FlowAnalysisMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.scenic.ai.model.FlowAnalysis">
         <id column="ID" property="id"/>
@@ -347,5 +347,160 @@
                 AND RECORD_TIME &lt;= #{params.endTime}
             </if>
         </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{deviceName} || '%'
+            </if>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 按小时统计客流量 -->
+    <select id="selectHourlyFlow" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'HH24') as hour,
+            SUM(FLOW_COUNT) as total_flow,
+            COUNT(*) as record_count,
+            ROUND(AVG(FLOW_COUNT), 2) as avg_flow
+        FROM FLOW_ANALYSIS
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
+        ORDER BY hour
+    </select>
+
+    <!-- 按方向统计客流量 -->
+    <select id="selectDirectionFlow" resultType="java.util.Map">
+        SELECT 
+            FLOW_DIRECTION as direction,
+            SUM(FLOW_COUNT) as total_flow,
+            COUNT(*) as record_count,
+            ROUND(AVG(FLOW_COUNT), 2) as avg_flow
+        FROM FLOW_ANALYSIS
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY FLOW_DIRECTION
+    </select>
+
+    <!-- 客流趋势分析 -->
+    <select id="selectFlowTrend" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
+            SUM(FLOW_COUNT) as total_flow,
+            FLOW_DIRECTION as direction
+        FROM FLOW_ANALYSIS
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY RECORD_TIME, FLOW_DIRECTION
+        ORDER BY RECORD_TIME
+    </select>
+
+    <!-- 客流统计概览 -->
+    <select id="selectFlowOverview" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as record_count,
+            SUM(FLOW_COUNT) as total_flow,
+            ROUND(AVG(FLOW_COUNT), 2) as avg_flow,
+            MAX(FLOW_COUNT) as max_flow
+        FROM FLOW_ANALYSIS
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 设备客流排名 -->
+    <select id="selectDeviceFlowRank" resultType="java.util.Map">
+        SELECT 
+            DEVICE_CODE,
+            DEVICE_NAME,
+            SUM(FLOW_COUNT) as total_flow,
+            COUNT(*) as record_count,
+            ROUND(AVG(FLOW_COUNT), 2) as avg_flow,
+            MAX(FLOW_COUNT) as max_flow
+        FROM FLOW_ANALYSIS
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY DEVICE_CODE, DEVICE_NAME
+        ORDER BY total_flow DESC
+    </select>
+
+    <!-- 查询设备最新客流数据 -->
+    <select id="selectLatestByDevice" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        WHERE DEVICE_CODE = #{deviceCode}
+        ORDER BY RECORD_TIME DESC
+        FETCH FIRST 1 ROWS ONLY
     </select>
 </mapper> 
