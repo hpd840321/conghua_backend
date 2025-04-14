@@ -99,4 +99,49 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
                                                 @Param("startTime") LocalDateTime startTime,
                                                 @Param("endTime") LocalDateTime endTime,
                                                 @Param("densityThreshold") BigDecimal densityThreshold);
+
+    /**
+     * 查询小时分布数据
+     */
+    List<Map<String, Object>> selectHourDistribution(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 查询密度分布数据
+     */
+    List<Map<String, Object>> selectDensityDistribution(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 查询趋势数据
+     */
+    List<Map<String, Object>> selectTrend(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 查询概览数据
+     */
+    Map<String, Object> selectOverview(
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 查询高密度区域数据
+     */
+    List<Map<String, Object>> selectHighDensity(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("densityThreshold") Double densityThreshold);
 } 

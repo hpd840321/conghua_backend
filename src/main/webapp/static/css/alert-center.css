@@ -1,0 +1,300 @@
+/* 告警中心样式 */
+
+/* 卡片样式 */
+.card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    margin-bottom: 1rem;
+    color: #333;
+    font-weight: 500;
+}
+
+/* 筛选条件卡片 */
+.filter-card {
+    background-color: #fff;
+}
+
+.filter-card .form-group {
+    margin-bottom: 1rem;
+}
+
+.filter-card label {
+    font-weight: 500;
+    color: #666;
+}
+
+.filter-card .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.btn-primary:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+.btn-default {
+    background-color: #fff;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+.btn-default:hover {
+    background-color: #f5f5f5;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+/* 表格样式 */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table th {
+    background-color: #fafafa;
+    font-weight: 500;
+    color: #333;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #fafafa;
+}
+
+/* 告警级别颜色 */
+.alert-level-1 {
+    color: #52c41a;
+}
+
+.alert-level-2 {
+    color: #faad14;
+}
+
+.alert-level-3 {
+    color: #f5222d;
+}
+
+/* 告警状态样式 */
+.alert-status-0 {
+    color: #f5222d;
+}
+
+.alert-status-1 {
+    color: #52c41a;
+}
+
+/* 图表容器 */
+.chart-card {
+    height: 100%;
+}
+
+.chart-container {
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+/* 分页样式 */
+.pagination-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.pagination {
+    margin: 0;
+}
+
+/* 模态框样式 */
+.modal-header {
+    background-color: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-footer {
+    background-color: #fafafa;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* 统计概览卡片 */
+.overview-card {
+    text-align: center;
+    background-color: #fff;
+}
+
+.overview-card .card-title {
+    font-size: 14px;
+    color: #666;
+}
+
+.overview-card .card-text {
+    font-size: 24px;
+    color: #1890ff;
+    margin: 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .filter-card .row > div {
+        margin-bottom: 1rem;
+    }
+    
+    .overview-card {
+        margin-bottom: 1rem;
+    }
+    
+    .chart-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* 加载动画 */
+.loading {
+    position: relative;
+    min-height: 200px;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #1890ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 表单样式优化 */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    border-radius: .25rem;
+    border: 1px solid #ced4da;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* 按钮样式优化 */
+.btn {
+    border-radius: .25rem;
+    transition: all .15s ease-in-out;
+}
+
+/* 表格样式优化 */
+.table {
+    margin-bottom: 0;
+}
+
+.table td, .table th {
+    padding: .75rem;
+    vertical-align: middle;
+}
+
+/* 告警状态样式 */
+.alert-status {
+    padding: .25rem .5rem;
+    border-radius: .25rem;
+    font-size: .875rem;
+}
+
+.alert-status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.alert-status-handled {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* 分页样式优化 */
+.page-link {
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.page-link:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* 模态框样式优化 */
+.modal-content {
+    border-radius: .3rem;
+    border: none;
+}
+
+/* 图片预览样式 */
+#previewImage {
+    max-width: 100%;
+    height: auto;
+}
+
+/* 复选框样式 */
+.custom-checkbox {
+    padding-left: 1.5rem;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: #007bff;
+    background-color: #007bff;
+}
+
+/* 时间选择器样式 */
+.daterangepicker {
+    border: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.175);
+}
+
+.daterangepicker .calendar-table {
+    border: none;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .btn {
+        width: 100%;
+        margin-bottom: .5rem;
+    }
+    
+    .card-tools {
+        margin-top: .5rem;
+        float: none !important;
+    }
+    
+    .table-responsive {
+        border: 0;
+    }
+} 

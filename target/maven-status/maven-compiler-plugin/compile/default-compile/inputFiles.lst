@@ -14,7 +14,9 @@ D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\doma
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\factory\AlertFactory.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\CrowdCountService.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\SyncService.java
+D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\dao\AlertHandlingRecordMapper.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\domain\model\sync\SyncTask.java
+D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\dao\AlertMapper.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\mapper\CrowdCountMapper.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\impl\StatisticsServiceImpl.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\AlertHandlingRecordService.java
@@ -85,6 +87,7 @@ D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\cont
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\model\CrowdStatistics.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\model\Panorama.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\config\DataSourceConfig.java
+D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\dao\CrowdStatisticsMapper.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\controller\DeviceController.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\model\AlertHandlingRecord.java
 D:\DevProjects\conghua_backend1\conghua_backend\src\main\java\com\scenic\ai\service\SyncRecordService.java

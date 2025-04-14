@@ -4,13 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.scenic.ai.mapper.CrowdStatisticsMapper;
+import com.scenic.ai.dao.CrowdStatisticsMapper;
 import com.scenic.ai.model.CrowdStatistics;
 import com.scenic.ai.service.CrowdStatisticsService;
 import com.scenic.ai.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -27,6 +28,7 @@ import java.util.*;
  */
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMapper, CrowdStatistics> 
         implements CrowdStatisticsService {
@@ -40,27 +42,24 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
     /**
      * 分页查询人群统计数据
      *
-     * @param pageNum 页码
-     * @param pageSize 每页大小
-     * @param tourismName 景区名称
+     * @param page 分页参数
      * @param deviceCode 设备编码
+     * @param tourismName 景区名称
      * @param startTime 开始时间
      * @param endTime 结束时间
      * @return 分页结果
      */
     @Override
-    public IPage<CrowdStatistics> page(Integer pageNum, Integer pageSize, String tourismName,
-                                      String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("分页查询人群统计数据: pageNum={}, pageSize={}, tourismName={}, deviceCode={}, startTime={}, endTime={}",
-                pageNum, pageSize, tourismName, deviceCode, startTime, endTime);
+    public IPage<CrowdStatistics> page(Page<CrowdStatistics> page, String deviceCode, String tourismName,
+                                      LocalDateTime startTime, LocalDateTime endTime) {
+        log.info("分页查询人群统计数据: page={}, deviceCode={}, tourismName={}, startTime={}, endTime={}",
+                page, deviceCode, tourismName, startTime, endTime);
         
         // 参数校验
-        Assert.notNull(pageNum, "页码不能为空");
-        Assert.notNull(pageSize, "每页大小不能为空");
-        Assert.isTrue(pageNum > 0, "页码必须大于0");
-        Assert.isTrue(pageSize > 0, "每页大小必须大于0");
+        Assert.notNull(page, "分页参数不能为空");
+        Assert.isTrue(page.getCurrent() > 0, "页码必须大于0");
+        Assert.isTrue(page.getSize() > 0, "每页大小必须大于0");
                 
-        Page<CrowdStatistics> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<CrowdStatistics> wrapper = new LambdaQueryWrapper<>();
         
         if (StringUtils.hasText(tourismName)) {
@@ -79,9 +78,7 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
         wrapper.orderByDesc(CrowdStatistics::getRecordTime);
         
         try {
-            IPage<CrowdStatistics> result = page(page, wrapper);
-            log.info("查询成功, 总记录数: {}, 总页数: {}", result.getTotal(), result.getPages());
-            return result;
+            return page(page, wrapper);
         } catch (Exception e) {
             log.error("分页查询人群统计数据失败: {}", e.getMessage());
             throw new BusinessException("查询失败");
@@ -100,7 +97,8 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
     public List<CrowdStatistics> getByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
         log.info("根据设备编码查询统计数据: deviceCode={}, startTime={}, endTime={}", deviceCode, startTime, endTime);
         Assert.hasText(deviceCode, "设备编码不能为空");
-        return crowdStatisticsMapper.selectByDeviceCode(deviceCode, startTime, endTime);
+        validateTimeRange(startTime, endTime);
+        return crowdStatisticsMapper.selectByDevice(deviceCode, startTime, endTime);
     }
 
     /**
@@ -115,7 +113,8 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
     public List<CrowdStatistics> getByTourism(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
         log.info("根据景区名称查询统计数据: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
         Assert.hasText(tourismName, "景区名称不能为空");
-        return crowdStatisticsMapper.selectByTimeRangeAndTourism(tourismName, startTime, endTime);
+        validateTimeRange(startTime, endTime);
+        return crowdStatisticsMapper.selectByTourism(tourismName, startTime, endTime);
     }
 
     /**
@@ -133,7 +132,7 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
         log.info("获取时段人群分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
                 deviceCode, tourismName, startTime, endTime);
         validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.getHourDistribution(deviceCode, tourismName, startTime, endTime);
+        return crowdStatisticsMapper.selectHourDistribution(deviceCode, tourismName, startTime, endTime);
     }
 
     /**
@@ -151,7 +150,7 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
         log.info("获取密度分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
                 deviceCode, tourismName, startTime, endTime);
         validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.getDensityDistribution(deviceCode, tourismName, startTime, endTime);
+        return crowdStatisticsMapper.selectDensityDistribution(deviceCode, tourismName, startTime, endTime);
     }
 
     /**
@@ -169,7 +168,7 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
         log.info("获取人群趋势: deviceCode={}, tourismName={}, startTime={}, endTime={}",
                 deviceCode, tourismName, startTime, endTime);
         validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.getTrend(deviceCode, tourismName, startTime, endTime);
+        return crowdStatisticsMapper.selectTrend(deviceCode, tourismName, startTime, endTime);
     }
 
     /**
@@ -185,7 +184,7 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
         log.info("获取统计概览: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
         Assert.hasText(tourismName, "景区名称不能为空");
         validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.getOverview(tourismName, startTime, endTime);
+        return crowdStatisticsMapper.selectOverview(tourismName, startTime, endTime);
     }
 
     /**
@@ -195,10 +194,10 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      * @return 最新统计数据
      */
     @Override
-    public CrowdStatistics getLatest(String deviceCode) {
+    public CrowdStatistics getLatestByDevice(String deviceCode) {
         log.info("获取设备最新人群统计数据: deviceCode={}", deviceCode);
         Assert.hasText(deviceCode, "设备编码不能为空");
-        return crowdStatisticsMapper.selectLatestByDeviceCode(deviceCode);
+        return crowdStatisticsMapper.selectLatestByDevice(deviceCode);
     }
 
     /**
@@ -208,20 +207,19 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      * @param tourismName 景区名称
      * @param startTime 开始时间
      * @param endTime 结束时间
-     * @param threshold 密度阈值
+     * @param densityThreshold 密度阈值
      * @return 高密度区域统计数据
      */
     @Override
     public List<Map<String, Object>> getHighDensityAreas(String deviceCode, String tourismName,
                                                         LocalDateTime startTime, LocalDateTime endTime,
-                                                        BigDecimal threshold) {
-        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, threshold={}",
-                deviceCode, tourismName, startTime, endTime, threshold);
+                                                        Double densityThreshold) {
+        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, densityThreshold={}",
+                deviceCode, tourismName, startTime, endTime, densityThreshold);
         validateTimeRange(startTime, endTime);
-        Assert.notNull(threshold, "密度阈值不能为空");
-        Assert.isTrue(threshold.compareTo(BigDecimal.ZERO) > 0 && threshold.compareTo(BigDecimal.ONE) <= 0,
-                "密度阈值必须在0到1之间");
-        return crowdStatisticsMapper.getHighDensityAreas(deviceCode, tourismName, startTime, endTime, threshold);
+        Assert.notNull(densityThreshold, "密度阈值不能为空");
+        Assert.isTrue(densityThreshold > 0 && densityThreshold <= 1.0, "密度阈值必须在0到1之间");
+        return crowdStatisticsMapper.selectHighDensity(deviceCode, tourismName, startTime, endTime, densityThreshold);
     }
 
     /**

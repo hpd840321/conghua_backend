@@ -305,10 +305,10 @@
     </select>
 
     <!-- 获取告警时段分布 -->
-    <select id="selectHourDistribution" resultType="java.util.Map">
+    <select id="selectTimeDistribution" resultType="java.util.Map">
         SELECT 
             EXTRACT(HOUR FROM RECORD_TIME) AS hour,
-            COUNT(1) AS count
+            COUNT(*) AS count
         FROM ALERT
         WHERE 1=1
         <if test="tourismName != null and tourismName != ''">
@@ -330,8 +330,8 @@
     <!-- 获取告警类型分布 -->
     <select id="selectTypeDistribution" resultType="java.util.Map">
         SELECT 
-            ALERT_TYPE AS type,
-            COUNT(1) AS count
+            ALERT_TYPE AS alertType,
+            COUNT(*) AS count
         FROM ALERT
         WHERE 1=1
         <if test="tourismName != null and tourismName != ''">
@@ -352,10 +352,10 @@
     <!-- 获取告警概览统计 -->
     <select id="selectOverview" resultType="java.util.Map">
         SELECT 
-            COUNT(1) AS totalAlerts,
-            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) AS pendingAlerts,
-            SUM(CASE WHEN ALERT_STATUS = 1 THEN 1 ELSE 0 END) AS handledAlerts,
-            SUM(CASE WHEN ALERT_LEVEL = 3 THEN 1 ELSE 0 END) AS highLevelAlerts
+            COUNT(*) AS totalCount,
+            COUNT(CASE WHEN ALERT_STATUS = 0 THEN 1 END) AS pendingCount,
+            COUNT(CASE WHEN ALERT_STATUS = 1 THEN 1 END) AS handledCount,
+            COUNT(CASE WHEN ALERT_LEVEL = 3 THEN 1 END) AS highLevelCount
         FROM ALERT
         WHERE 1=1
         <if test="tourismName != null and tourismName != ''">
@@ -371,4 +371,212 @@
             AND RECORD_TIME &lt;= #{endTime}
         </if>
     </select>
+
+    <!-- 查询告警类型分布 -->
+    <select id="selectTypeDistribution" resultType="java.util.Map">
+        SELECT 
+            ALERT_TYPE as type,
+            COUNT(*) as count
+        FROM ALERT
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY ALERT_TYPE
+        ORDER BY count DESC
+    </select>
+
+    <!-- 查询告警级别分布 -->
+    <select id="selectLevelDistribution" resultType="java.util.Map">
+        SELECT 
+            ALERT_LEVEL AS alertLevel,
+            COUNT(*) AS count
+        FROM ALERT
+        WHERE 1=1
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        GROUP BY ALERT_LEVEL
+        ORDER BY ALERT_LEVEL
+    </select>
+
+    <!-- 分页查询告警信息 -->
+    <select id="selectAlertPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="alertType != null and alertType != ''">
+                AND ALERT_TYPE = #{alertType}
+            </if>
+            <if test="alertLevel != null">
+                AND ALERT_LEVEL = #{alertLevel}
+            </if>
+            <if test="alertStatus != null">
+                AND ALERT_STATUS = #{alertStatus}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY RECORD_TIME DESC
+    </select>
+    
+    <!-- 查询告警时段分布 -->
+    <select id="selectAlertTimeDistribution" resultType="java.util.Map">
+        SELECT
+            HOUR(RECORD_TIME) as hour,
+            COUNT(*) as alert_count,
+            COUNT(DISTINCT DEVICE_CODE) as device_count
+        FROM ALERT
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY HOUR(RECORD_TIME)
+        ORDER BY hour
+    </select>
+    
+    <!-- 查询告警类型分布 -->
+    <select id="selectAlertTypeDistribution" resultType="java.util.Map">
+        SELECT
+            ALERT_TYPE as type,
+            COUNT(*) as alert_count,
+            COUNT(DISTINCT DEVICE_CODE) as device_count,
+            AVG(ALERT_LEVEL) as avg_level
+        FROM ALERT
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY ALERT_TYPE
+        ORDER BY alert_count DESC
+    </select>
+    
+    <!-- 查询告警统计概览 -->
+    <select id="selectAlertOverview" resultType="java.util.Map">
+        SELECT
+            COUNT(*) as total_count,
+            COUNT(DISTINCT DEVICE_CODE) as device_count,
+            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) as unhandled_count,
+            AVG(ALERT_LEVEL) as avg_level,
+            MAX(ALERT_LEVEL) as max_level
+        FROM ALERT
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+    
+    <!-- 查询设备最新告警 -->
+    <select id="selectLatestByDevice" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE DEVICE_CODE = #{deviceCode}
+        ORDER BY RECORD_TIME DESC
+        LIMIT 1
+    </select>
+    
+    <!-- 根据设备编码查询告警信息 -->
+    <select id="selectByDevice" resultType="com.scenic.ai.model.Alert">
+        SELECT * FROM ALERT
+        WHERE DEVICE_CODE = #{deviceCode}
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 根据景区名称查询告警信息 -->
+    <select id="selectByTourism" resultType="com.scenic.ai.model.Alert">
+        SELECT * FROM ALERT
+        WHERE TOURISM_NAME = #{tourismName}
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 统计未处理告警数量 -->
+    <select id="countUnhandledAlerts" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ALERT
+        WHERE ALERT_STATUS = 0
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+    </select>
+
+    <!-- 获取设备最新告警 -->
+    <select id="selectLatestByDevice" resultType="com.scenic.ai.model.Alert">
+        SELECT * FROM ALERT
+        WHERE DEVICE_CODE = #{deviceCode}
+        ORDER BY RECORD_TIME DESC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
 </mapper> 

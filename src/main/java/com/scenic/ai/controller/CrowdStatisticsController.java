@@ -44,8 +44,8 @@ public class CrowdStatisticsController {
      *
      * @param pageNum 页码
      * @param pageSize 每页大小
-     * @param tourismName 景区名称
      * @param deviceCode 设备编码
+     * @param tourismName 景区名称
      * @param startTime 开始时间
      * @param endTime 结束时间
      * @return 分页数据
@@ -55,15 +55,15 @@ public class CrowdStatisticsController {
     public ResponseEntity<Result<IPage<CrowdStatistics>>> page(
             @RequestParam(defaultValue = "1") @Min(1) Integer pageNum,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer pageSize,
-            @RequestParam(required = false) String tourismName,
             @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) String tourismName,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("分页查询人群统计数据: pageNum={}, pageSize={}, tourismName={}, deviceCode={}, startTime={}, endTime={}",
-                pageNum, pageSize, tourismName, deviceCode, startTime, endTime);
+        log.info("分页查询人群统计数据: pageNum={}, pageSize={}, deviceCode={}, tourismName={}, startTime={}, endTime={}",
+                pageNum, pageSize, deviceCode, tourismName, startTime, endTime);
         
         Page<CrowdStatistics> page = new Page<>(pageNum, pageSize);
-        IPage<CrowdStatistics> result = crowdStatisticsService.page(page, tourismName, deviceCode, startTime, endTime);
+        IPage<CrowdStatistics> result = crowdStatisticsService.page(page, deviceCode, tourismName, startTime, endTime);
         return ResponseEntity.ok(Result.success(result));
     }
 
@@ -195,9 +195,9 @@ public class CrowdStatisticsController {
      */
     @GetMapping("/latest/{deviceCode}")
     @ApiOperation("获取设备最新人群统计数据")
-    public ResponseEntity<Result<CrowdStatistics>> getLatest(@PathVariable @NotBlank String deviceCode) {
+    public ResponseEntity<Result<CrowdStatistics>> getLatestByDevice(@PathVariable @NotBlank String deviceCode) {
         log.info("获取设备最新人群统计数据: deviceCode={}", deviceCode);
-        return ResponseEntity.ok(Result.success(crowdStatisticsService.getLatest(deviceCode)));
+        return ResponseEntity.ok(Result.success(crowdStatisticsService.getLatestByDevice(deviceCode)));
     }
 
     /**
@@ -207,7 +207,7 @@ public class CrowdStatisticsController {
      * @param tourismName 景区名称
      * @param startTime 开始时间
      * @param endTime 结束时间
-     * @param threshold 密度阈值
+     * @param densityThreshold 密度阈值
      * @return 高密度区域统计数据
      */
     @GetMapping("/high-density")
@@ -217,10 +217,10 @@ public class CrowdStatisticsController {
             @RequestParam(required = false) String tourismName,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
-            @RequestParam(defaultValue = "0.7") BigDecimal threshold) {
-        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, threshold={}",
-                deviceCode, tourismName, startTime, endTime, threshold);
+            @RequestParam(defaultValue = "0.7") Double densityThreshold) {
+        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, densityThreshold={}",
+                deviceCode, tourismName, startTime, endTime, densityThreshold);
         return ResponseEntity.ok(Result.success(
-                crowdStatisticsService.getHighDensityAreas(deviceCode, tourismName, startTime, endTime, threshold)));
+                crowdStatisticsService.getHighDensityAreas(deviceCode, tourismName, startTime, endTime, densityThreshold)));
     }
 } 
