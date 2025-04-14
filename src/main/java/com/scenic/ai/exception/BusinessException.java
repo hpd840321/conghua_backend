@@ -1,21 +1,44 @@
 package com.scenic.ai.exception;
 
-import org.springframework.http.HttpStatus;
+import lombok.Getter;
 
+/**
+ * 业务异常类
+ * 
+ * @author scenic
+ */
+@Getter
 public class BusinessException extends RuntimeException {
-    private final HttpStatus status;
+    
+    private static final long serialVersionUID = 1L;
+    
+    /**
+     * 错误码
+     */
+    private final Integer code;
+    
+    /**
+     * 错误消息
+     */
+    private final String message;
     
     public BusinessException(String message) {
-        super(message);
-        this.status = HttpStatus.BAD_REQUEST;
+        this(500, message);
     }
     
-    public BusinessException(String message, HttpStatus status) {
+    public BusinessException(Integer code, String message) {
         super(message);
-        this.status = status;
+        this.code = code;
+        this.message = message;
     }
     
-    public HttpStatus getStatus() {
-        return status;
+    public BusinessException(String message, Throwable cause) {
+        this(500, message, cause);
+    }
+    
+    public BusinessException(Integer code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+        this.message = message;
     }
 } 

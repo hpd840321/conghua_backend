@@ -11,6 +11,8 @@ import java.util.Map;
 
 /**
  * 告警服务接口
+ * 
+ * @author scenic
  */
 public interface AlertService extends IService<Alert> {
     
@@ -180,4 +182,34 @@ public interface AlertService extends IService<Alert> {
      * 统计未处理告警数量
      */
     Long countUnhandledAlerts(String deviceCode, String tourismName);
+
+    /**
+     * 分页查询告警信息
+     */
+    IPage<Alert> page(Integer pageNum, Integer pageSize, String tourismName, String deviceCode,
+                     String alertType, Integer alertLevel, Integer alertStatus,
+                     LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 获取告警时段分布
+     */
+    List<Map<String, Object>> getHourDistribution(String tourismName, String deviceCode,
+                                                LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 获取告警类型分布
+     */
+    List<Map<String, Object>> getTypeDistribution(String tourismName, String deviceCode,
+                                                LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 获取告警概览统计
+     */
+    Map<String, Object> getOverview(String tourismName, String deviceCode,
+                                  LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 处理告警
+     */
+    void handleAlert(Long alertId, String description);
 } 

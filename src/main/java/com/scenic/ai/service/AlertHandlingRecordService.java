@@ -7,34 +7,43 @@ import java.util.List;
 
 /**
  * 告警处理记录服务接口
+ * 
+ * @author scenic
  */
 public interface AlertHandlingRecordService extends IService<AlertHandlingRecord> {
     
     /**
-     * 添加告警处理记录
-     * @param record 处理记录信息
-     * @return 是否添加成功
+     * 创建处理记录
      */
-    boolean save(AlertHandlingRecord record);
+    void createRecord(Long alertId, String handler, String description);
     
     /**
-     * 根据告警ID查询处理记录列表
-     * @param alertId 告警ID
-     * @return 处理记录列表，按创建时间降序排序
+     * 获取告警处理记录
      */
-    List<AlertHandlingRecord> listByAlertId(Long alertId);
+    List<AlertHandlingRecord> getHandlingRecords(Long alertId);
     
     /**
-     * 更新告警处理记录
-     * @param record 处理记录信息
-     * @return 是否更新成功
+     * 根据ID查询处理记录
+     */
+    AlertHandlingRecord getById(Long id);
+    
+    /**
+     * 更新处理记录
      */
     boolean updateById(AlertHandlingRecord record);
     
     /**
-     * 删除告警处理记录
-     * @param id 记录ID
-     * @return 是否删除成功
+     * 删除处理记录
      */
     boolean removeById(Long id);
+    
+    /**
+     * 根据告警ID查询处理记录列表
+     */
+    List<AlertHandlingRecord> listByAlertId(Long alertId);
+    
+    /**
+     * 保存处理记录
+     */
+    boolean save(AlertHandlingRecord record);
 } 

@@ -4,151 +4,164 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>客流分析</title>
+    <title>客流分析 - 景区智能分析系统</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/daterangepicker.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/common.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/loading.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/style.css">
 </head>
 <body>
     <!-- 加载动画 -->
-    <div class="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">数据加载中...</div>
-        </div>
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
     </div>
 
+    <!-- 主容器 -->
     <div class="container-fluid">
-        <h2 class="mt-4 mb-4">客流分析</h2>
-        
-        <!-- 筛选条件区域 -->
-        <div class="filter-section">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>景区名称</label>
-                        <input type="text" class="form-control" id="tourismName" placeholder="请输入景区名称">
+        <!-- 筛选条件 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>景区名称</label>
+                                <input type="text" class="form-control" id="tourismName" name="tourismName">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>设备编码</label>
+                                <input type="text" class="form-control" id="deviceCode" name="deviceCode">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>时间范围</label>
+                                <input type="text" class="form-control" id="dateRange" name="dateRange">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group" style="margin-top: 32px;">
+                                <button type="button" class="btn btn-primary" id="searchBtn">查询</button>
+                                <button type="button" class="btn btn-secondary" id="resetBtn">重置</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>设备编码</label>
-                        <input type="text" class="form-control" id="deviceCode" placeholder="请输入设备编码">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>流动方向</label>
-                        <select class="form-control" id="flowDirection">
-                            <option value="">全部</option>
-                            <option value="IN">进入</option>
-                            <option value="OUT">离开</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label>时间范围</label>
-                        <input type="text" class="form-control" id="dateRange">
-                    </div>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-md-12">
-                    <button class="btn btn-primary" onclick="searchData()">搜索</button>
-                    <button class="btn btn-default ml-2" onclick="resetSearch()">重置</button>
-                </div>
+                </form>
             </div>
         </div>
 
-        <!-- 统计卡片区域 -->
-        <div class="stats-cards">
-            <div class="stat-card">
-                <h5>总客流量</h5>
-                <p id="totalFlow">0</p>
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">总客流量</h5>
+                        <h3 class="card-text" id="totalFlow">0</h3>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h5>进入人数</h5>
-                <p id="inFlow">0</p>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">平均客流量</h5>
+                        <h3 class="card-text" id="avgFlow">0</h3>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h5>离开人数</h5>
-                <p id="outFlow">0</p>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">最大客流量</h5>
+                        <h3 class="card-text" id="maxFlow">0</h3>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h5>今日客流</h5>
-                <p id="todayFlow">0</p>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">总记录数</h5>
+                        <h3 class="card-text" id="totalRecords">0</h3>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- 图表区域 -->
-        <div class="row">
+        <div class="row mb-4">
             <div class="col-md-6">
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h5>客流时段分布</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">流向分布</h5>
+                        <div id="flowDirectionChart" style="height: 400px;"></div>
                     </div>
-                    <div id="hourDistribution" style="height: 400px;"></div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h5>客流趋势</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">客流趋势</h5>
+                        <div id="flowTrendChart" style="height: 400px;"></div>
                     </div>
-                    <div id="flowTrend" style="height: 400px;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- 数据表格区域 -->
-        <div class="data-table">
-            <div class="table-header">
-                <h5>客流记录</h5>
-            </div>
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>设备编码</th>
-                        <th>设备名称</th>
-                        <th>景区名称</th>
-                        <th>客流数量</th>
-                        <th>流动方向</th>
-                        <th>记录时间</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="dataTableBody">
-                </tbody>
-            </table>
-            <div id="pagination" class="text-center">
+        <!-- 数据表格 -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">客流记录</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>设备编码</th>
+                                <th>设备名称</th>
+                                <th>景区名称</th>
+                                <th>客流数量</th>
+                                <th>流动方向</th>
+                                <th>记录时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable">
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="pagination-info">
+                        共 <span id="totalCount">0</span> 条记录
+                    </div>
+                    <ul class="pagination" id="pagination">
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- 图片预览模态框 -->
     <div class="modal fade" id="imageModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">全景图预览</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <img id="previewImage" src="" class="img-fluid" alt="全景图">
+                    <img id="previewImage" src="" class="img-fluid">
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 引入相关JS文件 -->
+    <!-- JavaScript文件 -->
     <script src="${pageContext.request.contextPath}/static/js/jquery.min.js"></script>
     <script src="${pageContext.request.contextPath}/static/js/bootstrap.bundle.min.js"></script>
     <script src="${pageContext.request.contextPath}/static/js/moment.min.js"></script>
-    <script src="${pageContext.request.contextPath}/static/js/daterangepicker.min.js"></script>
+    <script src="${pageContext.request.contextPath}/static/js/daterangepicker.js"></script>
     <script src="${pageContext.request.contextPath}/static/js/echarts.min.js"></script>
     <script src="${pageContext.request.contextPath}/static/js/flow-analysis.js"></script>
 </body>

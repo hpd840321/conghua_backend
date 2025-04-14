@@ -1,12 +1,16 @@
 package com.scenic.ai.model;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
  * 告警信息实体类
+ * 
+ * @author scenic
  */
 @Data
 @TableName("ALERT")
@@ -15,7 +19,7 @@ public class Alert {
     /**
      * 主键ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "ID", type = IdType.AUTO)
     private Long id;
     
     /**
@@ -44,7 +48,7 @@ public class Alert {
     private Integer alertLevel;
     
     /**
-     * 状态：0-待处理，1-已处理
+     * 告警状态：0-待处理，1-已处理
      */
     private Integer alertStatus;
     

@@ -242,4 +242,80 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
         
         return baseMapper.selectCount(wrapper);
     }
+
+    @Override
+    public IPage<Alert> page(Integer pageNum, Integer pageSize, String tourismName, String deviceCode,
+                           String alertType, Integer alertLevel, Integer alertStatus,
+                           LocalDateTime startTime, LocalDateTime endTime) {
+        LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
+        
+        // 添加查询条件
+        if (StringUtils.hasText(tourismName)) {
+            wrapper.eq(Alert::getTourismName, tourismName);
+        }
+        if (StringUtils.hasText(deviceCode)) {
+            wrapper.eq(Alert::getDeviceCode, deviceCode);
+        }
+        if (StringUtils.hasText(alertType)) {
+            wrapper.eq(Alert::getAlertType, alertType);
+        }
+        if (alertLevel != null) {
+            wrapper.eq(Alert::getAlertLevel, alertLevel);
+        }
+        if (alertStatus != null) {
+            wrapper.eq(Alert::getAlertStatus, alertStatus);
+        }
+        if (startTime != null) {
+            wrapper.ge(Alert::getRecordTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(Alert::getRecordTime, endTime);
+        }
+        
+        // 按记录时间倒序排序
+        wrapper.orderByDesc(Alert::getRecordTime);
+        
+        return page(new Page<>(pageNum, pageSize), wrapper);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getHourDistribution(String tourismName, String deviceCode,
+                                                       LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.selectHourDistribution(tourismName, deviceCode, startTime, endTime);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getTypeDistribution(String tourismName, String deviceCode,
+                                                       LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.selectTypeDistribution(tourismName, deviceCode, startTime, endTime);
+    }
+    
+    @Override
+    public Map<String, Object> getOverview(String tourismName, String deviceCode,
+                                         LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.selectOverview(tourismName, deviceCode, startTime, endTime);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleAlert(Long alertId, String description) {
+        // 获取告警信息
+        Alert alert = getById(alertId);
+        if (alert == null) {
+            throw new RuntimeException("告警信息不存在");
+        }
+        
+        // 检查告警状态
+        if (alert.getAlertStatus() == 1) {
+            throw new RuntimeException("告警已处理");
+        }
+        
+        // 更新告警状态
+        alert.setAlertStatus(1);
+        alert.setDescription(description);
+        alert.setUpdateTime(LocalDateTime.now());
+        
+        // 保存更新
+        updateById(alert);
+    }
 }

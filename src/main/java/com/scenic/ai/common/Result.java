@@ -1,7 +1,6 @@
 package com.scenic.ai.common;
 
 import lombok.Data;
-import org.springframework.http.HttpStatus;
 
 /**
  * 通用响应结果类
@@ -36,6 +35,11 @@ public class Result<T> {
     /**
      * 带参数的构造函数
      */
+    private Result(Integer code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
     private Result(Integer code, String message, T data) {
         this.code = code;
         this.message = message;
@@ -44,45 +48,57 @@ public class Result<T> {
     
     /**
      * 成功响应
-     *
-     * @param data 响应数据
-     * @param <T> 数据类型
-     * @return Result对象
+     */
+    public static <T> Result<T> success() {
+        return new Result<>(200, "操作成功");
+    }
+    
+    /**
+     * 成功响应（带数据）
      */
     public static <T> Result<T> success(T data) {
-        return new Result<>(200, "success", data);
+        return new Result<>(200, "操作成功", data);
     }
     
     /**
      * 失败响应
-     *
-     * @param code 错误码
-     * @param message 错误消息
-     * @param <T> 数据类型
-     * @return Result对象
+     */
+    public static <T> Result<T> error(String message) {
+        return new Result<>(500, message);
+    }
+    
+    /**
+     * 失败响应（带错误码）
      */
     public static <T> Result<T> error(Integer code, String message) {
-        return new Result<>(code, message, null);
+        return new Result<>(code, message);
     }
     
     /**
-     * 参数验证失败返回结果
+     * 参数错误响应
      */
-    public static <T> Result<T> validateFailed(String message) {
-        return new Result<>(HttpStatus.BAD_REQUEST.value(), message, null);
+    public static <T> Result<T> validateError(String message) {
+        return new Result<>(400, message);
     }
     
     /**
-     * 未登录返回结果
+     * 未授权响应
      */
     public static <T> Result<T> unauthorized(String message) {
-        return new Result<>(HttpStatus.UNAUTHORIZED.value(), message, null);
+        return new Result<>(401, message);
     }
     
     /**
-     * 未授权返回结果
+     * 禁止访问响应
      */
     public static <T> Result<T> forbidden(String message) {
-        return new Result<>(HttpStatus.FORBIDDEN.value(), message, null);
+        return new Result<>(403, message);
+    }
+    
+    /**
+     * 资源不存在响应
+     */
+    public static <T> Result<T> notFound(String message) {
+        return new Result<>(404, message);
     }
 } 

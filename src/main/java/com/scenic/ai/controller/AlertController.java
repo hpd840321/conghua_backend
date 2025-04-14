@@ -105,9 +105,9 @@ public class AlertController {
 
     @ApiOperation("分页查询告警信息")
     @GetMapping
-    public ResponseEntity<IPage<Alert>> pageAlerts(
-            @ApiParam("页码") @RequestParam(defaultValue = "1") long current,
-            @ApiParam("每页大小") @RequestParam(defaultValue = "10") long size,
+    public Result<IPage<Alert>> page(
+            @ApiParam("页码") @RequestParam(defaultValue = "1") Integer pageNum,
+            @ApiParam("每页大小") @RequestParam(defaultValue = "10") Integer pageSize,
             @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
             @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
             @ApiParam("告警类型") @RequestParam(required = false) String alertType,
@@ -115,8 +115,10 @@ public class AlertController {
             @ApiParam("告警状态") @RequestParam(required = false) Integer alertStatus,
             @ApiParam("开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        Page<Alert> page = new Page<>(current, size);
-        return ResponseEntity.ok(alertService.pageAlerts(page, tourismName, deviceCode, alertType, alertLevel, alertStatus, startTime, endTime));
+        
+        IPage<Alert> page = alertService.page(pageNum, pageSize, tourismName, deviceCode,
+                alertType, alertLevel, alertStatus, startTime, endTime);
+        return Result.success(page);
     }
 
     @ApiOperation("获取未处理告警数量")
@@ -214,5 +216,51 @@ public class AlertController {
     public Result<?> getAlertRecords(@PathVariable Long id) {
         List<AlertHandlingRecord> records = alertHandlingRecordService.getHandlingRecordsByAlertId(id);
         return Result.ok(records);
+    }
+
+    @ApiOperation("获取告警时段分布")
+    @GetMapping("/distribution/hour")
+    public Result<List<Map<String, Object>>> getHourDistribution(
+            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
+            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        
+        List<Map<String, Object>> distribution = alertService.getHourDistribution(tourismName, deviceCode, startTime, endTime);
+        return Result.success(distribution);
+    }
+    
+    @ApiOperation("获取告警类型分布")
+    @GetMapping("/distribution/type")
+    public Result<List<Map<String, Object>>> getTypeDistribution(
+            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
+            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        
+        List<Map<String, Object>> distribution = alertService.getTypeDistribution(tourismName, deviceCode, startTime, endTime);
+        return Result.success(distribution);
+    }
+    
+    @ApiOperation("获取告警概览统计")
+    @GetMapping("/overview")
+    public Result<Map<String, Object>> getOverview(
+            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
+            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
+            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        
+        Map<String, Object> overview = alertService.getOverview(tourismName, deviceCode, startTime, endTime);
+        return Result.success(overview);
+    }
+    
+    @ApiOperation("处理告警")
+    @PostMapping("/{alertId}/handle")
+    public Result<Void> handleAlert(
+            @ApiParam("告警ID") @PathVariable Long alertId,
+            @ApiParam("处理说明") @RequestParam String description) {
+        
+        alertService.handleAlert(alertId, description);
+        return Result.success();
     }
 } 

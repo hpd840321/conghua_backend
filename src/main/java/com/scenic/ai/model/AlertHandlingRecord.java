@@ -9,15 +9,17 @@ import java.time.LocalDateTime;
 
 /**
  * 告警处理记录实体类
+ * 
+ * @author scenic
  */
 @Data
 @TableName("ALERT_HANDLING_RECORD")
 public class AlertHandlingRecord {
     
     /**
-     * 记录ID
+     * 主键ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "ID", type = IdType.AUTO)
     private Long id;
     
     /**
@@ -31,24 +33,14 @@ public class AlertHandlingRecord {
     private String handler;
     
     /**
+     * 处理说明
+     */
+    private String description;
+    
+    /**
      * 处理时间
      */
-    private LocalDateTime handlingTime;
-    
-    /**
-     * 处理内容
-     */
-    private String handlingContent;
-    
-    /**
-     * 处理结果
-     */
-    private String handlingResult;
-    
-    /**
-     * 备注
-     */
-    private String remark;
+    private LocalDateTime handleTime;
     
     /**
      * 创建时间

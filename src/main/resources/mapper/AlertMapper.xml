@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.scenic.ai.mapper.AlertMapper">
+<mapper namespace="com.scenic.ai.dao.AlertMapper">
     
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.scenic.ai.model.Alert">
@@ -302,5 +302,73 @@
             AND TOURISM_NAME = #{tourismName}
         </if>
         ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 获取告警时段分布 -->
+    <select id="selectHourDistribution" resultType="java.util.Map">
+        SELECT 
+            EXTRACT(HOUR FROM RECORD_TIME) AS hour,
+            COUNT(1) AS count
+        FROM ALERT
+        WHERE 1=1
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
+        ORDER BY hour
+    </select>
+    
+    <!-- 获取告警类型分布 -->
+    <select id="selectTypeDistribution" resultType="java.util.Map">
+        SELECT 
+            ALERT_TYPE AS type,
+            COUNT(1) AS count
+        FROM ALERT
+        WHERE 1=1
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        GROUP BY ALERT_TYPE
+    </select>
+    
+    <!-- 获取告警概览统计 -->
+    <select id="selectOverview" resultType="java.util.Map">
+        SELECT 
+            COUNT(1) AS totalAlerts,
+            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) AS pendingAlerts,
+            SUM(CASE WHEN ALERT_STATUS = 1 THEN 1 ELSE 0 END) AS handledAlerts,
+            SUM(CASE WHEN ALERT_LEVEL = 3 THEN 1 ELSE 0 END) AS highLevelAlerts
+        FROM ALERT
+        WHERE 1=1
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
     </select>
 </mapper> 
