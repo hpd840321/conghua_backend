@@ -22,6 +22,8 @@
         <ehcache.version>2.10.9.2</ehcache.version>
         <spring.retry.version>2.0.5</spring.retry.version>
         <commons.lang3.version>3.14.0</commons.lang3.version>
+        <slf4j.version>2.0.12</slf4j.version>
+        <logback.version>1.5.1</logback.version>
     </properties>
 
     <dependencies>
@@ -200,6 +202,18 @@
             <artifactId>tomcat-jasper</artifactId>
             <version>10.1.19</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
     </dependencies>
 

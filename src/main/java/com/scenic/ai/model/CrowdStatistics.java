@@ -1,22 +1,29 @@
 package com.scenic.ai.model;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * 人群统计实体类
+ * 
+ * @author scenic
+ * @date 2024-03-19
  */
 @Data
+@Accessors(chain = true)
 @TableName("CROWD_STATISTICS")
 public class CrowdStatistics {
     
     /**
      * 主键ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "ID", type = IdType.AUTO)
     private Long id;
     
     /**
@@ -67,12 +74,10 @@ public class CrowdStatistics {
     /**
      * 创建时间
      */
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     
     /**
      * 更新时间
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 } 

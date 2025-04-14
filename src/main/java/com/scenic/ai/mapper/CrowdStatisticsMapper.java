@@ -130,9 +130,9 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
      * @return 人群统计数据列表
      */
     List<CrowdStatistics> selectByTimeRangeAndTourism(
+            @Param("tourismName") String tourismName,
             @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime,
-            @Param("tourismName") String tourismName);
+            @Param("endTime") LocalDateTime endTime);
     
     /**
      * 根据设备编码查询最新的人群统计数据
@@ -141,4 +141,49 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
      * @return 人群统计数据
      */
     CrowdStatistics selectLatestByDeviceCode(@Param("deviceCode") String deviceCode);
+
+    /**
+     * 获取时段人群分布
+     */
+    List<Map<String, Object>> getHourDistribution(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 获取密度分布
+     */
+    List<Map<String, Object>> getDensityDistribution(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 获取人群趋势
+     */
+    List<Map<String, Object>> getTrend(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 获取统计概览
+     */
+    Map<String, Object> getOverview(
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 获取高密度区域统计
+     */
+    List<Map<String, Object>> getHighDensityAreas(
+            @Param("deviceCode") String deviceCode,
+            @Param("tourismName") String tourismName,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("densityThreshold") BigDecimal densityThreshold);
 } 

@@ -1,132 +1,226 @@
 package com.scenic.ai.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scenic.ai.model.CrowdStatistics;
 import com.scenic.ai.service.CrowdStatisticsService;
+import com.scenic.ai.common.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 人群统计控制器
+ * 提供人群密度统计、分布分析、趋势分析等接口
+ *
+ * @author scenic
+ * @date 2024-03-19
  */
-@Api(tags = "人群统计")
+@Slf4j
+@Validated
 @RestController
-@RequestMapping("/api/v1/crowd-statistics")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/crowd-statistics")
+@Api(tags = "人群统计接口")
 public class CrowdStatisticsController {
-    
+
     private final CrowdStatisticsService crowdStatisticsService;
-    
-    @ApiOperation("根据设备编码查询人群统计数据")
-    @GetMapping("/by-device")
-    public ResponseEntity<List<CrowdStatistics>> getByDeviceCode(
-            @ApiParam("设备编码") @RequestParam String deviceCode,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<CrowdStatistics> data = crowdStatisticsService.getByDeviceCode(deviceCode, startTime, endTime);
-        return ResponseEntity.ok(data);
-    }
-    
-    @ApiOperation("根据景区名称查询人群统计数据")
-    @GetMapping("/by-tourism")
-    public ResponseEntity<List<CrowdStatistics>> getByTourismName(
-            @ApiParam("景区名称") @RequestParam String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<CrowdStatistics> data = crowdStatisticsService.getByTourismName(tourismName, startTime, endTime);
-        return ResponseEntity.ok(data);
-    }
-    
-    @ApiOperation("统计时段人群分布")
-    @GetMapping("/stats/hourly")
-    public ResponseEntity<List<Map<String, Object>>> getHourlyDistribution(
-            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
-            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<Map<String, Object>> stats = crowdStatisticsService.getHourlyDistribution(deviceCode, tourismName, startTime, endTime);
-        return ResponseEntity.ok(stats);
-    }
-    
-    @ApiOperation("统计密度分布")
-    @GetMapping("/stats/density")
-    public ResponseEntity<List<Map<String, Object>>> getDensityDistribution(
-            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
-            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<Map<String, Object>> stats = crowdStatisticsService.getDensityDistribution(deviceCode, tourismName, startTime, endTime);
-        return ResponseEntity.ok(stats);
-    }
-    
-    @ApiOperation("获取人群趋势数据")
-    @GetMapping("/trend")
-    public ResponseEntity<List<Map<String, Object>>> getCrowdTrend(
-            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
-            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<Map<String, Object>> trend = crowdStatisticsService.getCrowdTrend(deviceCode, tourismName, startTime, endTime);
-        return ResponseEntity.ok(trend);
-    }
-    
-    @ApiOperation("条件分页查询")
+
+    /**
+     * 分页查询人群统计数据
+     *
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @param tourismName 景区名称
+     * @param deviceCode 设备编码
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 分页数据
+     */
     @GetMapping
-    public ResponseEntity<Map<String, Object>> findByConditions(
-            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
-            @ApiParam("设备名称") @RequestParam(required = false) String deviceName,
-            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
-            @ApiParam("页码") @RequestParam(defaultValue = "1") int pageNum,
-            @ApiParam("每页大小") @RequestParam(defaultValue = "10") int pageSize) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("deviceCode", deviceCode);
-        params.put("deviceName", deviceName);
-        params.put("tourismName", tourismName);
-        params.put("startTime", startTime);
-        params.put("endTime", endTime);
-        params.put("offset", (pageNum - 1) * pageSize);
-        params.put("limit", pageSize);
+    @ApiOperation("分页查询人群统计数据")
+    public ResponseEntity<Result<IPage<CrowdStatistics>>> page(
+            @RequestParam(defaultValue = "1") @Min(1) Integer pageNum,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer pageSize,
+            @RequestParam(required = false) String tourismName,
+            @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("分页查询人群统计数据: pageNum={}, pageSize={}, tourismName={}, deviceCode={}, startTime={}, endTime={}",
+                pageNum, pageSize, tourismName, deviceCode, startTime, endTime);
         
-        List<CrowdStatistics> records = crowdStatisticsService.findByConditions(params);
-        Long total = crowdStatisticsService.countRecords(params);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("records", records);
-        result.put("total", total);
-        result.put("pageNum", pageNum);
-        result.put("pageSize", pageSize);
-        
-        return ResponseEntity.ok(result);
+        Page<CrowdStatistics> page = new Page<>(pageNum, pageSize);
+        IPage<CrowdStatistics> result = crowdStatisticsService.page(page, tourismName, deviceCode, startTime, endTime);
+        return ResponseEntity.ok(Result.success(result));
     }
-    
-    @ApiOperation("获取最新的人群统计数据")
-    @GetMapping("/latest")
-    public ResponseEntity<CrowdStatistics> getLatestByDeviceCode(
-            @ApiParam("设备编码") @RequestParam String deviceCode) {
-        CrowdStatistics data = crowdStatisticsService.getLatestByDeviceCode(deviceCode);
-        return ResponseEntity.ok(data);
+
+    /**
+     * 根据设备编码查询统计数据
+     *
+     * @param deviceCode 设备编码
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计数据列表
+     */
+    @GetMapping("/by-device/{deviceCode}")
+    @ApiOperation("根据设备编码查询统计数据")
+    public ResponseEntity<Result<List<CrowdStatistics>>> getByDevice(
+            @PathVariable @NotBlank String deviceCode,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("根据设备编码查询统计数据: deviceCode={}, startTime={}, endTime={}", deviceCode, startTime, endTime);
+        return ResponseEntity.ok(Result.success(crowdStatisticsService.getByDevice(deviceCode, startTime, endTime)));
     }
-    
+
+    /**
+     * 根据景区名称查询统计数据
+     *
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计数据列表
+     */
+    @GetMapping("/by-tourism/{tourismName}")
+    @ApiOperation("根据景区名称查询统计数据")
+    public ResponseEntity<Result<List<CrowdStatistics>>> getByTourism(
+            @PathVariable @NotBlank String tourismName,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("根据景区名称查询统计数据: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
+        return ResponseEntity.ok(Result.success(crowdStatisticsService.getByTourism(tourismName, startTime, endTime)));
+    }
+
+    /**
+     * 获取时段人群分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 时段分布数据
+     */
+    @GetMapping("/distribution/hour")
+    @ApiOperation("获取时段人群分布")
+    public ResponseEntity<Result<List<Map<String, Object>>>> getHourDistribution(
+            @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("获取时段人群分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
+                deviceCode, tourismName, startTime, endTime);
+        return ResponseEntity.ok(Result.success(
+                crowdStatisticsService.getHourDistribution(deviceCode, tourismName, startTime, endTime)));
+    }
+
+    /**
+     * 获取密度分布
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 密度分布数据
+     */
+    @GetMapping("/distribution/density")
+    @ApiOperation("获取密度分布")
+    public ResponseEntity<Result<List<Map<String, Object>>>> getDensityDistribution(
+            @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("获取密度分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
+                deviceCode, tourismName, startTime, endTime);
+        return ResponseEntity.ok(Result.success(
+                crowdStatisticsService.getDensityDistribution(deviceCode, tourismName, startTime, endTime)));
+    }
+
+    /**
+     * 获取人群趋势
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 趋势数据
+     */
+    @GetMapping("/trend")
+    @ApiOperation("获取人群趋势")
+    public ResponseEntity<Result<List<Map<String, Object>>>> getTrend(
+            @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("获取人群趋势: deviceCode={}, tourismName={}, startTime={}, endTime={}",
+                deviceCode, tourismName, startTime, endTime);
+        return ResponseEntity.ok(Result.success(
+                crowdStatisticsService.getTrend(deviceCode, tourismName, startTime, endTime)));
+    }
+
+    /**
+     * 获取统计概览
+     *
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 概览数据
+     */
+    @GetMapping("/overview")
+    @ApiOperation("获取统计概览")
+    public ResponseEntity<Result<Map<String, Object>>> getOverview(
+            @RequestParam @NotBlank String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        log.info("获取统计概览: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
+        return ResponseEntity.ok(Result.success(crowdStatisticsService.getOverview(tourismName, startTime, endTime)));
+    }
+
+    /**
+     * 获取设备最新人群统计数据
+     *
+     * @param deviceCode 设备编码
+     * @return 最新统计数据
+     */
+    @GetMapping("/latest/{deviceCode}")
+    @ApiOperation("获取设备最新人群统计数据")
+    public ResponseEntity<Result<CrowdStatistics>> getLatest(@PathVariable @NotBlank String deviceCode) {
+        log.info("获取设备最新人群统计数据: deviceCode={}", deviceCode);
+        return ResponseEntity.ok(Result.success(crowdStatisticsService.getLatest(deviceCode)));
+    }
+
+    /**
+     * 获取高密度区域统计
+     *
+     * @param deviceCode 设备编码
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param threshold 密度阈值
+     * @return 高密度区域统计数据
+     */
+    @GetMapping("/high-density")
     @ApiOperation("获取高密度区域统计")
-    @GetMapping("/stats/high-density")
-    public ResponseEntity<List<Map<String, Object>>> getHighDensityStats(
-            @ApiParam("设备编码") @RequestParam(required = false) String deviceCode,
-            @ApiParam("景区名称") @RequestParam(required = false) String tourismName,
-            @ApiParam("密度阈值") @RequestParam(defaultValue = "0.6") Double densityThreshold,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        List<Map<String, Object>> stats = crowdStatisticsService.getHighDensityStats(deviceCode, tourismName, densityThreshold, startTime, endTime);
-        return ResponseEntity.ok(stats);
+    public ResponseEntity<Result<List<Map<String, Object>>>> getHighDensityAreas(
+            @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
+            @RequestParam(defaultValue = "0.7") BigDecimal threshold) {
+        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, threshold={}",
+                deviceCode, tourismName, startTime, endTime, threshold);
+        return ResponseEntity.ok(Result.success(
+                crowdStatisticsService.getHighDensityAreas(deviceCode, tourismName, startTime, endTime, threshold)));
     }
 } 
