@@ -1,6 +1,7 @@
 package com.scenic.ai.dto.request;
 
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 /**

@@ -1,66 +1,112 @@
 package com.scenic.ai.service;
 
-import com.scenic.ai.domain.model.Alert;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.scenic.ai.model.Alert;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-public interface AlertService {
+/**
+ * 告警服务接口
+ */
+public interface AlertService extends IService<Alert> {
     
     /**
      * 创建告警
      */
-    void createAlert(Alert alert);
-    
+    boolean createAlert(Alert alert);
+
     /**
-     * 更新告警
+     * 分页查询告警信息
+     * @param page 分页参数
+     * @param tourismName 景区名称
+     * @param deviceCode 设备编码
+     * @param alertType 告警类型
+     * @param alertLevel 告警级别
+     * @param alertStatus 告警状态
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 分页结果
      */
-    void updateAlert(Alert alert);
-    
-    /**
-     * 处理告警
-     */
-    void handleAlert(Long id, String handler, String remark);
-    
-    /**
-     * 批量处理告警
-     */
-    void batchHandleAlerts(List<Long> ids, String handler, String remark);
-    
-    /**
-     * 获取告警详情
-     */
-    Alert getAlertById(Long id);
-    
-    /**
-     * 获取待处理告警列表
-     */
-    List<Alert> getPendingAlerts();
-    
-    /**
-     * 获取高级别待处理告警
-     */
-    List<Alert> getHighLevelPendingAlerts();
-    
-    /**
-     * 获取告警统计信息
-     */
-    Map<String, Long> getAlertStats(LocalDateTime startTime, LocalDateTime endTime);
-    
+    IPage<Alert> pageAlerts(Page<Alert> page, String tourismName, String deviceCode, 
+            String alertType, Integer alertLevel, Integer alertStatus, 
+            LocalDateTime startTime, LocalDateTime endTime);
+
     /**
      * 获取告警类型分布
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 类型-数量映射
      */
-    List<Map<String, Object>> getAlertTypeDistribution(LocalDateTime startTime, LocalDateTime endTime);
-    
+    Map<String, Object> getAlertTypeDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 获取告警级别分布
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 级别-数量映射
+     */
+    Map<String, Object> getAlertLevelDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
+
     /**
      * 获取告警时段分布
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 时段-数量映射
      */
-    List<Map<String, Object>> getAlertHourDistribution(LocalDateTime startTime, LocalDateTime endTime);
-    
+    Map<String, Object> getAlertTimeDistribution(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
+
     /**
-     * 分页查询告警
+     * 获取告警统计概览
+     * @param tourismName 景区名称
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计概览
      */
-    List<Alert> searchAlerts(String type, String level, String status, String deviceCode,
-                           LocalDateTime startTime, LocalDateTime endTime, int page, int size);
+    Map<String, Object> getAlertStatistics(String tourismName, LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 处理告警
+     * @param id 告警ID
+     * @return 是否处理成功
+     */
+    boolean handleAlert(Long id);
+
+    /**
+     * 批量处理告警
+     * @param ids 告警ID列表
+     * @return 是否处理成功
+     */
+    boolean batchHandleAlerts(List<Long> ids);
+
+    /**
+     * 统计未处理告警数量
+     * @param tourismName 景区名称
+     * @return 未处理告警数量
+     */
+    int countPendingAlerts(String tourismName);
+
+    /**
+     * 批量更新告警状态
+     *
+     * @param ids 告警ID列表
+     * @param status 目标状态
+     * @return 更新成功的记录数
+     */
+    int batchUpdateStatus(List<Long> ids, Integer status);
+
+    /**
+     * 根据告警级别和状态统计数量
+     *
+     * @param alertLevel 告警级别
+     * @param alertStatus 告警状态
+     * @return 统计结果
+     */
+    long countByLevelAndStatus(Integer alertLevel, Integer alertStatus);
 } 

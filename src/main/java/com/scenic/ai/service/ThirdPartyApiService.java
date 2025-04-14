@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -53,8 +54,8 @@ public class ThirdPartyApiService {
      * 第三方API的基础URL
      * 从配置文件中读取，默认值为http://localhost:8080
      */
-    @Value("${third-party.api.base-url:http://172.26.46.25:30081}")
-    private String apiBaseUrl;
+    @Value("${api.base-url:http://172.26.46.25:30081}")
+    private String baseUrl;
 
     /**
      * API路径前缀
@@ -66,39 +67,22 @@ public class ThirdPartyApiService {
     /**
      * 获取统计数据
      */
-    public List<Map<String, Object>> getStatisticsData(LocalDateTime lastSyncTime) {
-        log.info("获取统计数据，上次同步时间：{}", lastSyncTime);
-        try {
-            Map<String, Object> request = new HashMap<>();
-            request.put("pageSize", 100);
-            List<Map<String, Object>> allResults = new ArrayList<>();
-            int pageNo = 1;
-
-            Map<String, Object> response;
-            do {
-                request.put("pageNo", pageNo);
-                response = fetchStatisticsPage(request);
-                
-                if (response != null && response.containsKey("data")) {
-                    Map<String, Object> data = (Map<String, Object>) response.get("data");
-                    if (data != null && data.containsKey("rows")) {
-                        List<Map<String, Object>> rows = (List<Map<String, Object>>) data.get("rows");
-                        if (rows != null && !rows.isEmpty()) {
-                            allResults.addAll(rows);
-                            pageNo++;
-                        }
-                    }
-                } else {
-                    break;
-                }
-            } while (response != null && isMorePages(response));
-
-            log.info("成功获取{}条统计数据", allResults.size());
-            return allResults;
-        } catch (Exception e) {
-            log.error("获取统计数据失败", e);
-            return new ArrayList<>();
-        }
+    public List<Map<String, Object>> getStatisticsData(LocalDateTime startTime) {
+        String url = baseUrl + "/api/statistics";
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        
+        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+        );
+        
+        return response.getBody();
     }
 
     /**
@@ -148,25 +132,7 @@ public class ThirdPartyApiService {
      * 下载图片
      */
     public byte[] downloadImage(String imageUrl) {
-        log.info("下载图片：{}", imageUrl);
-        try {
-            ResponseEntity<byte[]> response = restTemplate.exchange(
-                imageUrl,
-                HttpMethod.GET,
-                new HttpEntity<>(buildHeaders()),
-                byte[].class
-            );
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                log.info("成功下载图片，大小：{} bytes", response.getBody().length);
-                return response.getBody();
-            }
-            
-            return new byte[0];
-        } catch (Exception e) {
-            log.error("下载图片失败", e);
-            return new byte[0];
-        }
+        return restTemplate.getForObject(imageUrl, byte[].class);
     }
 
     /**
@@ -174,7 +140,7 @@ public class ThirdPartyApiService {
      */
     private String buildUrl(String path) {
         return UriComponentsBuilder
-            .fromHttpUrl(apiBaseUrl)
+            .fromHttpUrl(baseUrl)
             .path(apiPath)
             .path(path)
             .toUriString();
@@ -222,7 +188,7 @@ public class ThirdPartyApiService {
      */
     private Map<String, Object> fetchDetailedPage(Map<String, Object> request) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(apiBaseUrl)
+            String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                     .path(apiPath + "/client/third/getDetailsPage")
                     .queryParam("pageNo", request.get("pageNo"))
                     .queryParam("pageSize", request.get("pageSize"))

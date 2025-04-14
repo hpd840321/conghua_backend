@@ -1,5 +1,6 @@
 package com.scenic.ai.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -8,12 +9,17 @@ import java.time.LocalDateTime;
  * 密度趋势数据传输对象
  */
 @Data
+@Builder
 public class DensityTrendDTO {
+    /**
+     * 设备编码
+     */
+    private String deviceCode;
     
     /**
-     * 区域ID
+     * 设备名称
      */
-    private String areaId;
+    private String deviceName;
     
     /**
      * 密度值
@@ -21,22 +27,7 @@ public class DensityTrendDTO {
     private Double density;
     
     /**
-     * 密度等级(LOW/MEDIUM/HIGH)
+     * 记录时间
      */
-    private String level;
-    
-    /**
-     * 统计时间
-     */
-    private LocalDateTime timestamp;
-    
-    /**
-     * 区域名称
-     */
-    private String areaName;
-    
-    /**
-     * 告警阈值
-     */
-    private Double threshold;
+    private LocalDateTime recordTime;
 } 

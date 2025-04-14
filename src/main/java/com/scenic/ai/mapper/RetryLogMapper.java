@@ -1,6 +1,7 @@
 package com.scenic.ai.mapper;
 
-import com.scenic.ai.domain.model.sync.RetryLog;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.scenic.ai.model.RetryLog;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -8,10 +9,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 重试日志数据访问接口
+ * 重试日志Mapper接口
  */
 @Mapper
-public interface RetryLogMapper {
+public interface RetryLogMapper extends BaseMapper<RetryLog> {
     
     /**
      * 分页查询重试日志

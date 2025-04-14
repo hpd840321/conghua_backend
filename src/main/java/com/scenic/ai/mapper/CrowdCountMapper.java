@@ -25,21 +25,21 @@ public interface CrowdCountMapper {
     /**
      * 根据时间范围查询记录
      */
-    List<CrowdCount> findByTimeRange(@Param("areaId") String areaId,
+    List<CrowdCount> findByTimeRange(@Param("deviceCode") String deviceCode,
                                     @Param("startTime") LocalDateTime startTime,
                                     @Param("endTime") LocalDateTime endTime);
     
     /**
      * 计算平均人数
      */
-    Double calculateAverageCount(@Param("areaId") String areaId,
+    Double calculateAverageCount(@Param("deviceCode") String deviceCode,
                                @Param("startTime") LocalDateTime startTime,
                                @Param("endTime") LocalDateTime endTime);
     
     /**
      * 查询最大人数
      */
-    Integer findMaxCount(@Param("areaId") String areaId,
+    Integer findMaxCount(@Param("deviceCode") String deviceCode,
                         @Param("startTime") LocalDateTime startTime,
                         @Param("endTime") LocalDateTime endTime);
     
@@ -51,7 +51,7 @@ public interface CrowdCountMapper {
     /**
      * 查询高密度区域
      */
-    List<CrowdCount> findHighDensityAreas(@Param("areaId") String areaId,
+    List<CrowdCount> findHighDensityAreas(@Param("deviceCode") String deviceCode,
                                          @Param("threshold") int threshold,
                                          @Param("startTime") LocalDateTime startTime,
                                          @Param("endTime") LocalDateTime endTime);
@@ -59,23 +59,30 @@ public interface CrowdCountMapper {
     /**
      * 计算区域密度
      */
-    Double calculateDensity(@Param("areaId") String areaId,
+    Double calculateDensity(@Param("deviceCode") String deviceCode,
                           @Param("time") LocalDateTime time);
     
     /**
      * 分析人群趋势
      */
-    List<CrowdCount> analyzeTrend(@Param("areaId") String areaId,
+    List<CrowdCount> analyzeTrend(@Param("deviceCode") String deviceCode,
                                  @Param("startTime") LocalDateTime startTime,
                                  @Param("endTime") LocalDateTime endTime);
     
     /**
      * 获取最新计数
      */
-    CrowdCount findLatestCount(@Param("areaId") String areaId);
+    CrowdCount findLatestCount(@Param("deviceCode") String deviceCode);
     
     /**
      * 获取所有区域最新计数
      */
     List<CrowdCount> findLatestCounts();
+    
+    /**
+     * 计算平均密度
+     */
+    Double calculateAverageDensity(@Param("deviceCode") String deviceCode,
+                                  @Param("startTime") LocalDateTime startTime,
+                                  @Param("endTime") LocalDateTime endTime);
 } 

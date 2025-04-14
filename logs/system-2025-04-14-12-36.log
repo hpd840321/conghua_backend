@@ -1,0 +1,21 @@
+2025-04-14 12:36:56.900 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2025-04-14 12:37:00.457 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8080 (http)
+2025-04-14 12:37:00.475 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-04-14 12:37:00.480 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-04-14 12:37:00.481 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.15]
+2025-04-14 12:37:01.115 [main] INFO  o.apache.jasper.servlet.TldScanner - At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+2025-04-14 12:37:01.689 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-04-14 12:37:01.689 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4604 ms
+2025-04-14 12:37:02.460 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.batchUpdateStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.462 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.466 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.469 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.countByTimeRange] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.471 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByLevelAndStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.590 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.calculateAverageDensity] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.592 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.countByHour] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.593 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:02.595 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.findMaxCount] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:04.292 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 1 endpoint(s) beneath base path '/actuator'
+2025-04-14 12:37:04.764 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+2025-04-14 12:37:05.491 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-04-14 12:37:05.588 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port(s): 8080 (http) with context path ''

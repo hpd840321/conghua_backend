@@ -1,6 +1,8 @@
 package com.scenic.ai.service;
 
-import com.scenic.ai.domain.model.Alert;
+import com.scenic.ai.model.Alert;
+import com.scenic.ai.domain.model.AlertDomain;
+import com.scenic.ai.util.AlertConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -48,7 +50,8 @@ public class SchedulerService {
      * 检查人流量告警
      */
     private void checkFlowAlerts() {
-        List<Alert> alerts = crowdCountService.findExceedThresholdCounts();
+        List<AlertDomain> alertDomains = crowdCountService.findExceedThresholdCounts();
+        List<Alert> alerts = AlertConverter.toAlerts(alertDomains);
         for (Alert alert : alerts) {
             alertService.createAlert(alert);
         }
@@ -58,7 +61,8 @@ public class SchedulerService {
      * 检查密度告警
      */
     private void checkDensityAlerts() {
-        List<Alert> alerts = densityAnalysisService.findExceedThresholdDensities();
+        List<AlertDomain> alertDomains = densityAnalysisService.findExceedThresholdDensities();
+        List<Alert> alerts = AlertConverter.toAlerts(alertDomains);
         for (Alert alert : alerts) {
             alertService.createAlert(alert);
         }

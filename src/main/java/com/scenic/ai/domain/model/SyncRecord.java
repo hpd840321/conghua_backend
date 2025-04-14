@@ -4,22 +4,15 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 同步记录实体
+ */
 @Data
 public class SyncRecord {
     private Long id;
-    private Long taskId;
-    private String taskType;
-    private String status;
-    private String source;
-    private String target;
-    private Integer totalCount;
-    private Integer successCount;
-    private Integer failCount;
+    private String syncType;
+    private LocalDateTime syncTime;
+    private Integer status; // 1: 成功, 0: 失败
     private String errorMessage;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private Long duration;
-    private String executor;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private Integer processedCount;
 } 

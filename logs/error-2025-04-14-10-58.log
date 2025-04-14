@@ -1,0 +1,20 @@
+2025-04-14 10:58:30.044 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByLevelAndStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 10:58:30.048 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.batchUpdateStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 10:58:30.055 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 10:58:30.055 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.countByTimeRange] is ignored, because it exists, maybe from xml file
+2025-04-14 10:58:30.055 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 10:58:30.868 [main] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 3 of constructor in com.scenic.ai.service.SyncService required a bean of type 'org.springframework.retry.support.RetryTemplate' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'org.springframework.retry.support.RetryTemplate' in your configuration.
+

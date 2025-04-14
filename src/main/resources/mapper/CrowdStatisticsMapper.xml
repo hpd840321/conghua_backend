@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.CrowdStatisticsMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.domain.model.CrowdStatistics">
+        <id column="ID" property="id"/>
+        <result column="DEVICE_CODE" property="deviceCode"/>
+        <result column="DEVICE_NAME" property="deviceName"/>
+        <result column="TOURISM_NAME" property="tourismName"/>
+        <result column="COUNT" property="count"/>
+        <result column="DENSITY" property="density"/>
+        <result column="ALG_NAME" property="algName"/>
+        <result column="TASK_CODE" property="taskCode"/>
+        <result column="IMAGE_URL" property="imageUrl"/>
+        <result column="RECORD_TIME" property="recordTime"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, ALG_NAME,
+        TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <!-- 根据设备编码和时间范围查询统计数据 -->
+    <select id="findByDeviceAndTime" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY RECORD_TIME DESC
+    </select>
+
+    <!-- 统计时间范围内的平均密度 -->
+    <select id="calculateAverageDensity" resultType="java.util.Map">
+        SELECT 
+            ROUND(AVG(DENSITY), 2) as avgDensity,
+            MAX(DENSITY) as maxDensity,
+            MIN(DENSITY) as minDensity
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <!-- 统计时段分布 -->
+    <select id="countByHour" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'HH24') as hour,
+            ROUND(AVG(COUNT), 2) as count,
+            ROUND(AVG(DENSITY), 2) as density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
+        ORDER BY hour
+    </select>
+
+    <!-- 查询最高人数记录 -->
+    <select id="findMaxCount" resultMap="BaseResultMap">
+        SELECT *
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        AND COUNT = (
+            SELECT MAX(COUNT)
+            FROM CLOUDWALK.CROWD_STATISTICS
+            WHERE DEVICE_CODE = #{deviceCode}
+            AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        )
+    </select>
+
+    <!-- 条件分页查询 -->
+    <select id="findByConditions" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE 1=1
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="algName != null and algName != ''">
+            AND ALG_NAME = #{algName}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        ORDER BY RECORD_TIME DESC
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    </select>
+</mapper> 

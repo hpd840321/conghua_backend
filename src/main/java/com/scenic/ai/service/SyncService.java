@@ -2,6 +2,7 @@ package com.scenic.ai.service;
 
 import com.scenic.ai.domain.model.SyncProgress;
 import com.scenic.ai.exception.SyncException;
+import com.scenic.ai.model.RetryLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.support.RetryTemplate;
@@ -27,6 +28,7 @@ public class SyncService {
     private final ThirdPartyApiService thirdPartyApiService;
     private final StorageService storageService;
     private final RetryTemplate syncRetryTemplate;
+    private final RetryLogService retryLogService;
 
     // 同步进度跟踪
     private final Map<String, SyncProgress> progressMap = new ConcurrentHashMap<>();
@@ -49,18 +51,21 @@ public class SyncService {
                 (LocalDateTime) lastRecord.get("syncTime") : null;
             
             // 获取并处理数据
-            List<Map<String, Object>> data = syncRetryTemplate.execute(context -> {
-                log.debug("尝试获取数据，重试次数：{}", context.getRetryCount());
-                return thirdPartyApiService.getStatisticsData(lastSyncTime);
+            syncRetryTemplate.execute(context -> {
+                // 记录重试次数
+                int retryCount = context.getRetryCount();
+                updateRetryLog(syncType, syncId, retryCount);
+                
+                // 执行同步逻辑
+                List<Map<String, Object>> data = thirdPartyApiService.getStatisticsData(lastSyncTime);
+                processData(data, progress);
+                
+                // 更新同步记录
+                syncRecordService.createSyncRecord(syncType, 1, null, data.size());
+                log.info("{}同步任务完成，处理{}条数据", syncType, data.size());
+                
+                return null;
             });
-
-            // 处理数据
-            processData(data, progress);
-            
-            // 更新同步记录
-            syncRecordService.createSyncRecord(syncType, 1, null, data.size());
-            log.info("{}同步任务完成，处理{}条数据", syncType, data.size());
-            
         } catch (Exception e) {
             String errorMsg = "同步任务失败: " + e.getMessage();
             log.error(errorMsg, e);
@@ -120,5 +125,27 @@ public class SyncService {
      */
     public SyncProgress getProgress(String syncId) {
         return progressMap.get(syncId);
+    }
+
+    private void updateRetryLog(String businessType, String businessId, int retryCount) {
+        RetryLog log = retryLogService.getByBusinessTypeAndId(businessType, businessId);
+        if (log == null) {
+            log = new RetryLog();
+            log.setBusinessType(businessType);
+            log.setBusinessId(businessId);
+            log.setMaxRetryCount(3);
+            log.setStatus("RETRYING");
+        }
+        log.setRetryCount(retryCount);
+        retryLogService.saveOrUpdate(log);
+    }
+    
+    private void saveFailedRetryLog(String businessType, String businessId, String errorMessage) {
+        RetryLog log = retryLogService.getByBusinessTypeAndId(businessType, businessId);
+        if (log != null) {
+            log.setStatus("FAILED");
+            log.setErrorMessage(errorMessage);
+            retryLogService.updateById(log);
+        }
     }
 }

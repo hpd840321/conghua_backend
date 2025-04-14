@@ -1,7 +1,8 @@
 package com.scenic.ai.service;
 
-import com.scenic.ai.domain.model.Alert;
+import com.scenic.ai.domain.model.AlertDomain;
 import com.scenic.ai.dto.DensityTrendDTO;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public interface DensityAnalysisService {
     /**
      * 查找超过阈值的密度记录并生成告警
      */
-    List<Alert> findExceedThresholdDensities();
+    List<AlertDomain> findExceedThresholdDensities();
 
     /**
      * 分析指定时间范围内的密度趋势

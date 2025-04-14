@@ -1,0 +1,20 @@
+2025-04-14 10:56:34.019 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.batchUpdateStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 10:56:34.019 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByLevelAndStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 10:56:34.019 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 10:56:34.028 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.countByTimeRange] is ignored, because it exists, maybe from xml file
+2025-04-14 10:56:34.032 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 10:56:34.684 [main] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.scenic.ai.service.ThirdPartyApiService required a bean of type 'org.springframework.web.client.RestTemplate' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'org.springframework.web.client.RestTemplate' in your configuration.
+

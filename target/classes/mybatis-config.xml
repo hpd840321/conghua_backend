@@ -5,8 +5,10 @@
 <configuration>
     <!-- 全局设置 -->
     <settings>
-        <!-- 开启驼峰命名自动映射 -->
+        <!-- 使用驼峰命名法转换字段 -->
         <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- 使用jdbc的getGeneratedKeys获取数据库自增主键值 -->
+        <setting name="useGeneratedKeys" value="true"/>
         <!-- 开启二级缓存 -->
         <setting name="cacheEnabled" value="true"/>
         <!-- 开启延迟加载 -->
@@ -15,8 +17,6 @@
         <setting name="defaultStatementTimeout" value="30"/>
         <!-- 设置默认抓取大小 -->
         <setting name="defaultFetchSize" value="100"/>
-        <!-- 允许JDBC自动生成主键 -->
-        <setting name="useGeneratedKeys" value="true"/>
         <!-- 设置日志实现 -->
         <setting name="logImpl" value="SLF4J"/>
         <!-- 设置数据库厂商标识 -->

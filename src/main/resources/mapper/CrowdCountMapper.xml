@@ -3,87 +3,148 @@
 <mapper namespace="com.scenic.ai.mapper.CrowdCountMapper">
     
     <resultMap id="CrowdCountMap" type="com.scenic.ai.domain.model.CrowdCount">
-        <id property="id" column="id"/>
-        <result property="areaId" column="area_id"/>
-        <result property="count" column="count"/>
-        <result property="countTime" column="count_time"/>
-        <result property="panoramicImage" column="panoramic_image"/>
-        <result property="density" column="density"/>
+        <id column="ID" property="id"/>
+        <result column="DEVICE_CODE" property="deviceCode"/>
+        <result column="DEVICE_NAME" property="deviceName"/>
+        <result column="TOURISM_NAME" property="tourismName"/>
+        <result column="COUNT" property="count"/>
+        <result column="DENSITY" property="density"/>
+        <result column="ALG_NAME" property="algName"/>
+        <result column="TASK_CODE" property="taskCode"/>
+        <result column="IMAGE_URL" property="imageUrl"/>
+        <result column="RECORD_TIME" property="recordTime"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
     </resultMap>
     
+    <sql id="Base_Column_List">
+        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, ALG_NAME,
+        TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+    </sql>
+    
     <insert id="insert" parameterType="com.scenic.ai.domain.model.CrowdCount">
-        INSERT INTO crowd_count (
-            id, area_id, count, count_time, panoramic_image, density
+        INSERT INTO CLOUDWALK.CROWD_STATISTICS (
+            DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, 
+            ALG_NAME, TASK_CODE, IMAGE_URL, RECORD_TIME
         ) VALUES (
-            #{id}, #{areaId}, #{count}, #{countTime}, #{panoramicImage}, #{density}
+            #{deviceCode}, #{deviceName}, #{tourismName}, #{count}, #{density},
+            #{algName}, #{taskCode}, #{imageUrl}, #{recordTime}
         )
     </insert>
     
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO crowd_count (
-            id, area_id, count, count_time, panoramic_image, density
+        INSERT INTO CLOUDWALK.CROWD_STATISTICS (
+            DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY,
+            ALG_NAME, TASK_CODE, IMAGE_URL, RECORD_TIME
         ) VALUES 
         <foreach collection="list" item="item" separator=",">
-            (#{item.id}, #{item.areaId}, #{item.count}, #{item.countTime}, 
-             #{item.panoramicImage}, #{item.density})
+            (#{item.deviceCode}, #{item.deviceName}, #{item.tourismName},
+             #{item.count}, #{item.density}, #{item.algName}, #{item.taskCode},
+             #{item.imageUrl}, #{item.recordTime})
         </foreach>
     </insert>
     
     <select id="findByTimeRange" resultMap="CrowdCountMap">
-        SELECT * FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        AND count_time BETWEEN #{startTime} AND #{endTime}
-        ORDER BY count_time DESC
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY RECORD_TIME DESC
     </select>
     
     <select id="calculateAverageCount" resultType="java.lang.Double">
-        SELECT AVG(count) FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        AND count_time BETWEEN #{startTime} AND #{endTime}
+        SELECT AVG(COUNT) 
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
     </select>
     
     <select id="findMaxCount" resultType="java.lang.Integer">
-        SELECT MAX(count) FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        AND count_time BETWEEN #{startTime} AND #{endTime}
+        SELECT MAX(COUNT) 
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
     </select>
     
     <delete id="deleteHistoricalData">
-        DELETE FROM crowd_count 
-        WHERE count_time &lt; #{time}
+        DELETE FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE RECORD_TIME &lt; #{time}
     </delete>
     
     <select id="findHighDensityAreas" resultMap="CrowdCountMap">
-        SELECT * FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        AND count > #{threshold}
-        AND count_time BETWEEN #{startTime} AND #{endTime}
-        ORDER BY count DESC
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND COUNT > #{threshold}
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY COUNT DESC
     </select>
     
     <select id="calculateDensity" resultType="java.lang.Double">
-        SELECT density FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        AND count_time = #{time}
+        SELECT DENSITY 
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND RECORD_TIME = #{time}
     </select>
     
     <select id="analyzeTrend" resultMap="CrowdCountMap">
-        SELECT * FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        AND count_time BETWEEN #{startTime} AND #{endTime}
-        ORDER BY count_time ASC
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY RECORD_TIME ASC
     </select>
     
     <select id="findLatestCount" resultMap="CrowdCountMap">
-        SELECT * FROM crowd_count 
-        WHERE area_id = #{areaId} 
-        ORDER BY count_time DESC 
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode}
+        ORDER BY RECORD_TIME DESC
         LIMIT 1
     </select>
     
     <select id="findLatestCounts" resultMap="CrowdCountMap">
-        SELECT DISTINCT ON (area_id) * 
-        FROM crowd_count 
-        ORDER BY area_id, count_time DESC
+        SELECT DISTINCT ON (DEVICE_CODE) <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        ORDER BY DEVICE_CODE, RECORD_TIME DESC
+    </select>
+    
+    <select id="calculateAverageDensity" resultType="java.lang.Double">
+        SELECT AVG(DENSITY) 
+        FROM CLOUDWALK.CROWD_STATISTICS 
+        WHERE DEVICE_CODE = #{deviceCode} 
+        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+    </select>
+    
+    <!-- 分页查询 -->
+    <select id="getPage" resultMap="CrowdCountMap">
+        SELECT * FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="algName != null and algName != ''">
+                AND ALG_NAME = #{algName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY RECORD_TIME DESC
+    </select>
+    
+    <!-- 获取详情分页 -->
+    <select id="getDetailsPage" resultMap="CrowdCountMap">
+        SELECT * FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
+        AND ALG_NAME = #{algName}
+        AND RECORD_TIME BETWEEN #{recordBeginDate} AND #{recordEndDate}
+        ORDER BY RECORD_TIME DESC
     </select>
 </mapper> 

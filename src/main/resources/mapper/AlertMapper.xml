@@ -2,8 +2,30 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.scenic.ai.mapper.AlertMapper">
     
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.model.Alert">
+        <id column="ID" property="id"/>
+        <result column="DEVICE_CODE" property="deviceCode"/>
+        <result column="DEVICE_NAME" property="deviceName"/>
+        <result column="TOURISM_NAME" property="tourismName"/>
+        <result column="ALERT_TYPE" property="alertType"/>
+        <result column="ALERT_LEVEL" property="alertLevel"/>
+        <result column="ALERT_STATUS" property="alertStatus"/>
+        <result column="DESCRIPTION" property="description"/>
+        <result column="IMAGE_URL" property="imageUrl"/>
+        <result column="RECORD_TIME" property="recordTime"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, ALERT_TYPE, ALERT_LEVEL, ALERT_STATUS,
+        DESCRIPTION, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+    </sql>
+
     <!-- 基础字段映射 -->
-    <resultMap id="AlertMap" type="com.scenic.ai.domain.model.Alert">
+    <resultMap id="AlertMap" type="com.scenic.ai.model.Alert">
         <id property="id" column="id"/>
         <result property="type" column="type"/>
         <result property="level" column="level"/>
@@ -21,7 +43,7 @@
     </resultMap>
 
     <!-- 插入告警 -->
-    <insert id="insert" parameterType="com.scenic.ai.domain.model.Alert">
+    <insert id="insert" parameterType="com.scenic.ai.model.Alert">
         INSERT INTO alert (
             id, type, level, status, device_code, device_name, tourism_name,
             description, value, create_time, update_time, handler, remark, handle_time
@@ -32,7 +54,7 @@
     </insert>
     
     <!-- 更新告警 -->
-    <update id="update" parameterType="com.scenic.ai.domain.model.Alert">
+    <update id="update" parameterType="com.scenic.ai.model.Alert">
         UPDATE alert
         SET status = #{status},
             update_time = #{updateTime},
@@ -58,50 +80,53 @@
     </select>
     
     <!-- 根据级别和状态查询 -->
-    <select id="findByLevelAndStatus" resultMap="AlertMap">
-        SELECT *
-        FROM alert
-        WHERE level = #{level}
-        AND status = #{status}
-        ORDER BY create_time DESC
+    <select id="findByLevelAndStatus" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE 1=1
+        <if test="level != null">
+            AND ALERT_LEVEL = #{level}
+        </if>
+        <if test="status != null">
+            AND ALERT_STATUS = #{status}
+        </if>
+        ORDER BY CREATE_TIME DESC
     </select>
     
     <!-- 统计时间范围内的告警数量 -->
     <select id="countByTimeRange" resultType="java.util.Map">
         SELECT 
             COUNT(*) as total,
-            COUNT(CASE WHEN status = 'handled' THEN 1 END) as handled,
-            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
-        FROM alert
-        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+            COUNT(CASE WHEN ALERT_STATUS = 1 THEN 1 END) as handled,
+            COUNT(CASE WHEN ALERT_STATUS = 0 THEN 1 END) as pending
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
     </select>
     
     <!-- 统计告警类型分布 -->
     <select id="countByType" resultType="java.util.Map">
-        SELECT type, COUNT(*) as count
-        FROM alert
-        WHERE create_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY type
+        SELECT ALERT_TYPE as type, COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY ALERT_TYPE
     </select>
     
     <!-- 统计告警时段分布 -->
     <select id="countByHour" resultType="java.util.Map">
-        SELECT HOUR(create_time) as hour, COUNT(*) as count
-        FROM alert
-        WHERE create_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY HOUR(create_time)
+        SELECT EXTRACT(HOUR FROM RECORD_TIME) as hour, COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
         ORDER BY hour
     </select>
     
     <!-- 批量更新告警状态 -->
     <update id="batchUpdateStatus">
-        UPDATE alert
-        SET status = #{status},
-            handler = #{handler},
-            remark = #{remark},
-            handle_time = NOW(),
-            update_time = NOW()
-        WHERE id IN
+        UPDATE ALERT
+        SET ALERT_STATUS = #{status},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE ID IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
@@ -133,5 +158,29 @@
         </where>
         ORDER BY create_time DESC
         LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE 1=1
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="alertType != null and alertType != ''">
+            AND ALERT_TYPE = #{alertType}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+        ORDER BY CREATE_TIME DESC
     </select>
 </mapper> 

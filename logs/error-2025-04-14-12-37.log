@@ -1,0 +1,32 @@
+2025-04-14 12:37:10.485 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.batchUpdateStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.486 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByLevelAndStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.489 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.countByTimeRange] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.490 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.493 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.628 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.findMaxCount] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.629 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.calculateAverageDensity] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.633 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:10.634 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.countByHour] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:12.780 [main] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2025-04-14 12:37:36.841 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByLevelAndStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:36.851 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.batchUpdateStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:36.852 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByStatus] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:36.856 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.countByTimeRange] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:36.862 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.AlertMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:37.014 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.calculateAverageDensity] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:37.016 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.findMaxCount] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:37.018 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.findByConditions] is ignored, because it exists, maybe from xml file
+2025-04-14 12:37:37.019 [main] ERROR c.b.m.core.MybatisConfiguration - mapper[com.scenic.ai.mapper.CrowdStatisticsMapper.countByHour] is ignored, because it exists, maybe from xml file

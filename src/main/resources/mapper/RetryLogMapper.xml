@@ -2,80 +2,80 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.scenic.ai.mapper.RetryLogMapper">
     
-    <!-- 结果映射 -->
-    <resultMap id="RetryLogMap" type="com.scenic.ai.domain.model.sync.RetryLog">
-        <id property="id" column="id"/>
-        <result property="businessType" column="business_type"/>
-        <result property="businessId" column="business_id"/>
-        <result property="retryCount" column="retry_count"/>
-        <result property="maxRetryCount" column="max_retry_count"/>
-        <result property="status" column="status"/>
-        <result property="errorMessage" column="error_message"/>
-        <result property="nextRetryTime" column="next_retry_time"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.model.RetryLog">
+        <id column="ID" property="id"/>
+        <result column="BUSINESS_TYPE" property="businessType"/>
+        <result column="BUSINESS_ID" property="businessId"/>
+        <result column="RETRY_COUNT" property="retryCount"/>
+        <result column="MAX_RETRY_COUNT" property="maxRetryCount"/>
+        <result column="STATUS" property="status"/>
+        <result column="ERROR_MESSAGE" property="errorMessage"/>
+        <result column="NEXT_RETRY_TIME" property="nextRetryTime"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
     </resultMap>
 
-    <!-- 基础列 -->
+    <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, business_type, business_id, retry_count, max_retry_count,
-        status, error_message, next_retry_time, create_time, update_time
+        ID, BUSINESS_TYPE, BUSINESS_ID, RETRY_COUNT, MAX_RETRY_COUNT, STATUS,
+        ERROR_MESSAGE, NEXT_RETRY_TIME, CREATE_TIME, UPDATE_TIME
     </sql>
 
     <!-- 分页查询重试日志 -->
-    <select id="findByPage" resultMap="RetryLogMap">
+    <select id="findByPage" resultMap="BaseResultMap">
         SELECT
         <include refid="Base_Column_List"/>
-        FROM retry_log
+        FROM CLOUDWALK.RETRY_LOG
         <where>
             <if test="businessType != null and businessType != ''">
-                AND business_type = #{businessType}
+                AND BUSINESS_TYPE = #{businessType}
             </if>
             <if test="businessId != null and businessId != ''">
-                AND business_id = #{businessId}
+                AND BUSINESS_ID = #{businessId}
             </if>
             <if test="status != null">
-                AND status = #{status}
+                AND STATUS = #{status}
             </if>
             <if test="startTime != null">
-                AND create_time &gt;= #{startTime}
+                AND CREATE_TIME &gt;= #{startTime}
             </if>
             <if test="endTime != null">
-                AND create_time &lt;= #{endTime}
+                AND CREATE_TIME &lt;= #{endTime}
             </if>
         </where>
-        ORDER BY create_time DESC
+        ORDER BY CREATE_TIME DESC
         LIMIT #{offset}, #{pageSize}
     </select>
 
     <!-- 统计符合条件的记录总数 -->
     <select id="countByCondition" resultType="int">
         SELECT COUNT(*)
-        FROM retry_log
+        FROM CLOUDWALK.RETRY_LOG
         <where>
             <if test="businessType != null and businessType != ''">
-                AND business_type = #{businessType}
+                AND BUSINESS_TYPE = #{businessType}
             </if>
             <if test="businessId != null and businessId != ''">
-                AND business_id = #{businessId}
+                AND BUSINESS_ID = #{businessId}
             </if>
             <if test="status != null">
-                AND status = #{status}
+                AND STATUS = #{status}
             </if>
             <if test="startTime != null">
-                AND create_time &gt;= #{startTime}
+                AND CREATE_TIME &gt;= #{startTime}
             </if>
             <if test="endTime != null">
-                AND create_time &lt;= #{endTime}
+                AND CREATE_TIME &lt;= #{endTime}
             </if>
         </where>
     </select>
 
     <!-- 批量插入重试日志 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO retry_log (
-            business_type, business_id, retry_count, max_retry_count,
-            status, error_message, next_retry_time, create_time, update_time
+        INSERT INTO CLOUDWALK.RETRY_LOG (
+            BUSINESS_TYPE, BUSINESS_ID, RETRY_COUNT, MAX_RETRY_COUNT,
+            STATUS, ERROR_MESSAGE, NEXT_RETRY_TIME, CREATE_TIME, UPDATE_TIME
         )
         VALUES
         <foreach collection="list" item="item" separator=",">
@@ -89,20 +89,20 @@
 
     <!-- 批量更新重试状态 -->
     <update id="batchUpdateStatus" parameterType="java.util.List">
-        UPDATE retry_log
+        UPDATE CLOUDWALK.RETRY_LOG
         <trim prefix="SET" suffixOverrides=",">
-            <trim prefix="status = CASE" suffix="END,">
+            <trim prefix="STATUS = CASE" suffix="END,">
                 <foreach collection="list" item="item">
-                    WHEN id = #{item.id} THEN #{item.status}
+                    WHEN ID = #{item.id} THEN #{item.status}
                 </foreach>
             </trim>
-            <trim prefix="update_time = CASE" suffix="END,">
+            <trim prefix="UPDATE_TIME = CASE" suffix="END,">
                 <foreach collection="list" item="item">
-                    WHEN id = #{item.id} THEN #{item.updateTime}
+                    WHEN ID = #{item.id} THEN #{item.updateTime}
                 </foreach>
             </trim>
         </trim>
-        WHERE id IN
+        WHERE ID IN
         <foreach collection="list" item="item" open="(" separator="," close=")">
             #{item.id}
         </foreach>

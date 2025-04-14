@@ -1,80 +1,214 @@
 package com.scenic.ai.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scenic.ai.domain.model.CrowdCount;
+import com.scenic.ai.domain.model.AlertDomain;
+import com.scenic.ai.model.Alert;
+import com.scenic.ai.factory.AlertFactory;
 import com.scenic.ai.mapper.CrowdCountMapper;
+import com.scenic.ai.service.AlertService;
 import com.scenic.ai.service.CrowdCountService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+/**
+ * 人群计数服务实现类
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CrowdCountServiceImpl implements CrowdCountService {
-
+    
+    // 密度告警阈值
+    private static final double DENSITY_THRESHOLD = 0.8;
+    // 人群聚集告警阈值
+    private static final int GATHERING_THRESHOLD = 100;
+    
     private final CrowdCountMapper crowdCountMapper;
+    private final Map<String, Integer> thresholds = new ConcurrentHashMap<>();
+    private final AlertService alertService;
+    
+    @Override
+    public Page<CrowdCount> getPage(Page<CrowdCount> page, String tourismName, String deviceCode,
+                                   String algName, LocalDateTime startTime, LocalDateTime endTime) {
+        LambdaQueryWrapper<CrowdCount> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(tourismName)) {
+            wrapper.eq(CrowdCount::getTourismName, tourismName);
+        }
+        if (StringUtils.isNotBlank(deviceCode)) {
+            wrapper.eq(CrowdCount::getDeviceCode, deviceCode);
+        }
+        if (StringUtils.isNotBlank(algName)) {
+            wrapper.eq(CrowdCount::getAlgName, algName);
+        }
+        if (startTime != null) {
+            wrapper.ge(CrowdCount::getRecordTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(CrowdCount::getRecordTime, endTime);
+        }
+        wrapper.orderByDesc(CrowdCount::getRecordTime);
+        return page.setRecords(crowdCountMapper.findByTimeRange(deviceCode, startTime, endTime));
+    }
+    
+    @Override
+    public Page<CrowdCount> getDetailsPage(Page<CrowdCount> page, String deviceCode, String algName,
+                                         LocalDateTime recordBeginDate, LocalDateTime recordEndDate) {
+        LambdaQueryWrapper<CrowdCount> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(deviceCode)) {
+            wrapper.eq(CrowdCount::getDeviceCode, deviceCode);
+        }
+        if (StringUtils.isNotBlank(algName)) {
+            wrapper.eq(CrowdCount::getAlgName, algName);
+        }
+        if (recordBeginDate != null) {
+            wrapper.ge(CrowdCount::getRecordTime, recordBeginDate);
+        }
+        if (recordEndDate != null) {
+            wrapper.le(CrowdCount::getRecordTime, recordEndDate);
+        }
+        wrapper.orderByDesc(CrowdCount::getRecordTime);
+        return page.setRecords(crowdCountMapper.findByTimeRange(deviceCode, recordBeginDate, recordEndDate));
+    }
     
     @Override
     @Transactional
-    public void recordCrowdCount(CrowdCount crowdCount) {
-        crowdCount.setCountTime(LocalDateTime.now());
+    public void save(CrowdCount crowdCount) {
         crowdCountMapper.insert(crowdCount);
     }
     
     @Override
     @Transactional
-    public void batchRecordCrowdCount(List<CrowdCount> crowdCounts) {
-        LocalDateTime now = LocalDateTime.now();
-        crowdCounts.forEach(cc -> cc.setCountTime(now));
-        crowdCountMapper.batchInsert(crowdCounts);
+    public int batchSave(List<CrowdCount> crowdCounts) {
+        return crowdCountMapper.batchInsert(crowdCounts);
     }
     
     @Override
-    public List<CrowdCount> getAreaHistory(String areaId, LocalDateTime startTime, LocalDateTime endTime) {
-        return crowdCountMapper.findByTimeRange(areaId, startTime, endTime);
+    @Transactional(readOnly = true)
+    public List<CrowdCount> findByTimeRange(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return crowdCountMapper.findByTimeRange(deviceCode, startTime, endTime);
     }
     
     @Override
-    public Double getAreaAverageCount(String areaId, LocalDateTime startTime, LocalDateTime endTime) {
-        return crowdCountMapper.calculateAverageCount(areaId, startTime, endTime);
+    public Double calculateAverageCount(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return crowdCountMapper.calculateAverageCount(deviceCode, startTime, endTime);
     }
     
     @Override
-    public Integer getAreaMaxCount(String areaId, LocalDateTime startTime, LocalDateTime endTime) {
-        return crowdCountMapper.findMaxCount(areaId, startTime, endTime);
+    public Integer findMaxCount(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return crowdCountMapper.findMaxCount(deviceCode, startTime, endTime);
     }
     
     @Override
     @Transactional
-    public void cleanHistoricalData(LocalDateTime beforeTime) {
-        crowdCountMapper.deleteHistoricalData(beforeTime);
+    public int deleteHistoricalData(LocalDateTime time) {
+        return crowdCountMapper.deleteHistoricalData(time);
     }
     
     @Override
-    public List<CrowdCount> getHighDensityAreas(String areaId, Integer threshold, 
-                                               LocalDateTime startTime, LocalDateTime endTime) {
-        return crowdCountMapper.findHighDensityAreas(areaId, threshold, startTime, endTime);
+    @Transactional(readOnly = true)
+    public List<AlertDomain> findExceedThresholdCounts() {
+        List<CrowdCount> highDensityAreas = crowdCountMapper.findHighDensityAreas(null, GATHERING_THRESHOLD, 
+            LocalDateTime.now().minusHours(1), LocalDateTime.now());
+        return highDensityAreas.stream()
+            .map(count -> AlertDomain.createWithValue(
+                "DENSITY",  // 告警类型
+                count.getDensity() > DENSITY_THRESHOLD ? "HIGH" : "MEDIUM",  // 告警级别
+                count.getDeviceCode(),
+                count.getDeviceName(),
+                count.getTourismName(),
+                String.format("区域人群密度超过阈值：%.2f", count.getDensity()),
+                count.getDensity()
+            ))
+            .collect(Collectors.toList());
     }
     
     @Override
-    public Double getAreaDensity(String areaId, LocalDateTime time) {
-        return crowdCountMapper.calculateDensity(areaId, time);
+    public List<CrowdCount> findHighDensityAreas(String deviceCode, int threshold,
+                                                LocalDateTime startTime, LocalDateTime endTime) {
+        return crowdCountMapper.findHighDensityAreas(deviceCode, threshold, startTime, endTime);
     }
     
     @Override
-    public List<CrowdCount> analyzeAreaTrend(String areaId, LocalDateTime startTime, LocalDateTime endTime) {
-        return crowdCountMapper.analyzeTrend(areaId, startTime, endTime);
+    public Double calculateDensity(String deviceCode, LocalDateTime time) {
+        return crowdCountMapper.calculateDensity(deviceCode, time);
     }
     
     @Override
-    public CrowdCount getAreaRealtimeCount(String areaId) {
-        return crowdCountMapper.findLatestCount(areaId);
+    public List<CrowdCount> analyzeTrend(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return crowdCountMapper.analyzeTrend(deviceCode, startTime, endTime);
     }
     
     @Override
-    public List<CrowdCount> getAllAreasRealtimeCount() {
-        return crowdCountMapper.findLatestCounts();
+    public CrowdCount getRealTimeCount(String deviceCode) {
+        return crowdCountMapper.findLatestCount(deviceCode);
+    }
+    
+    @Override
+    public void setThreshold(String deviceCode, int threshold) {
+        thresholds.put(deviceCode, threshold);
+    }
+    
+    @Override
+    public Integer getThreshold(String deviceCode) {
+        return thresholds.getOrDefault(deviceCode, GATHERING_THRESHOLD);
+    }
+
+    @Override
+    public Double calculateAverage(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return calculateAverageCount(deviceCode, startTime, endTime);
+    }
+
+    @Override
+    public Double calculateGrowthRate(String deviceCode, LocalDateTime time) {
+        CrowdCount current = getRealTimeCount(deviceCode);
+        if (current == null) {
+            return 0.0;
+        }
+        
+        LocalDateTime previousTime = time.minusHours(1);
+        Double previousAvg = calculateAverage(deviceCode, previousTime, time);
+        if (previousAvg == null || previousAvg == 0) {
+            return 0.0;
+        }
+        
+        return (current.getCount() - previousAvg) / previousAvg * 100;
+    }
+
+    @Override
+    public Double calculateChainGrowthRate(String deviceCode, LocalDateTime time) {
+        CrowdCount current = getRealTimeCount(deviceCode);
+        if (current == null) {
+            return 0.0;
+        }
+        
+        LocalDateTime previousDayTime = time.minusDays(1);
+        Double previousDayAvg = calculateAverage(deviceCode, previousDayTime, previousDayTime.plusHours(1));
+        if (previousDayAvg == null || previousDayAvg == 0) {
+            return 0.0;
+        }
+        
+        return (current.getCount() - previousDayAvg) / previousDayAvg * 100;
+    }
+
+    @Override
+    public Integer findMax(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return findMaxCount(deviceCode, startTime, endTime);
+    }
+
+    @Override
+    public Double calculateAverageDensity(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        return crowdCountMapper.calculateAverageDensity(deviceCode, startTime, endTime);
     }
 } 

@@ -1,0 +1,4 @@
+2025-04-14 12:36:56.981 [main] INFO  com.scenic.ai.ScenicAiApplication - Starting ScenicAiApplication v1.0.6 using Java 17.0.10 with PID 26128 (D:\DevProjects\conghua_backend1\conghua_backend\target\scenic-ai-management-backend-1.0.6.jar started by localComputer in D:\DevProjects\conghua_backend1\conghua_backend)
+2025-04-14 12:36:56.983 [main] DEBUG com.scenic.ai.ScenicAiApplication - Running with Spring Boot v3.1.5, Spring v6.0.13
+2025-04-14 12:36:56.985 [main] INFO  com.scenic.ai.ScenicAiApplication - No active profile set, falling back to 1 default profile: "default"
+2025-04-14 12:37:05.652 [main] INFO  com.scenic.ai.ScenicAiApplication - Started ScenicAiApplication in 9.828 seconds (process running for 10.707)
