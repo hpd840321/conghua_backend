@@ -1,335 +1,202 @@
 package com.scenic.ai.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.scenic.ai.common.core.domain.AjaxResult;
 import com.scenic.ai.model.Alert;
+import com.scenic.ai.model.AlertHandleRecord;
 import com.scenic.ai.service.IAlertService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.apache.commons.lang3.StringUtils;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.stream.Collectors;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 
 /**
  * 告警控制器
- * 提供告警信息的查询、统计、处理等功能
+ * 处理告警相关的请求
  *
- * @author scenic
+ * @author AI
  * @date 2024-03-20
  */
-@Controller
-@RequestMapping("/alert")
+@RestController
+@RequestMapping("/api/alert")
 public class AlertController {
 
-    private static final Logger log = LoggerFactory.getLogger(AlertController.class);
+    private static final Logger logger = LoggerFactory.getLogger(AlertController.class);
 
     @Autowired
     private IAlertService alertService;
 
     /**
-     * 告警列表页面
-     */
-    @GetMapping("/list")
-    public ResponseEntity<Map<String, Object>> getAlertList(
-            @RequestParam(required = false) String tourismName,
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String alertType,
-            @RequestParam(required = false) Integer alertLevel,
-            @RequestParam(required = false) Integer alertStatus,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        try {
-            log.info("查询告警列表, tourismName={}, deviceCode={}, alertType={}, alertLevel={}, status={}, startTime={}, endTime={}, pageNum={}, pageSize={}",
-                    tourismName, deviceCode, alertType, alertLevel, alertStatus, startTime, endTime, pageNum, pageSize);
-            
-            Map<String, Object> result = alertService.getAlertList(tourismName, deviceCode, alertType,
-                    alertLevel, alertStatus, startTime, endTime, pageNum, pageSize);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            log.error("查询告警列表失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 告警统计页面
-     */
-    @GetMapping("/statistics")
-    public String statistics() {
-        return "alert/statistics";
-    }
-
-    /**
-     * 分页查询告警列表
-     */
-    @GetMapping("/page")
-    public ResponseEntity<Page<Alert>> getAlertPage(
-            @RequestParam(required = false) String tourismName,
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String alertType,
-            @RequestParam(required = false) Integer alertLevel,
-            @RequestParam(required = false) Integer alertStatus,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        try {
-            log.info("分页查询告警列表, tourismName={}, deviceCode={}, alertType={}, alertLevel={}, status={}, startTime={}, endTime={}, pageNum={}, pageSize={}",
-                    tourismName, deviceCode, alertType, alertLevel, alertStatus, startTime, endTime, pageNum, pageSize);
-            
-            Page<Alert> page = new Page<>(pageNum, pageSize);
-            Page<Alert> result = alertService.getAlertPage(page, tourismName, deviceCode,
-                    alertType, alertLevel, alertStatus, startTime, endTime);
-            
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            log.error("分页查询告警列表失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 告警详情页面
-     */
-    @GetMapping("/detail")
-    public String detail() {
-        return "alert/detail";
-    }
-
-    /**
      * 获取告警详情
+     *
+     * @param id 告警ID
+     * @return 告警详情
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Alert> getAlertDetail(@PathVariable Long id) {
-        log.info("获取告警详情, id={}", id);
+    public AjaxResult getById(@PathVariable Long id) {
+        logger.debug("获取告警详情，ID: {}", id);
         Alert alert = alertService.getById(id);
-        return ResponseEntity.ok(alert);
+        return AjaxResult.success(alert);
+    }
+
+    /**
+     * 获取告警处理记录
+     *
+     * @param alertId 告警ID
+     * @return 处理记录列表
+     */
+    @GetMapping("/{alertId}/records")
+    public AjaxResult getHandleRecords(@PathVariable Long alertId) {
+        logger.debug("获取告警处理记录，告警ID: {}", alertId);
+        List<AlertHandleRecord> records = alertService.getHandleRecords(alertId);
+        return AjaxResult.success(records);
     }
 
     /**
      * 处理告警
+     *
+     * @param alertId    告警ID
+     * @param handleDesc 处理描述
+     * @return 处理结果
      */
-    @PostMapping("/{id}/handle")
-    public ResponseEntity<Void> handleAlert(@PathVariable Long id, @RequestParam String description) {
-        try {
-            alertService.handleAlert(id, description);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("处理告警失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
+    @PostMapping("/{alertId}/handle")
+    public AjaxResult handleAlert(@PathVariable Long alertId, @RequestParam String handleDesc) {
+        logger.debug("处理告警，告警ID: {}, 处理描述: {}", alertId, handleDesc);
+        boolean result = alertService.handleAlert(alertId, handleDesc);
+        return result ? AjaxResult.success() : AjaxResult.error("处理告警失败");
     }
 
     /**
-     * 批量处理告警
+     * 分页查询告警信息
+     *
+     * @param pageNum     页码
+     * @param pageSize    每页大小
+     * @param deviceCode  设备编码
+     * @param tourismName 景区名称
+     * @param alertType   告警类型
+     * @param alertLevel  告警级别
+     * @param alertStatus 告警状态
+     * @param startTime   开始时间
+     * @param endTime     结束时间
+     * @return 告警列表
      */
-    @PostMapping("/batch-handle")
-    public ResponseEntity<Void> batchHandleAlerts(@RequestBody List<Long> ids) {
-        try {
-            alertService.batchHandleAlerts(ids);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("批量处理告警失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 获取告警时段分布
-     */
-    @GetMapping("/distribution/time")
-    public ResponseEntity<Map<String, Object>> getTimeDistribution(
-            @RequestParam(required = false) String tourismName,
+    @GetMapping("/page")
+    public AjaxResult page(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        try {
-            Map<String, Object> distribution = alertService.getTimeDistribution(tourismName,
-                    deviceCode, startTime, endTime);
-            return ResponseEntity.ok(distribution);
-        } catch (Exception e) {
-            log.error("获取告警时段分布失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 获取告警类型分布
-     */
-    @GetMapping("/distribution/type")
-    public ResponseEntity<Map<String, Object>> getTypeDistribution(
             @RequestParam(required = false) String tourismName,
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        try {
-            Map<String, Object> distribution = alertService.getTypeDistribution(tourismName,
-                    deviceCode, startTime, endTime);
-            return ResponseEntity.ok(distribution);
-        } catch (Exception e) {
-            log.error("获取告警类型分布失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
+            @RequestParam(required = false) String alertType,
+            @RequestParam(required = false) Integer alertLevel,
+            @RequestParam(required = false) Integer alertStatus,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
+        logger.debug("分页查询告警信息，页码: {}, 每页大小: {}, 设备编码: {}, 景区名称: {}, 告警类型: {}, 告警级别: {}, 告警状态: {}, 开始时间: {}, 结束时间: {}",
+                pageNum, pageSize, deviceCode, tourismName, alertType, alertLevel, alertStatus, startTime, endTime);
+        List<Alert> alerts = alertService.page(pageNum, pageSize, deviceCode, tourismName, alertType, alertLevel,
+                alertStatus, startTime, endTime);
+        int total = alertService.count(deviceCode, tourismName, alertType, alertLevel, alertStatus, startTime, endTime);
+        Map<String, Object> result = Map.of(
+                "list", alerts,
+                "total", total);
+        return AjaxResult.success(result);
     }
 
     /**
-     * 获取告警概览统计
-     */
-    @GetMapping("/overview")
-    public ResponseEntity<Map<String, Object>> getOverview(
-            @RequestParam(required = false) String tourismName,
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        try {
-            Map<String, Object> overview = alertService.getOverview(tourismName, deviceCode,
-                    startTime, endTime);
-            return ResponseEntity.ok(overview);
-        } catch (Exception e) {
-            log.error("获取告警概览统计失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 获取设备最新告警
-     */
-    @GetMapping("/latest/{deviceCode}")
-    public ResponseEntity<Alert> getLatestByDevice(@PathVariable String deviceCode) {
-        try {
-            if (StringUtils.isBlank(deviceCode)) {
-                return ResponseEntity.badRequest().body(null);
-            }
-            Alert alert = alertService.getLatestByDevice(deviceCode);
-            if (alert == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(alert);
-        } catch (Exception e) {
-            log.error("获取设备最新告警失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 获取待处理告警数量
+     * 获取告警统计信息
      *
      * @param tourismName 景区名称
-     * @return 待处理告警数量
+     * @param startTime   开始时间
+     * @param endTime     结束时间
+     * @return 统计信息
      */
-    @GetMapping("/pending/count")
-    public ResponseEntity<Integer> countPendingAlerts(@RequestParam(required = false) String tourismName) {
-        try {
-            int count = alertService.countUnhandledAlerts(null, tourismName);
-            return ResponseEntity.ok(count);
-        } catch (Exception e) {
-            log.error("获取待处理告警数量失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
+    @GetMapping("/statistics")
+    public AjaxResult getStatistics(
+            @RequestParam(required = false) String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
+        logger.debug("获取告警统计信息，景区名称: {}, 开始时间: {}, 结束时间: {}", tourismName, startTime, endTime);
+        Map<String, Object> statistics = alertService.getAlertStatistics(tourismName,
+                startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+                endTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        return AjaxResult.success(statistics);
     }
 
     /**
      * 获取告警类型列表
+     *
+     * @return 告警类型列表
      */
     @GetMapping("/types")
-    public ResponseEntity<List<Map<String, Object>>> getAlertTypes() {
-        try {
-            List<Map<String, Object>> types = alertService.getAlertTypes();
-            return ResponseEntity.ok(types);
-        } catch (Exception e) {
-            log.error("获取告警类型列表失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
+    public AjaxResult getAlertTypes() {
+        logger.debug("获取告警类型列表");
+        List<Map<String, Object>> types = alertService.getAlertTypes();
+        return AjaxResult.success(types);
     }
 
     /**
-     * 创建告警
+     * 获取告警趋势
      *
-     * @param alert 告警信息
-     * @return 创建结果
+     * @param tourismName 景区名称
+     * @param deviceCode  设备编码
+     * @param startTime   开始时间
+     * @param endTime     结束时间
+     * @return 趋势数据
      */
-    @PostMapping
-    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
-        try {
-            log.info("创建告警, alert={}", alert);
-            boolean success = alertService.createAlert(alert);
-            if (!success) {
-                return ResponseEntity.badRequest().body(null);
-            }
-            return ResponseEntity.ok(alert);
-        } catch (Exception e) {
-            log.error("创建告警失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    /**
-     * 更新告警状态
-     *
-     * @param id     告警ID
-     * @param status 状态
-     * @return 更新结果
-     */
-    @PostMapping("/{id}/status")
-    public ResponseEntity<Boolean> updateAlertStatus(
-            @PathVariable Long id,
-            @RequestParam Integer status) {
-        log.info("更新告警状态, id={}, status={}", id, status);
-        boolean result = alertService.updateStatus(id, status);
-        return ResponseEntity.ok(result);
-    }
-
-    /**
-     * 删除告警
-     *
-     * @param id 告警ID
-     * @return 删除结果
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
-        log.info("删除告警, id={}", id);
-        alertService.removeById(id);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 处理告警
-     */
-    @PostMapping("/process/{id}")
-    public ResponseEntity<Boolean> processAlert(@PathVariable Long id) {
-        try {
-            boolean result = alertService.processAlert(id);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            log.error("处理告警失败", e);
-            return ResponseEntity.badRequest().body(false);
-        }
-    }
-
-    @GetMapping("/distribution/level")
-    public ResponseEntity<Map<String, Object>> getLevelDistribution(
+    @GetMapping("/trend")
+    public AjaxResult getTrend(
             @RequestParam(required = false) String tourismName,
             @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        try {
-            Map<String, Object> distribution = alertService.getLevelDistribution(tourismName,
-                    deviceCode, startTime, endTime);
-            return ResponseEntity.ok(distribution);
-        } catch (Exception e) {
-            log.error("获取告警级别分布失败", e);
-            return ResponseEntity.badRequest().body(null);
-        }
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
+        logger.debug("获取告警趋势，景区名称: {}, 设备编码: {}, 开始时间: {}, 结束时间: {}", tourismName, deviceCode, startTime, endTime);
+        Map<String, Object> trend = alertService.getTrend(tourismName, deviceCode,
+                startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+                endTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        return AjaxResult.success(trend);
     }
-} 
+
+    /**
+     * 获取告警设备分布
+     *
+     * @param tourismName 景区名称
+     * @param startTime   开始时间
+     * @param endTime     结束时间
+     * @return 设备分布数据
+     */
+    @GetMapping("/device-distribution")
+    public AjaxResult getDeviceDistribution(
+            @RequestParam(required = false) String tourismName,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
+        logger.debug("获取告警设备分布，景区名称: {}, 开始时间: {}, 结束时间: {}", tourismName, startTime, endTime);
+        Map<String, Object> distribution = alertService.getDeviceDistribution(tourismName,
+                startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+                endTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        return AjaxResult.success(distribution);
+    }
+
+    /**
+     * 获取告警景区分布
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 景区分布数据
+     */
+    @GetMapping("/tourism-distribution")
+    public AjaxResult getTourismDistribution(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
+        logger.debug("获取告警景区分布，开始时间: {}, 结束时间: {}", startTime, endTime);
+        Map<String, Object> distribution = alertService.getTourismDistribution(
+                startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+                endTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        return AjaxResult.success(distribution);
+    }
+}

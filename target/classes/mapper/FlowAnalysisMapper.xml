@@ -4,183 +4,191 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.scenic.ai.mapper.FlowAnalysisMapper">
     
-    <resultMap type="com.scenic.ai.model.FlowAnalysis" id="FlowAnalysisResult">
-        <id property="id" column="id"/>
-        <result property="deviceCode" column="device_code"/>
-        <result property="deviceName" column="device_name"/>
-        <result property="tourismName" column="tourism_name"/>
-        <result property="flowCount" column="flow_count"/>
-        <result property="flowDirection" column="flow_direction"/>
-        <result property="algName" column="alg_name"/>
-        <result property="taskCode" column="task_code"/>
-        <result property="imageUrl" column="image_url"/>
-        <result property="recordTime" column="record_time"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
+    <!-- 通用查询结果列 -->
+    <resultMap type="com.scenic.ai.model.FlowAnalysis" id="BaseResultMap">
+        <id column="ID" property="id"/>
+        <result column="DEVICE_CODE" property="deviceCode"/>
+        <result column="TOURISM_NAME" property="tourismName"/>
+        <result column="FLOW_COUNT" property="flowCount"/>
+        <result column="DIRECTION" property="direction"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
     </resultMap>
 
-    <sql id="selectFlowAnalysisVo">
-        select id, device_code, device_name, tourism_name, flow_count, flow_direction, 
-        alg_name, task_code, image_url, record_time, create_time, update_time
-        from flow_analysis
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, DEVICE_CODE, TOURISM_NAME, FLOW_COUNT, DIRECTION, CREATE_TIME, UPDATE_TIME
     </sql>
 
-    <select id="selectFlowAnalysisList" parameterType="com.scenic.ai.model.FlowAnalysis" resultMap="FlowAnalysisResult">
-        <include refid="selectFlowAnalysisVo"/>
+    <!-- 通用查询条件 -->
+    <sql id="Query_Condition">
         <where>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND device_code = #{deviceCode}
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
             </if>
-            <if test="tourismName != null and tourismName != ''">
-                AND tourism_name like concat('%', #{tourismName}, '%')
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
             </if>
-            <if test="startTime != null">
-                AND record_time >= #{startTime}
+            <if test="params.startTime != null">
+                AND CREATE_TIME >= #{params.startTime}
             </if>
-            <if test="endTime != null">
-                AND record_time &lt;= #{endTime}
+            <if test="params.endTime != null">
+                AND CREATE_TIME &lt;= #{params.endTime}
             </if>
         </where>
-        order by record_time desc
+    </sql>
+
+    <!-- 分页查询客流分析列表 -->
+    <select id="pageByConditions" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        <include refid="Query_Condition"/>
+        ORDER BY CREATE_TIME DESC
+        FETCH FIRST #{params.pageSize} ROWS ONLY OFFSET #{params.offset} ROWS
     </select>
 
-    <select id="selectFlowAnalysisById" parameterType="Long" resultMap="FlowAnalysisResult">
-        <include refid="selectFlowAnalysisVo"/>
-        where id = #{id}
+    <!-- 统计记录总数 -->
+    <select id="countByConditions" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM FLOW_ANALYSIS
+        <include refid="Query_Condition"/>
     </select>
 
-    <insert id="insertFlowAnalysis" parameterType="com.scenic.ai.model.FlowAnalysis" useGeneratedKeys="true" keyProperty="id">
-        insert into flow_analysis
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="deviceCode != null">device_code,</if>
-            <if test="deviceName != null">device_name,</if>
-            <if test="tourismName != null">tourism_name,</if>
-            <if test="flowCount != null">flow_count,</if>
-            <if test="flowDirection != null">flow_direction,</if>
-            <if test="algName != null">alg_name,</if>
-            <if test="taskCode != null">task_code,</if>
-            <if test="imageUrl != null">image_url,</if>
-            <if test="recordTime != null">record_time,</if>
-            <if test="createTime != null">create_time,</if>
-            <if test="updateTime != null">update_time,</if>
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="deviceCode != null">#{deviceCode},</if>
-            <if test="deviceName != null">#{deviceName},</if>
-            <if test="tourismName != null">#{tourismName},</if>
-            <if test="flowCount != null">#{flowCount},</if>
-            <if test="flowDirection != null">#{flowDirection},</if>
-            <if test="algName != null">#{algName},</if>
-            <if test="taskCode != null">#{taskCode},</if>
-            <if test="imageUrl != null">#{imageUrl},</if>
-            <if test="recordTime != null">#{recordTime},</if>
-            <if test="createTime != null">#{createTime},</if>
-            <if test="updateTime != null">#{updateTime},</if>
-        </trim>
+    <!-- 根据ID查询客流分析 -->
+    <select id="getById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        WHERE ID = #{id}
+    </select>
+
+    <!-- 新增客流分析 -->
+    <insert id="insert" parameterType="com.scenic.ai.model.FlowAnalysis">
+        INSERT INTO FLOW_ANALYSIS (
+            DEVICE_CODE, TOURISM_NAME, FLOW_COUNT, DIRECTION, CREATE_TIME, UPDATE_TIME
+        ) VALUES (
+            #{deviceCode}, #{tourismName}, #{flowCount}, #{direction}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        )
     </insert>
 
-    <update id="updateFlowAnalysis" parameterType="com.scenic.ai.model.FlowAnalysis">
-        update flow_analysis
-        <trim prefix="SET" suffixOverrides=",">
-            <if test="deviceCode != null">device_code = #{deviceCode},</if>
-            <if test="deviceName != null">device_name = #{deviceName},</if>
-            <if test="tourismName != null">tourism_name = #{tourismName},</if>
-            <if test="flowCount != null">flow_count = #{flowCount},</if>
-            <if test="flowDirection != null">flow_direction = #{flowDirection},</if>
-            <if test="algName != null">alg_name = #{algName},</if>
-            <if test="taskCode != null">task_code = #{taskCode},</if>
-            <if test="imageUrl != null">image_url = #{imageUrl},</if>
-            <if test="recordTime != null">record_time = #{recordTime},</if>
-            <if test="updateTime != null">update_time = #{updateTime},</if>
-        </trim>
-        where id = #{id}
+    <!-- 更新客流分析 -->
+    <update id="update" parameterType="com.scenic.ai.model.FlowAnalysis">
+        UPDATE FLOW_ANALYSIS
+        SET DEVICE_CODE = #{deviceCode},
+            TOURISM_NAME = #{tourismName},
+            FLOW_COUNT = #{flowCount},
+            DIRECTION = #{direction},
+            UPDATE_TIME = CURRENT_TIMESTAMP
+        WHERE ID = #{id}
     </update>
 
-    <delete id="deleteFlowAnalysisById" parameterType="Long">
-        delete from flow_analysis where id = #{id}
+    <!-- 删除客流分析 -->
+    <delete id="deleteById">
+        DELETE FROM FLOW_ANALYSIS WHERE ID = #{id}
     </delete>
 
-    <delete id="deleteFlowAnalysisByIds" parameterType="Long">
-        delete from flow_analysis where id in 
-        <foreach collection="array" item="id" open="(" separator="," close=")">
+    <!-- 批量删除客流分析 -->
+    <delete id="deleteByIds">
+        DELETE FROM FLOW_ANALYSIS WHERE ID IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
     </delete>
 
-    <select id="selectTotalFlowCount" resultType="Integer">
-        select sum(flow_count) from flow_analysis
-        <where>
-            <if test="startTime != null">
-                AND record_time >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND record_time &lt;= #{endTime}
-            </if>
-        </where>
+    <!-- 根据设备编码查询客流数据 -->
+    <select id="listByDeviceCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        WHERE DEVICE_CODE = #{deviceCode}
+        AND CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY CREATE_TIME DESC
     </select>
 
-    <select id="selectFlowDirectionStats" resultMap="FlowAnalysisResult">
-        select flow_direction, sum(flow_count) as flow_count
-        from flow_analysis
-        <where>
-            <if test="startTime != null">
-                AND record_time >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND record_time &lt;= #{endTime}
-            </if>
-        </where>
-        group by flow_direction
+    <!-- 根据景区名称查询客流数据 -->
+    <select id="listByTourismName" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        WHERE TOURISM_NAME = #{tourismName}
+        AND CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY CREATE_TIME DESC
     </select>
-    
-    <!-- 分页查询客流分析数据 -->
-    <select id="selectFlowAnalysisPage" resultMap="FlowAnalysisResult">
-        <include refid="selectFlowAnalysisVo"/>
-        <where>
-            <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND device_code = #{params.deviceCode}
-            </if>
-            <if test="params.deviceName != null and params.deviceName != ''">
-                AND device_name like concat('%', #{params.deviceName}, '%')
-            </if>
-            <if test="params.tourismName != null and params.tourismName != ''">
-                AND tourism_name like concat('%', #{params.tourismName}, '%')
-            </if>
-            <if test="params.flowDirection != null and params.flowDirection != ''">
-                AND flow_direction = #{params.flowDirection}
-            </if>
-            <if test="params.startTime != null">
-                AND record_time >= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND record_time &lt;= #{params.endTime}
-            </if>
-        </where>
-        order by record_time desc
+
+    <!-- 统计时段客流分布 -->
+    <select id="getHourDistribution" resultType="java.util.Map">
+        SELECT 
+            EXTRACT(HOUR FROM CREATE_TIME) as HOUR,
+            COUNT(1) as COUNT,
+            SUM(FLOW_COUNT) as TOTAL_FLOW
+        FROM FLOW_ANALYSIS
+        WHERE 1=1
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        AND CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY EXTRACT(HOUR FROM CREATE_TIME)
+        ORDER BY HOUR
     </select>
-    
-    <!-- 查询客流分析记录总数 -->
-    <select id="selectFlowAnalysisCount" resultType="Long">
-        select count(1) from flow_analysis
-        <where>
-            <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND device_code = #{params.deviceCode}
-            </if>
-            <if test="params.deviceName != null and params.deviceName != ''">
-                AND device_name like concat('%', #{params.deviceName}, '%')
-            </if>
-            <if test="params.tourismName != null and params.tourismName != ''">
-                AND tourism_name like concat('%', #{params.tourismName}, '%')
-            </if>
-            <if test="params.flowDirection != null and params.flowDirection != ''">
-                AND flow_direction = #{params.flowDirection}
-            </if>
-            <if test="params.startTime != null">
-                AND record_time >= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND record_time &lt;= #{params.endTime}
-            </if>
-        </where>
+
+    <!-- 统计流向分布 -->
+    <select id="getDirectionDistribution" resultType="java.util.Map">
+        SELECT 
+            DIRECTION,
+            COUNT(1) as COUNT,
+            SUM(FLOW_COUNT) as TOTAL_FLOW
+        FROM FLOW_ANALYSIS
+        WHERE 1=1
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        AND CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY DIRECTION
     </select>
+
+    <!-- 获取客流趋势 -->
+    <select id="getFlowTrend" resultType="java.util.Map">
+        SELECT 
+            DATE_TRUNC('hour', CREATE_TIME) as TIME_POINT,
+            SUM(FLOW_COUNT) as TOTAL_FLOW
+        FROM FLOW_ANALYSIS
+        WHERE 1=1
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        AND CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY DATE_TRUNC('hour', CREATE_TIME)
+        ORDER BY TIME_POINT
+    </select>
+
+    <!-- 根据时间范围和景区名称查询客流分析数据 -->
+    <select id="listByTimeRangeAndTourism" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        WHERE TOURISM_NAME = #{tourismName}
+        AND CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备编码查询最新的客流分析数据 -->
+    <select id="getLatestByDeviceCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM FLOW_ANALYSIS
+        WHERE DEVICE_CODE = #{deviceCode}
+        ORDER BY CREATE_TIME DESC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
 </mapper> 

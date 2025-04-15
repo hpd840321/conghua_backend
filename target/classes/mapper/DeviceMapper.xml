@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.scenic.ai.dao.DeviceMapper">
+<mapper namespace="com.scenic.ai.mapper.DeviceMapper">
     
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.scenic.ai.model.Device">
         <id column="ID" property="id"/>
         <result column="DEVICE_CODE" property="deviceCode"/>
         <result column="DEVICE_NAME" property="deviceName"/>
+        <result column="DEVICE_TYPE" property="deviceType"/>
         <result column="TOURISM_NAME" property="tourismName"/>
         <result column="STATUS" property="status"/>
         <result column="CREATE_TIME" property="createTime"/>
@@ -15,7 +16,7 @@
     
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, STATUS, CREATE_TIME, UPDATE_TIME
+        ID, DEVICE_CODE, DEVICE_NAME, DEVICE_TYPE, TOURISM_NAME, STATUS, CREATE_TIME, UPDATE_TIME
     </sql>
     
     <!-- 查询条件 -->
@@ -223,4 +224,111 @@
             UPDATE_TIME = SYSTIMESTAMP
         WHERE DEVICE_CODE = #{deviceCode}
     </update>
+
+    <!-- 根据景区名称查询设备列表 -->
+    <select id="selectByTourism" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备类型查询设备列表 -->
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE DEVICE_TYPE = #{deviceType}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 统计各景区设备数量 -->
+    <select id="countByTourism" resultType="java.util.Map">
+        SELECT TOURISM_NAME as tourismName, COUNT(*) as count
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME IS NOT NULL
+        GROUP BY TOURISM_NAME
+    </select>
+
+    <!-- 统计各类型设备数量 -->
+    <select id="countByType" resultType="java.util.Map">
+        SELECT DEVICE_TYPE as deviceType, COUNT(*) as count
+        FROM CLOUDWALK.DEVICE
+        GROUP BY DEVICE_TYPE
+    </select>
+
+    <!-- 统计各状态设备数量 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT STATUS as status, COUNT(*) as count
+        FROM CLOUDWALK.DEVICE
+        GROUP BY STATUS
+    </select>
+
+    <!-- 查询记录总数 -->
+    <select id="countRecords" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM CLOUDWALK.DEVICE
+        <where>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.deviceType != null and params.deviceType != ''">
+                AND DEVICE_TYPE = #{params.deviceType}
+            </if>
+            <if test="params.status != null">
+                AND STATUS = #{params.status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据景区名称和设备类型查询设备列表 -->
+    <select id="selectByTourismAndType" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        AND DEVICE_TYPE = #{deviceType}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据景区名称和设备状态查询设备列表 -->
+    <select id="selectByTourismAndStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        AND STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备类型和状态查询设备列表 -->
+    <select id="selectByTypeAndStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE DEVICE_TYPE = #{deviceType}
+        AND STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 更新设备名称 -->
+    <update id="updateDeviceName">
+        UPDATE CLOUDWALK.DEVICE
+        SET DEVICE_NAME = #{deviceName},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE = #{deviceCode}
+    </update>
+
+    <!-- 更新景区名称 -->
+    <update id="updateTourismName">
+        UPDATE CLOUDWALK.DEVICE
+        SET TOURISM_NAME = #{tourismName},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE = #{deviceCode}
+    </update>
+
 </mapper> 

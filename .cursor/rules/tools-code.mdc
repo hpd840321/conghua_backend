@@ -1,0 +1,399 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 景区AI系统工具类使用规范
+
+## 一、工具类使用原则
+
+1. **优先使用开源工具类**
+   - 优先使用Spring框架提供的工具类
+   - 优先使用Apache Commons系列工具类
+   - 避免重复造轮子，减少代码冗余
+
+2. **最小修改原则**
+   - 遵循最小修改原则，避免大规模重构
+   - 修改代码时，确保兼容现有功能
+   - 添加新功能时，尽量不修改现有代码
+
+3. **领域驱动设计**
+   - 将业务逻辑封装在领域模型中
+   - 使用领域事件处理复杂业务流程
+   - 遵循领域驱动设计的原则和模式
+
+## 二、开源工具类使用指南
+
+### 1. Spring框架工具类
+
+1. **StringUtils**
+   ```java
+   import org.springframework.util.StringUtils;
+   
+   // 判断字符串是否为空
+   boolean isEmpty = StringUtils.isEmpty(str);
+   
+   // 判断字符串是否不为空
+   boolean isNotEmpty = StringUtils.hasText(str);
+   
+   // 获取字符串长度
+   int length = StringUtils.length(str);
+   ```
+
+2. **CollectionUtils**
+   ```java
+   import org.springframework.util.CollectionUtils;
+   
+   // 判断集合是否为空
+   boolean isEmpty = CollectionUtils.isEmpty(collection);
+   
+   // 判断集合是否不为空
+   boolean isNotEmpty = CollectionUtils.isNotEmpty(collection);
+   ```
+
+3. **Assert**
+   ```java
+   import org.springframework.util.Assert;
+   
+   // 断言对象不为空
+   Assert.notNull(obj, "对象不能为空");
+   
+   // 断言字符串不为空
+   Assert.hasText(str, "字符串不能为空");
+   
+   // 断言条件为真
+   Assert.isTrue(condition, "条件必须为真");
+   ```
+
+### 2. Apache Commons工具类
+
+1. **StringUtils (Commons Lang)**
+   ```java
+   import org.apache.commons.lang3.StringUtils;
+   
+   // 判断字符串是否为空
+   boolean isEmpty = StringUtils.isEmpty(str);
+   
+   // 判断字符串是否不为空
+   boolean isNotEmpty = StringUtils.isNotEmpty(str);
+   
+   // 判断字符串是否为空或空白
+   boolean isBlank = StringUtils.isBlank(str);
+   
+   // 判断字符串是否不为空且不为空白
+   boolean isNotBlank = StringUtils.isNotBlank(str);
+   
+   // 截取字符串
+   String substring = StringUtils.substring(str, start, end);
+   ```
+
+2. **CollectionUtils (Commons Collections)**
+   ```java
+   import org.apache.commons.collections4.CollectionUtils;
+   
+   // 判断集合是否为空
+   boolean isEmpty = CollectionUtils.isEmpty(collection);
+   
+   // 判断集合是否不为空
+   boolean isNotEmpty = CollectionUtils.isNotEmpty(collection);
+   
+   // 判断集合是否包含元素
+   boolean contains = CollectionUtils.containsAny(collection, element);
+   ```
+
+3. **DateUtils (Commons Lang)**
+   ```java
+   import org.apache.commons.lang3.time.DateUtils;
+   
+   // 解析日期字符串
+   Date date = DateUtils.parseDate(str, "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss");
+   
+   // 添加天数
+   Date newDate = DateUtils.addDays(date, 1);
+   
+   // 添加小时
+   Date newDate = DateUtils.addHours(date, 1);
+   ```
+
+4. **FileUtils (Commons IO)**
+   ```java
+   import org.apache.commons.io.FileUtils;
+   
+   // 读取文件内容
+   String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+   
+   // 写入文件内容
+   FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
+   
+   // 复制文件
+   FileUtils.copyFile(sourceFile, destFile);
+   ```
+
+## 三、自定义工具类规范
+
+### 1. 命名规范
+
+1. **工具类命名**
+   - 使用`ScenicXxxUtils`格式，其中`Xxx`为功能描述
+   - 例如：`ScenicValidationUtils`、`ScenicQueryUtils`、`ScenicDateUtils`
+   - 避免与开源工具类命名冲突
+
+2. **方法命名**
+   - 方法名应清晰表达其功能
+   - 使用动词+名词的形式
+   - 例如：`validateId`、`formatDateTime`、`isEmpty`
+
+### 2. 类定义规范
+
+1. **基本结构**
+   ```java
+   public final class ScenicXxxUtils {
+       private ScenicXxxUtils() {
+           // 私有构造函数，防止实例化
+       }
+       
+       // 静态方法
+   }
+   ```
+
+2. **注解使用**
+   - 使用`@UtilityClass`注解标记工具类（如果使用Lombok）
+   - 由于项目禁止使用Lombok，因此不使用此注解
+
+### 3. 自定义工具类示例
+
+1. **参数校验工具类**
+   ```java
+   public final class ScenicValidationUtils {
+       private ScenicValidationUtils() {}
+       
+       public static void validateId(Long id) {
+           if (id == null || id <= 0) {
+               throw new BusinessException("ID不能为空或小于等于0");
+           }
+       }
+       
+       public static void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+           if (startTime == null || endTime == null) {
+               throw new BusinessException("开始时间和结束时间不能为空");
+           }
+           if (startTime.isAfter(endTime)) {
+               throw new BusinessException("开始时间不能晚于结束时间");
+           }
+       }
+       
+       public static void validateDeviceCode(String deviceCode) {
+           if (StringUtils.isEmpty(deviceCode)) {
+               throw new BusinessException("设备编码不能为空");
+           }
+           if (deviceCode.length() > 50) {
+               throw new BusinessException("设备编码长度不能超过50");
+           }
+       }
+   }
+   ```
+
+2. **查询条件构建工具类**
+   ```java
+   public final class ScenicQueryUtils {
+       private ScenicQueryUtils() {}
+       
+       public static void validatePage(Integer pageNum, Integer pageSize) {
+           if (pageNum == null || pageNum <= 0) {
+               throw new BusinessException("页码不能为空或小于等于0");
+           }
+           if (pageSize == null || pageSize <= 0) {
+               throw new BusinessException("每页大小不能为空或小于等于0");
+           }
+           if (pageSize > 100) {
+               throw new BusinessException("每页大小不能超过100");
+           }
+       }
+       
+       public static LambdaQueryWrapper<FlowAnalysis> buildFlowAnalysisWrapper(
+               String deviceCode, String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
+           LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+           
+           if (StringUtils.hasText(deviceCode)) {
+               wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode);
+           }
+           if (StringUtils.hasText(tourismName)) {
+               wrapper.eq(FlowAnalysis::getTourismName, tourismName);
+           }
+           if (startTime != null) {
+               wrapper.ge(FlowAnalysis::getRecordTime, startTime);
+           }
+           if (endTime != null) {
+               wrapper.le(FlowAnalysis::getRecordTime, endTime);
+           }
+           
+           wrapper.orderByDesc(FlowAnalysis::getRecordTime);
+           return wrapper;
+       }
+   }
+   ```
+
+3. **日期时间工具类**
+   ```java
+   public final class ScenicDateUtils {
+       private ScenicDateUtils() {}
+       
+       public static LocalDateTime convertToLocalDateTime(Date date) {
+           if (date == null) {
+               return null;
+           }
+           return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+       }
+       
+       public static Date convertToDate(LocalDateTime localDateTime) {
+           if (localDateTime == null) {
+               return null;
+           }
+           return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+       }
+       
+       public static String formatDateTime(LocalDateTime dateTime) {
+           if (dateTime == null) {
+               return null;
+           }
+           return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+       }
+   }
+   ```
+
+## 四、特殊注意事项
+
+### 1. 异常处理
+
+1. **异常类型**
+   - 使用`BusinessException`处理业务异常
+   - 使用`SystemException`处理系统异常
+   - 避免使用通用异常`Exception`
+
+2. **异常信息**
+   - 异常信息应清晰明确，便于定位问题
+   - 包含足够的上下文信息
+   - 避免暴露敏感信息
+
+### 2. 日志记录
+
+1. **日志级别**
+   - 使用`DEBUG`级别记录调试信息
+   - 使用`INFO`级别记录正常操作信息
+   - 使用`WARN`级别记录警告信息
+   - 使用`ERROR`级别记录错误信息
+
+2. **日志内容**
+   - 记录方法入口和出口信息
+   - 记录关键业务操作和异常信息
+   - 包含足够的上下文信息
+
+### 3. 性能优化
+
+1. **避免重复计算**
+   - 避免在循环中重复计算
+   - 使用缓存减少重复计算
+   - 使用局部变量存储中间结果
+
+2. **避免创建对象**
+   - 避免在循环中创建对象
+   - 使用对象池或缓存减少对象创建
+   - 使用基本类型代替包装类型（如果可能）
+
+3. **IO操作优化**
+   - 使用try-with-resources语句自动关闭资源
+   - 使用批量操作代替单条操作
+   - 使用异步操作处理耗时IO
+
+## 五、工具类使用示例
+
+### 1. 参数校验示例
+
+```java
+@Override
+public FlowAnalysis getById(Long id) {
+    try {
+        // 使用自定义工具类进行参数校验
+        ScenicValidationUtils.validateId(id);
+        
+        // 执行查询
+        return flowAnalysisMapper.selectById(id);
+    } catch (BusinessException e) {
+        throw e;
+    } catch (Exception e) {
+        log.error("查询流量分析详情失败, id: {}", id, e);
+        throw new BusinessException("查询流量分析详情失败");
+    }
+}
+```
+
+### 2. 分页查询示例
+
+```java
+@Override
+public PageResult<FlowAnalysis> selectFlowAnalysisPage(PageQuery pageQuery) {
+    try {
+        // 使用自定义工具类进行参数校验
+        ScenicQueryUtils.validatePage(pageQuery.getPageNum(), pageQuery.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+        
+        // 设置查询条件
+        if (pageQuery.getParams() != null) {
+            Map<String, Object> params = pageQuery.getParams();
+            if (params.containsKey("deviceCode") && params.get("deviceCode") != null) {
+                wrapper.eq(FlowAnalysis::getDeviceCode, params.get("deviceCode"));
+            }
+            if (params.containsKey("tourismName") && params.get("tourismName") != null) {
+                wrapper.eq(FlowAnalysis::getTourismName, params.get("tourismName"));
+            }
+        }
+        
+        // 按记录时间倒序排序
+        wrapper.orderByDesc(FlowAnalysis::getRecordTime);
+        
+        // 执行分页查询
+        Page<FlowAnalysis> page = new Page<>(pageQuery.getPageNum(), pageQuery.getPageSize());
+        IPage<FlowAnalysis> pageResult = flowAnalysisMapper.selectPage(page, wrapper);
+        
+        // 转换为PageResult
+        PageResult<FlowAnalysis> result = new PageResult<>();
+        result.setTotal(pageResult.getTotal());
+        result.setRows(pageResult.getRecords());
+        
+        return result;
+    } catch (BusinessException e) {
+        throw e;
+    } catch (Exception e) {
+        log.error("分页查询流量分析失败", e);
+        throw new BusinessException("分页查询流量分析失败");
+    }
+}
+```
+
+### 3. 日期时间处理示例
+
+```java
+@Override
+public Integer selectTotalFlowCount(Date startTime, Date endTime) {
+    try {
+        // 转换日期类型
+        LocalDateTime startDateTime = ScenicDateUtils.convertToLocalDateTime(startTime);
+        LocalDateTime endDateTime = ScenicDateUtils.convertToLocalDateTime(endTime);
+        
+        // 验证时间范围
+        ScenicValidationUtils.validateTimeRange(startDateTime, endDateTime);
+        
+        // 执行查询
+        return flowAnalysisMapper.countTotal(null, null, startDateTime, endDateTime);
+    } catch (BusinessException e) {
+        throw e;
+    } catch (Exception e) {
+        log.error("统计总流量失败", e);
+        throw new BusinessException("统计总流量失败");
+    }
+}
+```
+
+通过遵循以上规范，可以确保工具类的正确使用，提高代码的可读性、可维护性和性能，同时避免与开源工具类的冲突。

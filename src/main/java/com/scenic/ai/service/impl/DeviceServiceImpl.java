@@ -74,13 +74,13 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (status == null) {
             throw new IllegalArgumentException("设备状态不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getDeviceCode, deviceCode);
-        
+
         Device device = new Device();
         device.setStatus(status);
-        
+
         return update(device, wrapper);
     }
 
@@ -93,13 +93,13 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (StringUtils.isBlank(deviceName)) {
             throw new IllegalArgumentException("设备名称不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getDeviceCode, deviceCode);
-        
+
         Device device = new Device();
         device.setDeviceName(deviceName);
-        
+
         return update(device, wrapper);
     }
 
@@ -112,13 +112,13 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (StringUtils.isBlank(tourismName)) {
             throw new IllegalArgumentException("景区名称不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getDeviceCode, deviceCode);
-        
+
         Device device = new Device();
         device.setTourismName(tourismName);
-        
+
         return update(device, wrapper);
     }
 
@@ -131,29 +131,29 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (status == null) {
             throw new IllegalArgumentException("设备状态不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(Device::getDeviceCode, deviceCodes);
-        
+
         Device device = new Device();
         device.setStatus(status);
-        
+
         return update(device, wrapper);
     }
 
     @Override
     public IPage<Device> pageDevices(Integer pageNum, Integer pageSize, String tourismName, Integer status) {
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.isNotBlank(tourismName)) {
             wrapper.eq(Device::getTourismName, tourismName);
         }
         if (status != null) {
             wrapper.eq(Device::getStatus, status);
         }
-        
+
         wrapper.orderByDesc(Device::getCreateTime);
-        
+
         return page(new Page<>(pageNum, pageSize), wrapper);
     }
 
@@ -162,10 +162,10 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (StringUtils.isBlank(deviceCode)) {
             throw new IllegalArgumentException("设备编码不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getDeviceCode, deviceCode);
-        
+
         return getOne(wrapper);
     }
 
@@ -174,11 +174,11 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (StringUtils.isBlank(tourismName)) {
             throw new IllegalArgumentException("景区名称不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getTourismName, tourismName);
         wrapper.orderByDesc(Device::getCreateTime);
-        
+
         return list(wrapper);
     }
 
@@ -187,11 +187,11 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (status == null) {
             throw new IllegalArgumentException("设备状态不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getStatus, status);
         wrapper.orderByDesc(Device::getCreateTime);
-        
+
         return list(wrapper);
     }
 
@@ -200,10 +200,10 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (StringUtils.isBlank(tourismName)) {
             throw new IllegalArgumentException("景区名称不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getTourismName, tourismName);
-        
+
         return count(wrapper);
     }
 
@@ -212,24 +212,24 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (status == null) {
             throw new IllegalArgumentException("设备状态不能为空");
         }
-        
+
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Device::getStatus, status);
-        
+
         return count(wrapper);
     }
 
     @Override
     public long countDevicesByStatus(String tourismName, Integer status) {
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.isNotBlank(tourismName)) {
             wrapper.eq(Device::getTourismName, tourismName);
         }
         if (status != null) {
             wrapper.eq(Device::getStatus, status);
         }
-        
+
         return count(wrapper);
     }
 }

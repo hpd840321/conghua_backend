@@ -1,665 +1,57 @@
 package com.scenic.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.scenic.ai.common.core.domain.PageQuery;
 import com.scenic.ai.common.core.domain.PageResult;
-import com.scenic.ai.exception.BusinessException;
-import com.scenic.ai.exception.ErrorCode;
-import com.scenic.ai.exception.SystemException;
-import com.scenic.ai.mapper.FlowAnalysisMapper;
+import com.scenic.ai.common.enums.ErrorCode;
+import com.scenic.ai.common.exception.BusinessException;
+import com.scenic.ai.common.exception.SystemException;
+import com.scenic.ai.common.util.QueryUtils;
+import com.scenic.ai.common.util.ValidationUtils;
 import com.scenic.ai.model.FlowAnalysis;
-import com.scenic.ai.service.FlowAnalysisService;
+import com.scenic.ai.mapper.FlowAnalysisMapper;
+import com.scenic.ai.service.IFlowAnalysisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 客流分析服务实现类
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
-public class FlowAnalysisServiceImpl extends ServiceImpl<FlowAnalysisMapper, FlowAnalysis> implements FlowAnalysisService {
+public class FlowAnalysisServiceImpl extends ServiceImpl<FlowAnalysisMapper, FlowAnalysis>
+        implements IFlowAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(FlowAnalysisServiceImpl.class);
 
-    private static final String FIELD_TOURISM_NAME = "tourism_name";
-    private static final String FIELD_DEVICE_CODE = "device_code";
-    private static final String FIELD_FLOW_DIRECTION = "flow_direction";
-    private static final String FIELD_RECORD_TIME = "record_time";
-    private static final String FIELD_FLOW_COUNT = "flow_count";
-    private static final String FIELD_CREATE_TIME = "create_time";
-    private static final String FIELD_UPDATE_TIME = "update_time";
-    private static final String FIELD_ALG_NAME = "alg_name";
-    private static final String FIELD_TASK_CODE = "task_code";
-    private static final String FIELD_IMAGE_URL = "image_url";
-    private static final String FIELD_DEVICE_NAME = "device_name";
-
     private final FlowAnalysisMapper flowAnalysisMapper;
 
+    @Autowired
     public FlowAnalysisServiceImpl(FlowAnalysisMapper flowAnalysisMapper) {
         this.flowAnalysisMapper = flowAnalysisMapper;
     }
 
     @Override
-    public IPage<FlowAnalysis> pageFlowAnalysis(Page<FlowAnalysis> page, String tourismName, String deviceCode,
-            String flowDirection, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-            
-            if (StringUtils.hasText(tourismName)) {
-                wrapper.eq(FlowAnalysis::getTourismName, tourismName);
-            }
-            if (StringUtils.hasText(deviceCode)) {
-                wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode);
-            }
-            if (StringUtils.hasText(flowDirection)) {
-                wrapper.eq(FlowAnalysis::getFlowDirection, flowDirection);
-            }
-            if (startTime != null) {
-                wrapper.ge(FlowAnalysis::getRecordTime, startTime);
-            }
-            if (endTime != null) {
-                wrapper.le(FlowAnalysis::getRecordTime, endTime);
-            }
-            
-            wrapper.orderByDesc(FlowAnalysis::getRecordTime);
-            return page(page, wrapper);
-        } catch (Exception e) {
-            log.error("分页查询客流分析数据失败", e);
-            throw new BusinessException(ErrorCode.QUERY_ERROR, "分页查询客流分析数据失败");
-        }
-    }
-
-    @Override
-    public List<FlowAnalysis> getByDeviceCode(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (!StringUtils.hasText(deviceCode)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编码不能为空");
-            }
-            return flowAnalysisMapper.selectByDeviceCode(deviceCode, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("根据设备编码查询客流数据失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "根据设备编码查询客流数据失败", e);
-        }
-    }
-
-    @Override
-    public List<FlowAnalysis> getByTourismName(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (!StringUtils.hasText(tourismName)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "景区名称不能为空");
-            }
-            return flowAnalysisMapper.selectByTourismName(tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("根据景区名称查询客流数据失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "根据景区名称查询客流数据失败", e);
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> getHourlyDistribution(String deviceCode, String tourismName,
-                                                         LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return flowAnalysisMapper.countByHour(deviceCode, tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取时段客流分布失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取时段客流分布失败", e);
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> getFlowDirectionDistribution(String deviceCode, String tourismName,
-                                                            LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return flowAnalysisMapper.countByDirection(deviceCode, tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取客流方向分布失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取客流方向分布失败", e);
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> getFlowDirectionDistributionV2(String deviceCode, String tourismName,
-            LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return baseMapper.countByDirection(deviceCode, tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取客流方向分布失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取客流方向分布失败", e);
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> getFlowTrend(String deviceCode, String tourismName,
-                                                 LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return flowAnalysisMapper.getFlowTrend(deviceCode, tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取客流趋势失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取客流趋势失败", e);
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> getPeakHours(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return flowAnalysisMapper.getPeakHours(deviceCode, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取高峰时段失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取高峰时段失败", e);
-        }
-    }
-
-    @Override
-    public List<FlowAnalysis> findByConditions(Map<String, Object> params) {
-        try {
-            if (params == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "查询参数不能为空");
-            }
-            return flowAnalysisMapper.findByConditions(params);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("根据条件查询客流分析数据失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "根据条件查询客流分析数据失败", e);
-        }
-    }
-
-    @Override
-    public Long countRecords(Map<String, Object> params) {
-        try {
-            if (params == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "查询参数不能为空");
-            }
-            return flowAnalysisMapper.countRecords(params);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("统计客流分析记录数失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "统计客流分析记录数失败", e);
-        }
-    }
-
-    @Override
-    public List<FlowAnalysis> getFlowByTimeRangeAndTourism(LocalDateTime startTime, LocalDateTime endTime, String tourismName) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            if (!StringUtils.hasText(tourismName)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "景区名称不能为空");
-            }
-
-            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(FlowAnalysis::getTourismName, tourismName)
-                  .ge(FlowAnalysis::getRecordTime, startTime)
-                  .le(FlowAnalysis::getRecordTime, endTime)
-                  .orderByDesc(FlowAnalysis::getRecordTime);
-
-            return list(wrapper);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("根据时间范围和景区名称查询客流数据失败", e);
-            throw new BusinessException(ErrorCode.QUERY_ERROR, "根据时间范围和景区名称查询客流数据失败");
-        }
-    }
-
-    @Override
-    public int getTotalFlowCount(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return this.baseMapper.getTotalFlowCount(deviceCode, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取总客流量失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取总客流量失败", e);
-        }
-    }
-
-    @Override
-    public FlowAnalysis getPeakFlowRecord(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode)
-                   .ge(FlowAnalysis::getRecordTime, startTime)
-                   .le(FlowAnalysis::getRecordTime, endTime)
-                   .orderByDesc(FlowAnalysis::getFlowCount)
-                   .last("LIMIT 1");
-            return this.getOne(wrapper);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取高峰客流记录失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取高峰客流记录失败", e);
-        }
-    }
-
-    @Override
-    public List<FlowAnalysis> getFlowByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (!StringUtils.hasText(deviceCode)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编码不能为空");
-            }
-            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode)
-                  .ge(FlowAnalysis::getRecordTime, startTime)
-                  .le(FlowAnalysis::getRecordTime, endTime)
-                  .orderByDesc(FlowAnalysis::getRecordTime);
-            return list(wrapper);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("根据设备编码查询客流数据失败", e);
-            throw new BusinessException(ErrorCode.QUERY_ERROR, "根据设备编码查询客流数据失败");
-        }
-    }
-
-    @Override
-    public List<FlowAnalysis> getFlowByTourism(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (!StringUtils.hasText(tourismName)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "景区名称不能为空");
-            }
-            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(FlowAnalysis::getTourismName, tourismName)
-                  .ge(FlowAnalysis::getRecordTime, startTime)
-                  .le(FlowAnalysis::getRecordTime, endTime)
-                  .orderByDesc(FlowAnalysis::getRecordTime);
-            return list(wrapper);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("根据景区名称查询客流数据失败", e);
-            throw new BusinessException(ErrorCode.QUERY_ERROR, "根据景区名称查询客流数据失败");
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> getFlowHourDistribution(String deviceCode, String tourismName,
-            LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            return baseMapper.countByHour(deviceCode, tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取时段客流分布失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取时段客流分布失败", e);
-        }
-    }
-
-    @Override
-    public FlowAnalysis getLatestFlowByDevice(String deviceCode) {
-        try {
-            if (!StringUtils.hasText(deviceCode)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编码不能为空");
-            }
-            return baseMapper.selectLatestByDeviceCode(deviceCode);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取设备最新客流数据失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取设备最新客流数据失败", e);
-        }
-    }
-
-    @Override
-    public Map<String, Object> getFlowStatistics(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            LambdaQueryWrapper<FlowAnalysis> wrapper = buildBaseWrapper(tourismName, startTime, endTime);
-            List<FlowAnalysis> flowList = list(wrapper);
-            
-            Map<String, Object> result = new HashMap<>();
-            
-            // 总客流量
-            int totalFlow = flowList.stream()
-                    .mapToInt(flow -> flow.getFlowCount())
-                    .sum();
-            result.put("totalFlow", totalFlow);
-            
-            // 平均客流量
-            double avgFlow = flowList.isEmpty() ? 0 : 
-                    flowList.stream()
-                            .mapToInt(flow -> flow.getFlowCount())
-                            .average()
-                            .orElse(0);
-            result.put("avgFlow", avgFlow);
-            
-            // 最高客流量
-            int maxFlow = flowList.stream()
-                    .mapToInt(flow -> flow.getFlowCount())
-                    .max()
-                    .orElse(0);
-            result.put("maxFlow", maxFlow);
-            
-            // 方向分布
-            Map<String, Long> directionDistribution = flowList.stream()
-                    .collect(Collectors.groupingBy(
-                            flow -> flow.getFlowDirection(),
-                            Collectors.counting()
-                    ));
-            result.put("directionDistribution", directionDistribution);
-            
-            return result;
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取客流统计概览失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "获取客流统计概览失败", e);
-        }
-    }
-
-    private LambdaQueryWrapper<FlowAnalysis> buildBaseWrapper(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(tourismName)) {
-            wrapper.eq(FlowAnalysis::getTourismName, tourismName);
-        }
-        if (startTime != null) {
-            wrapper.ge(FlowAnalysis::getRecordTime, startTime);
-        }
-        if (endTime != null) {
-            wrapper.le(FlowAnalysis::getRecordTime, endTime);
-        }
-        return wrapper;
-    }
-
-    /**
-     * 查询客流分析列表
-     * 
-     * @param flowAnalysis 查询条件
-     * @return 客流分析列表
-     */
-    @Override
     public List<FlowAnalysis> selectFlowAnalysisList(FlowAnalysis flowAnalysis) {
         try {
-            if (flowAnalysis == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "查询条件不能为空");
-            }
-            
-            String deviceCode = flowAnalysis.getDeviceCode();
-            String tourismName = flowAnalysis.getTourismName();
-            Date startTime = flowAnalysis.getStartTime() != null ? 
-                    Date.from(flowAnalysis.getStartTime().atZone(java.time.ZoneId.systemDefault()).toInstant()) : null;
-            Date endTime = flowAnalysis.getEndTime() != null ? 
-                    Date.from(flowAnalysis.getEndTime().atZone(java.time.ZoneId.systemDefault()).toInstant()) : null;
-            
-            return flowAnalysisMapper.selectFlowAnalysisList(deviceCode, tourismName, startTime, endTime);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("查询客流分析列表失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "查询客流分析列表失败", e);
-        }
-    }
-
-    /**
-     * 查询客流分析详情
-     * 
-     * @param id 客流分析ID
-     * @return 客流分析详情
-     */
-    @Override
-    public FlowAnalysis selectFlowAnalysisById(Long id) {
-        try {
-            if (id == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "ID不能为空");
-            }
-            return flowAnalysisMapper.selectFlowAnalysisById(id);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("查询客流分析详情失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "查询客流分析详情失败", e);
-        }
-    }
-
-    /**
-     * 新增客流分析
-     * 
-     * @param flowAnalysis 客流分析信息
-     * @return 结果
-     */
-    @Override
-    public int insertFlowAnalysis(FlowAnalysis flowAnalysis) {
-        try {
-            if (flowAnalysis == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "客流分析信息不能为空");
-            }
-            if (!StringUtils.hasText(flowAnalysis.getDeviceCode())) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编码不能为空");
-            }
-            return flowAnalysisMapper.insertFlowAnalysis(flowAnalysis);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("新增客流分析失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "新增客流分析失败", e);
-        }
-    }
-
-    /**
-     * 修改客流分析
-     * 
-     * @param flowAnalysis 客流分析信息
-     * @return 结果
-     */
-    @Override
-    public int updateFlowAnalysis(FlowAnalysis flowAnalysis) {
-        try {
-            if (flowAnalysis == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "客流分析信息不能为空");
-            }
-            if (flowAnalysis.getId() == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "ID不能为空");
-            }
-            return flowAnalysisMapper.updateFlowAnalysis(flowAnalysis);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("修改客流分析失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "修改客流分析失败", e);
-        }
-    }
-
-    /**
-     * 删除客流分析
-     * 
-     * @param id 客流分析ID
-     * @return 结果
-     */
-    @Override
-    public int deleteFlowAnalysisById(Long id) {
-        try {
-            if (id == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "ID不能为空");
-            }
-            return flowAnalysisMapper.deleteFlowAnalysisById(id);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("删除客流分析失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "删除客流分析失败", e);
-        }
-    }
-
-    /**
-     * 批量删除客流分析
-     * 
-     * @param ids 需要删除的客流分析ID数组
-     * @return 结果
-     */
-    @Override
-    public int deleteFlowAnalysisByIds(Long[] ids) {
-        try {
-            if (ids == null || ids.length == 0) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "ID数组不能为空");
-            }
-            return flowAnalysisMapper.deleteFlowAnalysisByIds(ids);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("批量删除客流分析失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "批量删除客流分析失败", e);
-        }
-    }
-
-    /**
-     * 统计指定时间范围内的总客流量
-     * 
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 总客流量
-     */
-    @Override
-    public Integer selectTotalFlowCount(LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            
-            Date startDate = Date.from(startTime.atZone(java.time.ZoneId.systemDefault()).toInstant());
-            Date endDate = Date.from(endTime.atZone(java.time.ZoneId.systemDefault()).toInstant());
-            
-            return flowAnalysisMapper.selectTotalFlowCount(startDate, endDate);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("统计总客流量失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "统计总客流量失败", e);
-        }
-    }
-
-    /**
-     * 统计指定时间范围内的各方向客流数量
-     * 
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 各方向客流数量统计
-     */
-    @Override
-    public List<FlowAnalysis> selectFlowDirectionStats(LocalDateTime startTime, LocalDateTime endTime) {
-        try {
-            if (startTime == null || endTime == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
-            }
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
-            }
-            
-            Date startDate = Date.from(startTime.atZone(java.time.ZoneId.systemDefault()).toInstant());
-            Date endDate = Date.from(endTime.atZone(java.time.ZoneId.systemDefault()).toInstant());
-            
-            return flowAnalysisMapper.selectFlowDirectionStats(startDate, endDate);
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("统计各方向客流数量失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "统计各方向客流数量失败", e);
-        }
-    }
-    
-    /**
-     * 分页查询客流分析数据
-     * 
-     * @param page 分页参数
-     * @param flowAnalysis 查询条件
-     * @return 分页结果
-     */
-    @Override
-    public IPage<FlowAnalysis> selectFlowAnalysisPage(Page<FlowAnalysis> page, FlowAnalysis flowAnalysis) {
-        try {
-            if (page == null) {
-                throw new BusinessException(ErrorCode.PARAM_ERROR, "分页参数不能为空");
-            }
-            
+            // 构建查询条件
             LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
-            
+
+            // 设置查询条件
             if (flowAnalysis != null) {
                 if (StringUtils.hasText(flowAnalysis.getDeviceCode())) {
                     wrapper.eq(FlowAnalysis::getDeviceCode, flowAnalysis.getDeviceCode());
@@ -674,15 +66,558 @@ public class FlowAnalysisServiceImpl extends ServiceImpl<FlowAnalysisMapper, Flo
                     wrapper.eq(FlowAnalysis::getRecordTime, flowAnalysis.getRecordTime());
                 }
             }
-            
+
+            // 按记录时间倒序排序
             wrapper.orderByDesc(FlowAnalysis::getRecordTime);
-            
-            return page(page, wrapper);
+
+            // 执行查询
+            return flowAnalysisMapper.selectList(wrapper);
+        } catch (Exception e) {
+            log.error("查询客流分析列表失败", e);
+            throw new BusinessException("查询客流分析列表失败");
+        }
+    }
+
+    @Override
+    public FlowAnalysis selectFlowAnalysisById(Long id) {
+        try {
+            // 验证ID
+            ValidationUtils.validateId(id);
+
+            // 执行查询
+            return flowAnalysisMapper.selectById(id);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("分页查询客流分析数据失败", e);
-            throw new SystemException(ErrorCode.DATABASE_ERROR, "分页查询客流分析数据失败", e);
+            log.error("查询客流分析详情失败, id: {}", id, e);
+            throw new BusinessException("查询客流分析详情失败");
         }
     }
-} 
+
+    @Override
+    public int insertFlowAnalysis(FlowAnalysis flowAnalysis) {
+        try {
+            // 验证流量分析对象
+            validateFlowAnalysis(flowAnalysis);
+
+            // 执行插入
+            return flowAnalysisMapper.insert(flowAnalysis);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("插入流量分析数据失败", e);
+            throw new BusinessException("插入流量分析数据失败");
+        }
+    }
+
+    @Override
+    public int updateFlowAnalysis(FlowAnalysis flowAnalysis) {
+        try {
+            // 验证ID
+            ValidationUtils.validateId(flowAnalysis.getId());
+
+            // 验证流量分析对象
+            validateFlowAnalysis(flowAnalysis);
+
+            // 执行更新
+            return flowAnalysisMapper.updateById(flowAnalysis);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("更新流量分析数据失败, id: {}", flowAnalysis.getId(), e);
+            throw new BusinessException("更新流量分析数据失败");
+        }
+    }
+
+    @Override
+    public int deleteFlowAnalysisById(Long id) {
+        try {
+            // 验证ID
+            ValidationUtils.validateId(id);
+
+            // 执行删除
+            return flowAnalysisMapper.deleteById(id);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("删除流量分析数据失败, id: {}", id, e);
+            throw new BusinessException("删除流量分析数据失败");
+        }
+    }
+
+    @Override
+    public int deleteFlowAnalysisByIds(Long[] ids) {
+        try {
+            // 验证ID数组
+            if (ids == null || ids.length == 0) {
+                throw new BusinessException("ID数组不能为空");
+            }
+
+            // 执行批量删除
+            return flowAnalysisMapper.deleteBatchIds(java.util.Arrays.asList(ids));
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("批量删除流量分析数据失败", e);
+            throw new BusinessException("批量删除流量分析数据失败");
+        }
+    }
+
+    @Override
+    public Integer selectTotalFlowCount(Date startTime, Date endTime) {
+        try {
+            // 转换日期类型
+            LocalDateTime startDateTime = convertToLocalDateTime(startTime);
+            LocalDateTime endDateTime = convertToLocalDateTime(endTime);
+
+            // 验证时间范围
+            ValidationUtils.validateTimeRange(startDateTime, endDateTime);
+
+            // 执行查询
+            return flowAnalysisMapper.countTotal(null, null, startDateTime, endDateTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("统计总流量失败", e);
+            throw new BusinessException("统计总流量失败");
+        }
+    }
+
+    @Override
+    public List<FlowAnalysis> selectFlowDirectionStats(Date startTime, Date endTime) {
+        try {
+            // 转换日期类型
+            LocalDateTime startDateTime = convertToLocalDateTime(startTime);
+            LocalDateTime endDateTime = convertToLocalDateTime(endTime);
+
+            // 验证时间范围
+            ValidationUtils.validateTimeRange(startDateTime, endDateTime);
+
+            // 执行查询
+            return flowAnalysisMapper.selectFlowDirectionStats(startDateTime, endDateTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("统计流量方向分布失败", e);
+            throw new BusinessException("统计流量方向分布失败");
+        }
+    }
+
+    @Override
+    public PageResult<FlowAnalysis> selectFlowAnalysisPage(PageQuery pageQuery) {
+        try {
+            // 验证分页参数
+            ValidationUtils.validatePage(pageQuery.getPageNum(), pageQuery.getPageSize());
+
+            // 构建查询条件
+            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+
+            // 设置查询条件
+            if (pageQuery.getParams() != null) {
+                Map<String, Object> params = pageQuery.getParams();
+                if (params.containsKey("deviceCode") && params.get("deviceCode") != null) {
+                    wrapper.eq(FlowAnalysis::getDeviceCode, params.get("deviceCode"));
+                }
+                if (params.containsKey("tourismName") && params.get("tourismName") != null) {
+                    wrapper.eq(FlowAnalysis::getTourismName, params.get("tourismName"));
+                }
+                if (params.containsKey("flowDirection") && params.get("flowDirection") != null) {
+                    wrapper.eq(FlowAnalysis::getFlowDirection, params.get("flowDirection"));
+                }
+            }
+
+            // 按记录时间倒序排序
+            wrapper.orderByDesc(FlowAnalysis::getRecordTime);
+
+            // 执行分页查询
+            Page<FlowAnalysis> page = new Page<>(pageQuery.getPageNum(), pageQuery.getPageSize());
+            IPage<FlowAnalysis> pageResult = flowAnalysisMapper.selectPage(page, wrapper);
+
+            // 转换为PageResult
+            PageResult<FlowAnalysis> result = new PageResult<>();
+            result.setTotal(pageResult.getTotal());
+            result.setRows(pageResult.getRecords());
+
+            return result;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("分页查询流量分析失败", e);
+            throw new BusinessException("分页查询流量分析失败");
+        }
+    }
+
+    /**
+     * 验证流量分析对象
+     */
+    private void validateFlowAnalysis(FlowAnalysis flowAnalysis) {
+        if (flowAnalysis == null) {
+            throw new BusinessException("流量分析对象不能为空");
+        }
+
+        // 验证设备编码
+        if (flowAnalysis.getDeviceCode() != null) {
+            ValidationUtils.validateDeviceCode(flowAnalysis.getDeviceCode());
+        }
+
+        // 验证景区名称
+        if (flowAnalysis.getTourismName() != null) {
+            ValidationUtils.validateTourismName(flowAnalysis.getTourismName());
+        }
+
+        // 验证流量数量
+        if (flowAnalysis.getFlowCount() != null && flowAnalysis.getFlowCount() < 0) {
+            throw new BusinessException("流量数量不能为负数");
+        }
+    }
+
+    /**
+     * 将Date转换为LocalDateTime
+     */
+    private LocalDateTime convertToLocalDateTime(Date date) {
+        if (date == null) {
+            return null;
+        }
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean save(FlowAnalysis flowAnalysis) {
+        if (flowAnalysis == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "客流分析记录不能为空");
+        }
+        try {
+            return flowAnalysisMapper.insert(flowAnalysis) > 0;
+        } catch (Exception e) {
+            log.error("保存客流分析记录失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存客流分析记录失败");
+        }
+    }
+
+    @Override
+    public FlowAnalysis getById(Long id) {
+        if (id == null || id <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "客流分析记录ID不能为空");
+        }
+        try {
+            return flowAnalysisMapper.selectById(id);
+        } catch (Exception e) {
+            log.error("查询客流分析记录失败, id: {}", id, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询客流分析记录失败");
+        }
+    }
+
+    @Override
+    public List<FlowAnalysis> listByDevice(String deviceCode) {
+        if (!StringUtils.hasText(deviceCode)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编码不能为空");
+        }
+        try {
+            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode)
+                    .orderByDesc(FlowAnalysis::getRecordTime);
+            return flowAnalysisMapper.selectList(wrapper);
+        } catch (Exception e) {
+            log.error("查询设备客流分析记录失败, deviceCode: {}", deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询设备客流分析记录失败");
+        }
+    }
+
+    @Override
+    public List<FlowAnalysis> listByTourism(String tourismName) {
+        if (!StringUtils.hasText(tourismName)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "景区名称不能为空");
+        }
+        try {
+            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(FlowAnalysis::getTourismName, tourismName)
+                    .orderByDesc(FlowAnalysis::getRecordTime);
+            return flowAnalysisMapper.selectList(wrapper);
+        } catch (Exception e) {
+            log.error("查询景区客流分析记录失败, tourismName: {}", tourismName, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询景区客流分析记录失败");
+        }
+    }
+
+    @Override
+    public List<FlowAnalysis> listByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.between(FlowAnalysis::getRecordTime, startTime, endTime)
+                    .orderByDesc(FlowAnalysis::getRecordTime);
+            return flowAnalysisMapper.selectList(wrapper);
+        } catch (Exception e) {
+            log.error("查询时间范围内客流分析记录失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询时间范围内客流分析记录失败");
+        }
+    }
+
+    @Override
+    public IPage<FlowAnalysis> page(Page<FlowAnalysis> page, String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        if (page == null || page.getCurrent() <= 0 || page.getSize() <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "分页参数错误");
+        }
+        if (startTime != null && endTime != null) {
+            validateTimeRange(startTime, endTime);
+        }
+        try {
+            LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+            if (StringUtils.hasText(deviceCode)) {
+                wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode);
+            }
+            if (StringUtils.hasText(tourismName)) {
+                wrapper.eq(FlowAnalysis::getTourismName, tourismName);
+            }
+            if (startTime != null) {
+                wrapper.ge(FlowAnalysis::getRecordTime, startTime);
+            }
+            if (endTime != null) {
+                wrapper.le(FlowAnalysis::getRecordTime, endTime);
+            }
+            wrapper.orderByDesc(FlowAnalysis::getRecordTime);
+            return flowAnalysisMapper.selectPage(page, wrapper);
+        } catch (Exception e) {
+            log.error("分页查询客流分析记录失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "分页查询客流分析记录失败");
+        }
+    }
+
+    @Override
+    public Integer getMaxFlowCount(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.selectMaxFlowCount(startTime, endTime);
+        } catch (Exception e) {
+            log.error("获取最大客流量失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取最大客流量失败");
+        }
+    }
+
+    @Override
+    public Integer getMinFlowCount(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.selectMinFlowCount(startTime, endTime);
+        } catch (Exception e) {
+            log.error("获取最小客流量失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取最小客流量失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getTourismDistribution(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.selectTourismDistribution(startTime, endTime);
+        } catch (Exception e) {
+            log.error("获取景区分布失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取景区分布失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getDeviceDistribution(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.selectDeviceDistribution(startTime, endTime);
+        } catch (Exception e) {
+            log.error("获取设备分布失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取设备分布失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getDirectionDistribution(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.selectDirectionDistribution(startTime, endTime);
+        } catch (Exception e) {
+            log.error("获取方向分布失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取方向分布失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getTimeTrend(LocalDateTime startTime, LocalDateTime endTime, Integer interval) {
+        validateTimeRange(startTime, endTime);
+        if (interval == null || interval <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "时间间隔必须大于0");
+        }
+        try {
+            return flowAnalysisMapper.selectTimeTrend(startTime, endTime, interval);
+        } catch (Exception e) {
+            log.error("获取时间趋势失败, startTime: {}, endTime: {}, interval: {}", startTime, endTime, interval, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取时间趋势失败");
+        }
+    }
+
+    @Override
+    public Map<String, Object> getOverview(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.selectOverview(startTime, endTime);
+        } catch (Exception e) {
+            log.error("获取概览数据失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取概览数据失败");
+        }
+    }
+
+    /**
+     * 验证时间范围
+     */
+    private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
+        }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
+        }
+    }
+
+    @Override
+    public List<FlowAnalysis> listByConditions(String tourismName, String deviceCode, String algName,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            return flowAnalysisMapper.listByConditions(tourismName, deviceCode, algName, startTime, endTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("查询客流分析列表失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询客流分析列表失败");
+        }
+    }
+
+    @Override
+    public IPage<FlowAnalysis> pageByConditions(Page<FlowAnalysis> page,
+            String deviceCode,
+            String tourismName,
+            LocalDateTime startTime,
+            LocalDateTime endTime) {
+        if (page == null || page.getCurrent() <= 0 || page.getSize() <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "分页参数错误");
+        }
+        if (startTime != null && endTime != null) {
+            validateTimeRange(startTime, endTime);
+        }
+        try {
+            return flowAnalysisMapper.pageByConditions(page, deviceCode, tourismName, startTime, endTime);
+        } catch (Exception e) {
+            log.error("分页查询客流分析记录失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "分页查询客流分析记录失败");
+        }
+    }
+
+    @Override
+    public Integer countTotalFlow(LocalDateTime startTime, LocalDateTime endTime) {
+        validateTimeRange(startTime, endTime);
+        try {
+            return flowAnalysisMapper.countTotalFlow(startTime, endTime);
+        } catch (Exception e) {
+            log.error("统计总客流量失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "统计总客流量失败");
+        }
+    }
+
+    @Override
+    public Integer countByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            return flowAnalysisMapper.countByTimeRange(startTime, endTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("统计时间范围内客流量失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "统计时间范围内客流量失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getDirectionDistribution(String tourismName, String deviceCode,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            return flowAnalysisMapper.getDirectionDistribution(tourismName, deviceCode, startTime, endTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取客流方向分布失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取客流方向分布失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getTimeDistribution(String tourismName, String deviceCode,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            return flowAnalysisMapper.getTimeDistribution(tourismName, deviceCode, startTime, endTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取客流时段分布失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取客流时段分布失败");
+        }
+    }
+
+    @Override
+    public FlowAnalysis getLatestByDevice(String deviceCode) {
+        try {
+            if (StringUtils.hasText(deviceCode)) {
+                LambdaQueryWrapper<FlowAnalysis> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(FlowAnalysis::getDeviceCode, deviceCode)
+                        .orderByDesc(FlowAnalysis::getRecordTime)
+                        .last("FETCH FIRST 1 ROWS ONLY");
+                return getOne(wrapper);
+            }
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编号不能为空");
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取设备最新客流分析失败, deviceCode: {}", deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取设备最新客流分析失败");
+        }
+    }
+
+    @Override
+    public Map<String, Object> getOverview(String tourismName, String deviceCode,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            Map<String, Object> result = new HashMap<>();
+
+            // 获取总客流量
+            int totalCount = count(tourismName, deviceCode, null, startTime, endTime);
+            result.put("totalCount", totalCount);
+
+            // 获取最大客流量
+            Integer maxFlowCount = getMaxFlowCount(startTime, endTime);
+            result.put("maxFlowCount", maxFlowCount);
+
+            // 获取最小客流量
+            Integer minFlowCount = getMinFlowCount(startTime, endTime);
+            result.put("minFlowCount", minFlowCount);
+
+            // 获取方向分布
+            List<Map<String, Object>> directionDistribution = getDirectionDistribution(tourismName, deviceCode,
+                    startTime,
+                    endTime);
+            result.put("directionDistribution", directionDistribution);
+
+            // 获取时段分布
+            List<Map<String, Object>> timeDistribution = getTimeDistribution(tourismName, deviceCode, startTime,
+                    endTime);
+            result.put("timeDistribution", timeDistribution);
+
+            return result;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取客流分析概览失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取客流分析概览失败");
+        }
+    }
+}

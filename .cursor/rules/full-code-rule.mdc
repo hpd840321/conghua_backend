@@ -1,0 +1,246 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 景区AI系统编码规范要求
+
+## 一、项目架构规范
+
+### 1. 技术栈要求
+- 禁止使用Spring Boot相关技术架构
+- 仅允许使用Spring MVC相关技术架构
+- 前端禁止使用Vue，必须使用JSP和ECharts相关技术
+- 禁止使用Lombok注解
+- 数据库使用达梦数据库
+
+### 2. 项目结构规范
+```
+src/main/java/com/scenic/ai/
+├── common/           # 公共组件
+│   ├── exception/    # 异常处理
+│   └── utils/        # 工具类
+├── controller/       # 控制器层
+├── entity/           # 实体类
+├── mapper/           # 数据访问层
+├── service/          # 服务层
+│   └── impl/         # 服务实现
+└── web/              # Web相关配置
+```
+
+## 二、命名规范
+
+### 1. 包命名规范
+- 使用小写字母，多个单词用点号分隔
+- 包名应具有描述性，反映包的用途
+- 例如：`com.scenic.ai.controller`、`com.scenic.ai.service.impl`
+
+### 2. 类命名规范
+- 使用大驼峰命名法（PascalCase）
+- 类名应具有描述性，反映类的用途
+- 例如：`AlertController`、`CrowdStatisticsServiceImpl`
+
+### 3. 接口命名规范
+- 使用大驼峰命名法，以"I"开头
+- 例如：`IAlertService`、`ICrowdStatisticsService`
+
+### 4. 方法命名规范
+- 使用小驼峰命名法（camelCase）
+- 方法名应具有描述性，反映方法的功能
+- 查询单个对象：使用`get`前缀
+- 查询列表：使用`list`前缀
+- 统计数量：使用`count`前缀
+- 分页查询：使用`page`前缀
+- 插入操作：使用`save`前缀
+- 更新操作：使用`update`前缀
+- 删除操作：使用`delete`前缀
+- 业务操作：使用动词+名词，如`processAlert`
+
+### 5. 变量命名规范
+- 使用小驼峰命名法
+- 变量名应具有描述性，反映变量的用途
+- 常量使用全大写，多个单词用下划线分隔
+- 例如：`MAX_RETRY_COUNT`、`DEFAULT_PAGE_SIZE`
+
+## 三、代码风格规范
+
+### 1. 缩进和格式
+- 使用4个空格进行缩进，不使用Tab
+- 大括号单独占一行
+- 运算符前后加空格
+- 逗号后加空格
+- 每行代码不超过120个字符
+
+### 2. 注释规范
+- 类注释：描述类的用途、作者、创建日期
+- 方法注释：描述方法的功能、参数、返回值、异常
+- 关键代码注释：解释复杂逻辑或算法
+- 使用Javadoc风格的注释
+
+### 3. 异常处理规范
+- 使用自定义异常类，如`BusinessException`、`SystemException`
+- 在方法中捕获异常并转换为业务异常
+- 记录异常日志，包含详细的错误信息
+- 避免捕获通用异常`Exception`，应捕获具体异常
+
+### 4. 日志记录规范
+- 使用SLF4J进行日志记录
+- 记录方法入口和出口信息
+- 记录关键业务操作和异常信息
+- 使用适当的日志级别（DEBUG、INFO、WARN、ERROR）
+- 日志信息应包含足够的上下文信息
+
+## 四、数据库规范
+
+### 1. 表命名规范
+- 使用大写字母，多个单词用下划线连接
+- 表名应具有描述性，反映表的用途
+- 例如：`ALERT`、`CROWD_STATISTICS`、`DEVICE`
+
+### 2. 字段命名规范
+- 使用大写字母，多个单词用下划线连接
+- 字段名应具有描述性，反映字段的用途
+- 例如：`DEVICE_CODE`、`TOURISM_NAME`、`ALERT_LEVEL`
+
+### 3. SQL语句规范
+- 关键字使用大写，如`SELECT`、`FROM`、`WHERE`
+- 表名和字段名使用大写
+- 使用达梦数据库特有的分页语法：`FETCH FIRST n ROWS ONLY OFFSET m ROWS`
+- 避免使用`SELECT *`，明确指定查询字段
+- 为常用查询条件创建索引
+- 使用`EXISTS`代替`IN`进行子查询
+- 合理使用`UNION ALL`代替`UNION`
+- 避免在索引列上使用函数或运算
+
+## 五、Mapper层规范
+
+### 1. 接口命名规范
+- 使用`XxxMapper`格式，其中`Xxx`为实体名称
+- 例如：`AlertMapper`、`CrowdStatisticsMapper`、`DeviceMapper`
+
+### 2. 方法命名规范
+- 查询单个对象：使用`get`前缀，如`getById`、`getByDeviceCode`
+- 查询列表：使用`list`前缀，如`listByTourism`、`listByStatus`
+- 统计数量：使用`count`前缀，如`countByStatus`、`countByTourism`
+- 分页查询：使用`page`前缀，如`pageByConditions`
+- 插入操作：使用`insert`前缀，如`insert`、`insertBatch`
+- 更新操作：使用`update`前缀，如`updateStatus`、`updateBatch`
+- 删除操作：使用`delete`前缀，如`deleteById`、`deleteBatch`
+
+### 3. XML映射规范
+- 必须定义`BaseResultMap`作为基础结果映射
+- 字段名使用大写，与数据库字段名一致
+- 属性名使用驼峰命名，与Java实体属性一致
+- 使用`<sql>`标签定义可重用的SQL片段
+- 必须定义`Base_Column_List`包含所有字段
+- 复杂条件可抽取为独立SQL片段
+- 使用`<where>`标签替代WHERE关键字
+- 使用`<if>`标签进行条件判断
+- 使用`<foreach>`标签处理集合参数
+- 使用`<choose>`、`<when>`、`<otherwise>`处理多条件分支
+
+-禁止使用baseMapper
+
+## 六、Service层规范
+
+### 1. 接口命名规范
+- 使用`IXxxService`格式，其中`Xxx`为实体名称
+- 例如：`IAlertService`、`ICrowdStatisticsService`、`IDeviceService`
+
+### 2. 实现类命名规范
+- 使用`XxxServiceImpl`格式，其中`Xxx`为实体名称
+- 例如：`AlertServiceImpl`、`CrowdStatisticsServiceImpl`、`DeviceServiceImpl`
+
+### 3. 方法参数规范
+- 单个参数：直接使用参数类型
+- 多个参数：直接使用多个参数，不使用DTO对象
+- 分页参数：直接使用`pageNum`和`pageSize`参数
+
+### 4. 返回值规范
+- 单个对象：返回实体类型
+- 列表查询：返回`List<实体类型>`
+- 分页查询：返回`IPage<实体类型>`
+- 统计查询：返回`Map<String, Object>`或具体数值类型
+- 操作结果：返回`boolean`或`int`表示成功或失败
+
+### 5. 事务管理规范
+- 在方法级别使用`@Transactional`注解
+- 指定`rollbackFor`属性为`Exception.class`
+- 对于只读操作，使用`@Transactional(readOnly = true)`
+
+## 七、Controller层规范
+
+### 1. 命名规范
+- 使用`XxxController`格式，其中`Xxx`为实体名称
+- 例如：`AlertController`、`CrowdStatisticsController`、`DeviceController`
+
+### 2. 请求映射规范
+- 使用`@RequestMapping`注解定义请求路径
+- 使用`@GetMapping`、`@PostMapping`等注解定义请求方法
+- 请求路径使用小写字母，多个单词用连字符分隔
+- 例如：`/alert/list`、`/crowd-statistics/overview`
+
+### 3. 参数处理规范
+- 使用`@RequestParam`注解处理请求参数
+- 使用`@RequestBody`注解处理请求体
+- 使用`@PathVariable`注解处理路径变量
+- 参数校验使用`@Valid`注解
+
+### 4. 返回值规范
+- 使用统一的响应格式，如`Result<T>`
+- 成功响应：`Result.success(data)`
+- 失败响应：`Result.error(code, message)`
+- 分页响应：`Result.success(page)`
+
+## 八、禁止事项
+
+### 1. 禁止实现的功能
+- 实时监控功能（WebSocket支持、数据实时推送、告警阈值配置）
+- 数据存储策略优化（数据分片存储、数据归档功能、查询性能优化）
+- 增强统计分析功能（更多统计维度、自定义统计周期、数据导出功能）
+- 导出功能
+- 自动更新数据功能
+- WebSocket功能
+
+### 2. 禁止使用的技术
+- Spring Boot相关技术
+- Vue前端框架
+- Lombok注解
+- 实时数据推送技术
+
+## 九、性能优化规范
+
+### 1. 数据库优化
+- 为常用查询条件创建索引
+- 避免在循环中执行SQL
+- 大量数据操作时使用批量处理
+- 避免使用`SELECT *`，只查询需要的字段
+- 使用`EXISTS`代替`IN`进行子查询
+- 合理使用`UNION ALL`代替`UNION`
+- 避免在索引列上使用函数或运算
+
+### 2. 代码优化
+- 避免在循环中执行数据库操作
+- 使用批量操作代替单条操作
+- 合理使用缓存减少数据库访问
+- 避免重复定义相同功能的SQL
+- 合理使用索引提示
+
+## 十、安全规范
+
+### 1. 数据安全
+- 敏感数据加密存储
+- 使用参数化查询防止SQL注入
+- 避免在日志中记录敏感信息
+
+### 2. 访问控制
+- 实现基于角色的访问控制
+- 对敏感操作进行权限验证
+- 记录关键操作的审计日志
+
+### 3. 输入验证
+- 对所有用户输入进行验证
+- 使用参数校验注解进行参数校验
+- 对特殊字符进行转义处理
+
+通过遵循以上规范，可以确保代码的质量、可读性、可维护性和性能，同时避免使用禁止的技术和功能。

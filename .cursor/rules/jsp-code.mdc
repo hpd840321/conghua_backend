@@ -1,0 +1,565 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 景区AI系统JSP和Controller编码规范（结合项目规范）
+
+## 一、JSP编码规范
+
+### 1. 文件命名规范
+- 使用小写字母，多个单词用连字符分隔
+- 文件名应具有描述性，反映页面的用途
+- 例如：`flow-analysis.jsp`、`alert-list.jsp`、`crowd-statistics.jsp`
+
+### 2. 页面结构规范
+- 必须包含标准的JSP头部声明
+  ```jsp
+  <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+  <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+  ```
+- 使用HTML5文档类型声明
+  ```jsp
+  <!DOCTYPE html>
+  <html>
+  ```
+- 页面必须包含完整的`<head>`和`<body>`标签
+
+### 3. 资源引用规范
+- 使用`${pageContext.request.contextPath}`或`${ctx}`引用上下文路径
+- CSS文件放在`<head>`标签内
+- JavaScript文件放在`</body>`标签前
+- 资源引用顺序：先CSS，后JavaScript
+- 例如：
+  ```jsp
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/bootstrap.min.css">
+  <script src="${pageContext.request.contextPath}/static/js/jquery.min.js"></script>
+  ```
+
+### 4. 页面布局规范
+- 使用Bootstrap栅格系统进行响应式布局
+- 页面结构应包含：筛选条件、统计卡片、图表区域、数据表格
+- 使用卡片组件（card）包装各个功能区域
+- 例如：
+  ```jsp
+  <div class="container-fluid">
+      <!-- 筛选条件 -->
+      <div class="card mb-4">
+          <!-- 筛选表单 -->
+      </div>
+      
+      <!-- 统计卡片 -->
+      <div class="row mb-4">
+          <!-- 统计卡片 -->
+      </div>
+      
+      <!-- 图表区域 -->
+      <div class="row mb-4">
+          <!-- 图表 -->
+      </div>
+      
+      <!-- 数据表格 -->
+      <div class="card">
+          <!-- 表格 -->
+      </div>
+  </div>
+  ```
+
+### 5. 表单规范
+- 使用Bootstrap表单样式
+- 表单元素必须有`id`和`name`属性
+- 使用`form-group`类包装表单元素
+- 例如：
+  ```jsp
+  <div class="form-group">
+      <label>景区名称</label>
+      <input type="text" class="form-control" id="tourismName" name="tourismName">
+  </div>
+  ```
+
+### 6. 表格规范
+- 使用Bootstrap表格样式
+- 表格必须有表头（`<thead>`）
+- 表格主体（`<tbody>`）通常通过JavaScript动态填充
+- 例如：
+  ```jsp
+  <table class="table table-striped">
+      <thead>
+          <tr>
+              <th>景区名称</th>
+              <th>设备名称</th>
+              <th>客流量</th>
+              <th>记录时间</th>
+          </tr>
+      </thead>
+      <tbody id="dataTable">
+          <!-- 数据行将通过JavaScript动态生成 -->
+      </tbody>
+  </table>
+  ```
+
+### 7. 分页规范
+- 使用Bootstrap分页组件
+- 分页容器必须有`id`属性，便于JavaScript操作
+- 例如：
+  ```jsp
+  <ul class="pagination" id="pagination">
+      <!-- 分页将通过JavaScript动态生成 -->
+  </ul>
+  ```
+
+### 8. 模态框规范
+- 使用Bootstrap模态框组件
+- 模态框必须有唯一的`id`属性
+- 模态框标题、内容和按钮结构完整
+- 例如：
+  ```jsp
+  <div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">详情</h5>
+                  <button type="button" class="close" data-dismiss="modal">
+                      <span>&times;</span>
+                  </button>
+              </div>
+              <div class="modal-body">
+                  <!-- 模态框内容 -->
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+              </div>
+          </div>
+      </div>
+  </div>
+  ```
+
+### 9. 加载状态规范
+- 使用加载动画显示AJAX请求状态
+- 加载动画必须有`id`属性，便于JavaScript控制
+- 例如：
+  ```jsp
+  <div id="loading" class="loading-overlay" style="display: none;">
+      <div class="loading-spinner"></div>
+  </div>
+  ```
+
+### 10. 错误提示规范
+- 使用Bootstrap警告组件显示错误信息
+- 错误提示容器必须有`id`属性，便于JavaScript操作
+- 例如：
+  ```jsp
+  <div id="alertContainer"></div>
+  ```
+
+## 二、Controller编码规范
+
+### 1. 命名规范
+- 使用`XxxController`格式，其中`Xxx`为实体名称
+- 例如：`AlertController`、`CrowdStatisticsController`、`FlowAnalysisController`
+
+### 2. 注解规范
+- 使用`@RestController`注解标记控制器类
+- 使用`@RequestMapping`注解定义请求路径
+- 使用`@GetMapping`、`@PostMapping`等注解定义请求方法
+- 例如：
+  ```java
+  @RestController
+  @RequestMapping("/api/flow-analysis")
+  public class FlowAnalysisController {
+      @GetMapping("/page")
+      public AjaxResult page(...) {
+          // 方法实现
+      }
+  }
+  ```
+
+### 3. 请求路径规范
+- 使用小写字母，多个单词用连字符分隔
+- 路径应以`/api`开头，表示API接口
+- 路径应包含资源名称，例如：`/api/flow-analysis`
+- 子路径应表示操作，例如：`/page`、`/overview`、`/trend`
+- 例如：
+  ```java
+  @RequestMapping("/api/flow-analysis")
+  ```
+
+### 4. 参数处理规范
+- 使用`@RequestParam`注解处理请求参数
+- 使用`@PathVariable`注解处理路径变量
+- 使用`@DateTimeFormat`注解处理日期时间参数
+- 例如：
+  ```java
+  @GetMapping("/page")
+  public AjaxResult page(
+          @RequestParam(defaultValue = "1") Integer pageNum,
+          @RequestParam(defaultValue = "10") Integer pageSize,
+          @RequestParam(required = false) String deviceCode,
+          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+      // 方法实现
+  }
+  ```
+
+### 5. 返回值规范
+- 使用`AjaxResult`类统一响应格式
+- 成功响应使用`AjaxResult.success(data)`
+- 失败响应使用`AjaxResult.error(msg)`
+- 例如：
+  ```java
+  @GetMapping("/overview")
+  public AjaxResult getOverview(
+          @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+          @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+      return AjaxResult.success(flowAnalysisService.getOverview(startTime, endTime));
+  }
+  ```
+
+### 6. 依赖注入规范
+- 使用`@Autowired`注解注入依赖
+- 依赖字段应声明为`private final`
+- 例如：
+  ```java
+  @Autowired
+  private IFlowAnalysisService flowAnalysisService;
+  ```
+
+### 7. 异常处理规范
+- 在控制器方法中捕获异常并转换为`AjaxResult`
+- 使用`try-catch`块处理业务异常
+- 例如：
+  ```java
+  @GetMapping("/by-device/{deviceCode}")
+  public AjaxResult getByDevice(@PathVariable String deviceCode) {
+      try {
+          return AjaxResult.success(flowAnalysisService.listByDevice(deviceCode));
+      } catch (BusinessException e) {
+          return AjaxResult.error(e.getMessage());
+      } catch (Exception e) {
+          return AjaxResult.error("系统错误");
+      }
+  }
+  ```
+
+### 8. 分页处理规范
+- 使用`Page`对象处理分页参数
+- 分页参数应有默认值
+- 例如：
+  ```java
+  @GetMapping("/page")
+  public AjaxResult page(
+          @RequestParam(defaultValue = "1") Integer pageNum,
+          @RequestParam(defaultValue = "10") Integer pageSize,
+          ...) {
+      Page<FlowAnalysis> page = new Page<>(pageNum, pageSize);
+      return AjaxResult.success(flowAnalysisService.page(page, ...));
+  }
+  ```
+
+### 9. 方法命名规范
+- 方法名应具有描述性，反映方法的功能
+- 查询方法使用`get`前缀
+- 列表方法使用`list`前缀
+- 分页方法使用`page`前缀
+- 例如：
+  ```java
+  public AjaxResult getOverview(...)
+  public AjaxResult listByDevice(...)
+  public AjaxResult page(...)
+  ```
+
+### 10. 注释规范
+- 类注释：描述控制器的用途
+- 方法注释：描述方法的功能、参数、返回值
+- 使用Javadoc风格的注释
+- 例如：
+  ```java
+  /**
+   * 客流分析控制器
+   */
+  @RestController
+  @RequestMapping("/api/flow-analysis")
+  public class FlowAnalysisController {
+  
+      /**
+       * 分页查询客流数据
+       */
+      @GetMapping("/page")
+      public AjaxResult page(...) {
+          // 方法实现
+      }
+  }
+  ```
+
+## 三、前后端交互规范
+
+### 1. API路径规范
+- 前端JavaScript中的API路径必须与Controller中定义的一致
+- 例如：
+  ```javascript
+  // JavaScript中
+  url: '/api/flow-analysis/overview',
+  
+  // Controller中
+  @GetMapping("/overview")
+  public AjaxResult getOverview(...)
+  ```
+
+### 2. 参数传递规范
+- 前端传递的参数名必须与Controller中定义的参数名一致
+- 日期时间参数必须使用正确的格式
+- 例如：
+  ```javascript
+  // JavaScript中
+  data: {
+      startTime: '2023-01-01 00:00:00',
+      endTime: '2023-01-31 23:59:59'
+  },
+  
+  // Controller中
+  @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+  @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
+  ```
+
+### 3. 响应处理规范
+- 前端必须处理`AjaxResult`格式的响应
+- 成功响应：`res.code === 200`
+- 失败响应：`res.code !== 200`
+- 例如：
+  ```javascript
+  $.ajax({
+      // ...
+      success: function(res) {
+          if (res.code === 200) {
+              // 处理成功响应
+              const data = res.data;
+              // ...
+          } else {
+              // 处理失败响应
+              showError('加载数据失败: ' + res.msg);
+          }
+      },
+      error: function() {
+          // 处理请求错误
+          showError('加载数据失败，请稍后重试');
+      }
+  });
+  ```
+
+### 4. 加载状态处理规范
+- 前端必须在AJAX请求前后显示/隐藏加载状态
+- 例如：
+  ```javascript
+  $.ajax({
+      // ...
+      beforeSend: function() {
+          showLoading();
+      },
+      complete: function() {
+          hideLoading();
+      },
+      // ...
+  });
+  ```
+
+### 5. 错误处理规范
+- 前端必须显示错误信息
+- 错误信息应清晰明确，便于用户理解
+- 例如：
+  ```javascript
+  function showError(message) {
+      const alertHtml = `
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              ${message}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+      `;
+      $('#alertContainer').html(alertHtml);
+  }
+  ```
+
+## 四、JavaScript编码规范
+
+### 1. 文件命名规范
+- 使用小写字母，多个单词用连字符分隔
+- 文件名应与对应的JSP页面名称一致
+- 例如：`flow-analysis.js`、`alert-list.js`、`crowd-statistics.js`
+
+### 2. 代码组织规范
+- 使用立即执行函数表达式（IIFE）包装代码
+- 将相关功能组织到函数中
+- 例如：
+  ```javascript
+  $(function() {
+      // 初始化
+      initDateTimePicker();
+      initCharts();
+      
+      // 绑定事件
+      $('#searchBtn').on('click', function() {
+          loadData();
+      });
+      
+      // 初始加载数据
+      loadData();
+  });
+  ```
+
+### 3. 函数命名规范
+- 函数名应具有描述性，反映函数的功能
+- 初始化函数使用`init`前缀
+- 加载数据函数使用`load`前缀
+- 更新UI函数使用`update`前缀
+- 例如：
+  ```javascript
+  function initDateTimePicker() { ... }
+  function loadData() { ... }
+  function updateCharts(data) { ... }
+  ```
+
+### 4. 变量命名规范
+- 变量名应具有描述性，反映变量的用途
+- 使用驼峰命名法
+- 常量使用全大写，多个单词用下划线分隔
+- 例如：
+  ```javascript
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+  ```
+
+### 5. 注释规范
+- 使用JSDoc风格的注释
+- 函数注释：描述函数的功能、参数、返回值
+- 例如：
+  ```javascript
+  /**
+   * 加载数据
+   * @param {Object} params - 查询参数
+   */
+  function loadData(params) {
+      // 函数实现
+  }
+  ```
+
+### 6. 错误处理规范
+- 使用`try-catch`块处理可能的错误
+- 显示友好的错误信息
+- 例如：
+  ```javascript
+  try {
+      // 可能出错的代码
+  } catch (error) {
+      console.error('发生错误:', error);
+      showError('操作失败，请稍后重试');
+  }
+  ```
+
+### 7. 日期时间处理规范
+- 使用`moment.js`库处理日期时间
+- 日期时间格式应与后端一致
+- 例如：
+  ```javascript
+  function formatDateTime(date) {
+      return moment(date).format('YYYY-MM-DD HH:mm:ss');
+  }
+  ```
+
+### 8. 图表处理规范
+- 使用`ECharts`库处理图表
+- 图表初始化应在页面加载完成后进行
+- 图表应在窗口大小变化时调整大小
+- 例如：
+  ```javascript
+  function initCharts() {
+      const chart = echarts.init(document.getElementById('chartContainer'));
+      chart.setOption({ ... });
+      
+      $(window).resize(function() {
+          chart.resize();
+      });
+  }
+  ```
+
+### 9. 分页处理规范
+- 分页参数应有默认值
+- 分页UI应与后端分页参数一致
+- 例如：
+  ```javascript
+  function loadData(pageNum = 1, pageSize = 10) {
+      // 加载数据
+  }
+  
+  function renderPagination(total, currentPage, pageSize) {
+      // 渲染分页UI
+  }
+  ```
+
+### 10. 代码复用规范
+- 将可复用的代码抽取到函数中
+- 避免重复定义相同功能的代码
+- 例如：
+  ```javascript
+  function showLoading() {
+      $('#loading').show();
+  }
+  
+  function hideLoading() {
+      $('#loading').hide();
+  }
+  ```
+
+## 五、项目特定规范
+
+### 1. 禁止使用的技术
+- 禁止使用Spring Boot相关技术架构
+- 禁止使用Vue前端框架
+- 禁止使用Lombok注解
+- 禁止使用WebSocket功能
+- 禁止实现实时数据推送
+
+### 2. 禁止实现的功能
+- 禁止实现实时监控功能
+- 禁止实现数据导出功能
+- 禁止实现自动更新数据功能
+- 禁止实现WebSocket功能
+- 禁止实现数据分片存储
+- 禁止实现数据归档功能
+- 禁止实现自定义统计周期
+
+### 3. 数据库规范
+- 使用达梦数据库
+- 表名和字段名使用大写字母，多个单词用下划线连接
+- 使用`IDENTITY`属性定义自增主键
+- 使用`COMMENT ON COLUMN`添加字段注释
+- 分页查询使用`FETCH FIRST n ROWS ONLY OFFSET m ROWS`语法
+
+### 4. 项目结构规范
+```
+src/main/java/com/scenic/ai/
+├── common/           # 公共组件
+│   ├── exception/    # 异常处理
+│   └── utils/        # 工具类
+├── controller/       # 控制器层
+├── entity/           # 实体类
+├── mapper/           # 数据访问层
+├── service/          # 服务层
+│   └── impl/         # 服务实现
+└── web/              # Web相关配置
+```
+
+### 5. 日志记录规范
+- 使用SLF4J进行日志记录
+- 记录方法入口和出口信息
+- 记录关键业务操作和异常信息
+- 使用适当的日志级别（DEBUG、INFO、WARN、ERROR）
+- 日志信息应包含足够的上下文信息
+
+### 6. 异常处理规范
+- 使用自定义异常类，如`BusinessException`、`SystemException`
+- 在方法中捕获异常并转换为业务异常
+- 记录异常日志，包含详细的错误信息
+- 避免捕获通用异常`Exception`，应捕获具体异常
+
+通过遵循以上规范，可以确保JSP和Controller代码的质量、可读性和可维护性，同时提高前后端交互的效率和可靠性，并符合项目的特定要求。

@@ -1,9 +1,9 @@
 package com.scenic.ai.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.scenic.ai.dao.AlertHandlingRecordMapper;
+import com.scenic.ai.mapper.AlertHandlingRecordMapper;
 import com.scenic.ai.exception.BusinessException;
-import com.scenic.ai.exception.ErrorCode;
+import com.scenic.ai.common.enums.ErrorCode;
 import com.scenic.ai.model.AlertHandlingRecord;
 import com.scenic.ai.service.AlertHandlingRecordService;
 import org.slf4j.Logger;
@@ -21,16 +21,16 @@ import java.util.List;
  * @author scenic
  */
 @Service
-public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRecordMapper, AlertHandlingRecord> 
+public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRecordMapper, AlertHandlingRecord>
         implements AlertHandlingRecordService {
-    
+
     private static final Logger log = LoggerFactory.getLogger(AlertHandlingRecordServiceImpl.class);
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createRecord(Long alertId, String handler, String description) {
         log.info("创建告警处理记录: alertId={}, handler={}", alertId, handler);
-        
+
         // 参数校验
         if (alertId == null) {
             throw new IllegalArgumentException("告警ID不能为空");
@@ -41,7 +41,7 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
         if (!StringUtils.hasText(description)) {
             throw new IllegalArgumentException("处理说明不能为空");
         }
-        
+
         try {
             // 创建处理记录
             AlertHandlingRecord record = new AlertHandlingRecord();
@@ -50,19 +50,19 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
             record.setDescription(description);
             record.setHandleTime(LocalDateTime.now());
             record.setCreateTime(LocalDateTime.now());
-            
+
             // 保存记录
             if (!save(record)) {
                 throw new BusinessException(ErrorCode.SAVE_ERROR, "创建处理记录失败");
             }
-            
+
             log.info("创建告警处理记录成功: recordId={}", record.getId());
         } catch (Exception e) {
             log.error("创建告警处理记录失败: alertId={}, error={}", alertId, e.getMessage(), e);
             throw new BusinessException(ErrorCode.SAVE_ERROR, "创建处理记录失败: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     public List<AlertHandlingRecord> getHandlingRecords(Long alertId) {
         try {
@@ -77,7 +77,7 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
             throw new BusinessException(ErrorCode.QUERY_ERROR, "获取告警处理记录失败: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     public AlertHandlingRecord getById(Long id) {
         try {
@@ -92,7 +92,7 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
             throw new BusinessException(ErrorCode.QUERY_ERROR, "获取告警处理记录失败: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateById(AlertHandlingRecord record) {
@@ -112,7 +112,7 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
             throw new BusinessException(ErrorCode.UPDATE_ERROR, "更新告警处理记录失败: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean removeById(Long id) {
@@ -128,12 +128,12 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
             throw new BusinessException(ErrorCode.DELETE_ERROR, "删除告警处理记录失败: " + e.getMessage(), e);
         }
     }
-    
+
     @Override
     public List<AlertHandlingRecord> listByAlertId(Long alertId) {
         return lambdaQuery().eq(AlertHandlingRecord::getAlertId, alertId).list();
     }
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean save(AlertHandlingRecord record) {
@@ -151,4 +151,4 @@ public class AlertHandlingRecordServiceImpl extends ServiceImpl<AlertHandlingRec
             throw new BusinessException(ErrorCode.SAVE_ERROR, "保存告警处理记录失败: " + e.getMessage(), e);
         }
     }
-} 
+}

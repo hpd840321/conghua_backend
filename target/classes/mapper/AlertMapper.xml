@@ -16,117 +16,19 @@
         <result column="RECORD_TIME" property="recordTime"/>
         <result column="CREATE_TIME" property="createTime"/>
         <result column="UPDATE_TIME" property="updateTime"/>
+        <result column="HANDLE_TIME" property="handleTime"/>
+        <result column="HANDLE_USER" property="handleUser"/>
+        <result column="HANDLE_RESULT" property="handleResult"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         ID, TOURISM_NAME, DEVICE_CODE, DEVICE_NAME, ALERT_TYPE, ALERT_LEVEL, ALERT_STATUS,
-        DESCRIPTION, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+        DESCRIPTION, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME, HANDLE_TIME, HANDLE_USER, HANDLE_RESULT
     </sql>
 
-    <!-- 根据ID查询 -->
-    <select id="findById" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM ALERT
-        WHERE ID = #{id}
-    </select>
-    
-    <!-- 根据状态查询 -->
-    <select id="findByStatus" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM ALERT
-        WHERE ALERT_STATUS = #{status}
-        ORDER BY RECORD_TIME DESC
-    </select>
-    
-    <!-- 根据级别和状态查询 -->
-    <select id="findByLevelAndStatus" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM ALERT
-        WHERE 1=1
-        <if test="level != null">
-            AND ALERT_LEVEL = #{level}
-        </if>
-        <if test="status != null">
-            AND ALERT_STATUS = #{status}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-    
-    <!-- 统计时间范围内的告警数量 -->
-    <select id="countByTimeRange" resultType="java.util.Map">
-        SELECT 
-            COUNT(*) as total,
-            COUNT(CASE WHEN ALERT_STATUS = 1 THEN 1 END) as handled,
-            COUNT(CASE WHEN ALERT_STATUS = 0 THEN 1 END) as pending
-        FROM ALERT
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-    </select>
-    
-    <!-- 统计告警类型分布 -->
-    <select id="countByType" resultType="java.util.Map">
-        SELECT ALERT_TYPE as type, COUNT(*) as count
-        FROM ALERT
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY ALERT_TYPE
-    </select>
-    
-    <!-- 统计告警时段分布 -->
-    <select id="countByHour" resultType="java.util.Map">
-        SELECT EXTRACT(HOUR FROM RECORD_TIME) as hour, COUNT(*) as count
-        FROM ALERT
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
-        ORDER BY hour
-    </select>
-    
-    <!-- 批量更新告警状态 -->
-    <update id="batchUpdateStatus">
-        UPDATE ALERT
-        SET ALERT_STATUS = #{status},
-            UPDATE_TIME = SYSTIMESTAMP
-        WHERE ID IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </update>
-    
-    <!-- 条件分页查询 -->
-    <select id="findByConditions" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM ALERT
-        <where>
-            <if test="params.type != null and params.type != ''">
-                AND ALERT_TYPE = #{params.type}
-            </if>
-            <if test="params.level != null">
-                AND ALERT_LEVEL = #{params.level}
-            </if>
-            <if test="params.status != null">
-                AND ALERT_STATUS = #{params.status}
-            </if>
-            <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND DEVICE_CODE = #{params.deviceCode}
-            </if>
-            <if test="params.startTime != null">
-                AND RECORD_TIME >= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
-            </if>
-        </where>
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 分页查询告警信息 -->
-    <select id="selectAlertPage" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
-        FROM ALERT
+    <!-- 通用查询条件 -->
+    <sql id="Base_Where_Clause">
         <where>
             <if test="tourismName != null and tourismName != ''">
                 AND TOURISM_NAME = #{tourismName}
@@ -150,11 +52,161 @@
                 AND RECORD_TIME &lt;= #{endTime}
             </if>
         </where>
+    </sql>
+
+    <!-- 根据ID查询告警信息 -->
+    <select id="getById" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ID = #{id}
+    </select>
+    
+    <!-- 根据状态查询告警信息 -->
+    <select id="listByStatus" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ALERT_STATUS = #{status}
+        ORDER BY RECORD_TIME DESC
+    </select>
+    
+    <!-- 根据级别和状态查询告警信息 -->
+    <select id="listByLevelAndStatus" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ALERT_LEVEL = #{level}
+        AND ALERT_STATUS = #{status}
+        ORDER BY RECORD_TIME DESC
+    </select>
+    
+    <!-- 统计时间范围内的告警数量 -->
+    <select id="countByTimeRange" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_LEVEL = 1 THEN 1 ELSE 0 END) as level1,
+            SUM(CASE WHEN ALERT_LEVEL = 2 THEN 1 ELSE 0 END) as level2,
+            SUM(CASE WHEN ALERT_LEVEL = 3 THEN 1 ELSE 0 END) as level3
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+    </select>
+    
+    <!-- 统计告警类型分布 -->
+    <select id="getTypeDistribution" resultType="java.util.Map">
+        SELECT 
+            ALERT_TYPE as type,
+            COUNT(*) as count
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
+        GROUP BY ALERT_TYPE
+    </select>
+    
+    <!-- 统计告警时段分布 -->
+    <select id="countByHour" resultType="java.util.Map">
+        SELECT 
+            EXTRACT(HOUR FROM RECORD_TIME) as hour, 
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
+        ORDER BY hour
+    </select>
+    
+    <!-- 批量更新告警状态 -->
+    <update id="updateStatusBatch">
+        UPDATE ALERT
+        SET ALERT_STATUS = #{status},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE ID IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+    <!-- 分页查询告警信息 -->
+    <select id="pageByConditions" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
+        ORDER BY RECORD_TIME DESC
+        FETCH FIRST #{limit} ROWS ONLY
+        OFFSET #{offset} ROWS
+    </select>
+
+    <!-- 根据查询条件获取告警列表 -->
+    <select id="listByConditions" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
         ORDER BY RECORD_TIME DESC
     </select>
 
+    <!-- 统计告警数量 -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
+    </select>
+
+    <!-- 获取告警时段分布 -->
+    <select id="getTimeDistribution" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'HH24:00') as time,
+            COUNT(*) as count
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
+        GROUP BY TO_CHAR(RECORD_TIME, 'HH24:00')
+        ORDER BY time
+    </select>
+    
+    <!-- 获取告警级别分布 -->
+    <select id="getLevelDistribution" resultType="java.util.Map">
+        SELECT 
+            ALERT_LEVEL as level,
+            COUNT(*) as count
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
+        GROUP BY ALERT_LEVEL
+    </select>
+
+    <!-- 获取告警趋势 -->
+    <select id="getAlertTrend" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00') as time,
+            COUNT(*) as count
+        FROM ALERT
+        <include refid="Base_Where_Clause"/>
+        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00')
+        ORDER BY time
+    </select>
+
+    <!-- 删除历史数据 -->
+    <delete id="deleteHistoricalData">
+        DELETE FROM ALERT
+        WHERE RECORD_TIME &lt; #{beforeTime}
+    </delete>
+    
+    <!-- 批量插入告警数据 -->
+    <insert id="insertBatch">
+        INSERT INTO ALERT (
+            TOURISM_NAME, DEVICE_CODE, DEVICE_NAME, ALERT_TYPE, ALERT_LEVEL,
+            ALERT_STATUS, DESCRIPTION, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME, HANDLE_TIME, HANDLE_USER, HANDLE_RESULT
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.tourismName}, #{item.deviceCode}, #{item.deviceName},
+                #{item.alertType}, #{item.alertLevel}, #{item.alertStatus},
+                #{item.description}, #{item.imageUrl}, #{item.recordTime},
+                SYSTIMESTAMP, SYSTIMESTAMP, SYSTIMESTAMP, #{item.handleUser}, #{item.handleResult}
+            )
+        </foreach>
+    </insert>
+    
     <!-- 根据设备编码查询告警信息 -->
-    <select id="selectByDevice" resultMap="BaseResultMap">
+    <select id="listByDevice" resultMap="BaseResultMap">
         SELECT 
         <include refid="Base_Column_List"/>
         FROM ALERT
@@ -169,7 +221,7 @@
     </select>
 
     <!-- 根据景区名称查询告警信息 -->
-    <select id="selectByTourism" resultMap="BaseResultMap">
+    <select id="listByTourism" resultMap="BaseResultMap">
         SELECT 
         <include refid="Base_Column_List"/>
         FROM ALERT
@@ -184,263 +236,13 @@
     </select>
 
     <!-- 统计未处理告警数量 -->
-    <select id="countUnhandledAlerts" resultType="java.lang.Long">
+    <select id="countPending" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM ALERT
         WHERE ALERT_STATUS = 0
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
         </if>
-    </select>
-
-    <!-- 获取告警时段分布 -->
-    <select id="getTimeDistribution" resultType="java.util.Map">
-        SELECT 
-            EXTRACT(HOUR FROM RECORD_TIME) as hour,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
-        ORDER BY hour
-    </select>
-    
-    <!-- 获取告警类型分布 -->
-    <select id="getTypeDistribution" resultType="java.util.Map">
-        SELECT 
-            ALERT_TYPE as type,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY ALERT_TYPE
-    </select>
-    
-    <!-- 获取告警级别分布 -->
-    <select id="getLevelDistribution" resultType="java.util.Map">
-        SELECT 
-            ALERT_LEVEL as level,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY ALERT_LEVEL
-        ORDER BY level
-    </select>
-
-    <!-- 删除历史数据 -->
-    <delete id="deleteHistoricalData">
-        DELETE FROM ALERT
-        WHERE RECORD_TIME &lt; #{beforeTime}
-    </delete>
-    
-    <!-- 批量插入告警数据 -->
-    <insert id="insertBatch">
-        INSERT INTO ALERT (
-            TOURISM_NAME, DEVICE_CODE, DEVICE_NAME, ALERT_TYPE, ALERT_LEVEL,
-            ALERT_STATUS, DESCRIPTION, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
-        )
-        SELECT 
-            A.*, SYSTIMESTAMP, SYSTIMESTAMP
-        FROM (
-            <foreach collection="list" item="item" separator="UNION ALL">
-                SELECT 
-                    #{item.tourismName}, #{item.deviceCode}, #{item.deviceName},
-                    #{item.alertType}, #{item.alertLevel}, #{item.alertStatus},
-                    #{item.description}, #{item.imageUrl}, #{item.recordTime}
-                FROM DUAL
-            </foreach>
-        ) A
-    </insert>
-    
-    <!-- 根据设备编码查询告警信息 -->
-    <select id="getByDevice" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM ALERT
-        WHERE DEVICE_CODE = #{deviceCode}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-    
-    <!-- 根据景区名称查询告警信息 -->
-    <select id="getByTourism" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM ALERT
-        WHERE TOURISM_NAME = #{tourismName}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-    
-    <!-- 查询告警时段分布 -->
-    <select id="selectTimeDistribution" resultType="java.util.Map">
-        SELECT 
-            EXTRACT(HOUR FROM RECORD_TIME) as hour,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
-        ORDER BY hour
-    </select>
-    
-    <!-- 查询告警类型分布 -->
-    <select id="selectTypeDistribution" resultType="java.util.Map">
-        SELECT 
-            ALERT_TYPE as type,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY ALERT_TYPE
-    </select>
-    
-    <!-- 查询告警级别分布 -->
-    <select id="selectLevelDistribution" resultType="java.util.Map">
-        SELECT 
-            ALERT_LEVEL as level,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY ALERT_LEVEL
-        ORDER BY level
-    </select>
-    
-    <!-- 查询告警趋势 -->
-    <select id="selectTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24') as time,
-            COUNT(*) as count
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24')
-        ORDER BY time
-    </select>
-    
-    <!-- 查询告警概览统计 -->
-    <select id="selectOverview" resultType="java.util.Map">
-        SELECT 
-            COUNT(*) as total,
-            COUNT(CASE WHEN ALERT_STATUS = 0 THEN 1 END) as pending,
-            COUNT(CASE WHEN ALERT_STATUS = 1 THEN 1 END) as handled,
-            COUNT(CASE WHEN ALERT_LEVEL = 1 THEN 1 END) as lowLevel,
-            COUNT(CASE WHEN ALERT_LEVEL = 2 THEN 1 END) as mediumLevel,
-            COUNT(CASE WHEN ALERT_LEVEL = 3 THEN 1 END) as highLevel
-        FROM ALERT
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
     </select>
     
 </mapper> 

@@ -36,6 +36,14 @@
         <property name="dataSource" ref="dataSource"/>
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
         <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+        <property name="typeAliasesPackage" value="com.scenic.ai.model"/>
+        <property name="configuration">
+            <bean class="com.baomidou.mybatisplus.core.MybatisConfiguration">
+                <property name="mapUnderscoreToCamelCase" value="true"/>
+                <property name="cacheEnabled" value="true"/>
+                <property name="lazyLoadingEnabled" value="true"/>
+            </bean>
+        </property>
     </bean>
 
     <!-- MyBatis Mapper扫描配置 -->

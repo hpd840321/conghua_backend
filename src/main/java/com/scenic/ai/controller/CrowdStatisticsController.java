@@ -1,40 +1,25 @@
 package com.scenic.ai.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.scenic.ai.common.core.domain.AjaxResult;
 import com.scenic.ai.model.CrowdStatistics;
 import com.scenic.ai.service.ICrowdStatisticsService;
-import com.scenic.ai.exception.BusinessException;
-import com.scenic.ai.exception.ErrorCode;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 人群统计控制器
- * 提供人群密度统计、分布分析、趋势分析等接口
- *
- * @author scenic
- * @date 2024-03-19
  */
 @Controller
-@Validated
-@RequestMapping("/api/v1/crowd-statistics")
+@RequestMapping("/crowd-statistics")
 public class CrowdStatisticsController {
-
-    private static final Logger log = LoggerFactory.getLogger(CrowdStatisticsController.class);
 
     @Autowired
     private ICrowdStatisticsService crowdStatisticsService;
@@ -42,136 +27,143 @@ public class CrowdStatisticsController {
     /**
      * 人群统计页面
      */
-    @GetMapping("/page")
-    public String page(Model model) {
-        return "crowd/statistics";
+    @GetMapping("/list")
+    public String list() {
+        return "crowd/list";
+    }
+
+    /**
+     * 人群统计详情页面
+     */
+    @GetMapping("/detail")
+    public String detail() {
+        return "crowd/detail";
     }
 
     /**
      * 分页查询人群统计数据
      */
-    @GetMapping("/")
+    @GetMapping("/page")
     @ResponseBody
-    public ResponseEntity<IPage<CrowdStatistics>> getPage(
+    public AjaxResult page(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
-            @RequestParam(required = false) String tourismName,
             @RequestParam(required = false) String deviceCode,
+            @RequestParam(required = false) String tourismName,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("分页查询人群统计数据: pageNum={}, pageSize={}, tourismName={}, deviceCode={}, startTime={}, endTime={}",
-                pageNum, pageSize, tourismName, deviceCode, startTime, endTime);
-        
-        return ResponseEntity.ok(crowdStatisticsService.getPage(pageNum, pageSize, tourismName, deviceCode, startTime, endTime));
+        try {
+            Page<CrowdStatistics> page = new Page<>(pageNum, pageSize);
+            return AjaxResult.success(
+                    crowdStatisticsService.pageByConditions(page, deviceCode, tourismName, startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("查询人群统计数据失败：" + e.getMessage());
+        }
     }
 
     /**
-     * 根据设备编码查询统计数据
+     * 获取总人数统计
      */
-    @GetMapping("/by-device/{deviceCode}")
+    @GetMapping("/total")
     @ResponseBody
-    public ResponseEntity<List<CrowdStatistics>> getByDevice(
-            @PathVariable String deviceCode,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("根据设备编码查询统计数据: deviceCode={}, startTime={}, endTime={}", deviceCode, startTime, endTime);
-        return ResponseEntity.ok(crowdStatisticsService.getByDevice(deviceCode, startTime, endTime));
-    }
-
-    /**
-     * 根据景区名称查询统计数据
-     */
-    @GetMapping("/by-tourism/{tourismName}")
-    @ResponseBody
-    public ResponseEntity<List<CrowdStatistics>> getByTourism(
-            @PathVariable String tourismName,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("根据景区名称查询统计数据: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
-        return ResponseEntity.ok(crowdStatisticsService.getByTourism(tourismName, startTime, endTime));
-    }
-
-    /**
-     * 获取时段人群分布
-     */
-    @GetMapping("/distribution/hour")
-    @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getHourDistribution(
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String tourismName,
+    public AjaxResult getTotalCount(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("获取时段人群分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                deviceCode, tourismName, startTime, endTime);
-        return ResponseEntity.ok(crowdStatisticsService.getHourDistribution(deviceCode, tourismName, startTime, endTime));
+        try {
+            return AjaxResult.success(crowdStatisticsService.countTotalCrowd(startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("获取总人数统计失败：" + e.getMessage());
+        }
     }
 
     /**
-     * 获取密度分布
+     * 获取平均密度
      */
-    @GetMapping("/distribution/density")
+    @GetMapping("/average-density")
     @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getDensityDistribution(
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String tourismName,
+    public AjaxResult getAverageDensity(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("获取密度分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                deviceCode, tourismName, startTime, endTime);
-        return ResponseEntity.ok(crowdStatisticsService.getDensityDistribution(deviceCode, tourismName, startTime, endTime));
+        try {
+            return AjaxResult.success(crowdStatisticsService.getAverageDensity(startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("获取平均密度失败：" + e.getMessage());
+        }
     }
 
     /**
-     * 获取人群趋势
+     * 获取最大人数
      */
-    @GetMapping("/trend")
+    @GetMapping("/max-count")
     @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getTrend(
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String tourismName,
+    public AjaxResult getMaxCount(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("获取人群趋势: deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                deviceCode, tourismName, startTime, endTime);
-        return ResponseEntity.ok(crowdStatisticsService.getTrend(deviceCode, tourismName, startTime, endTime));
+        try {
+            return AjaxResult.success(crowdStatisticsService.getMaxCrowdCount(startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("获取最大人数失败：" + e.getMessage());
+        }
     }
 
     /**
-     * 获取统计概览
+     * 获取最小人数
      */
-    @GetMapping("/overview")
+    @GetMapping("/min-count")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getOverview(
-            @RequestParam(required = false) String tourismName,
+    public AjaxResult getMinCount(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        log.info("获取统计概览: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
-        return ResponseEntity.ok(crowdStatisticsService.getOverview(tourismName, startTime, endTime));
+        try {
+            return AjaxResult.success(crowdStatisticsService.getMinCrowdCount(startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("获取最小人数失败：" + e.getMessage());
+        }
     }
 
     /**
-     * 获取设备最新人群统计数据
+     * 获取景区分布
      */
-    @GetMapping("/latest/{deviceCode}")
+    @GetMapping("/tourism-distribution")
     @ResponseBody
-    public ResponseEntity<CrowdStatistics> getLatest(@PathVariable String deviceCode) {
-        log.info("获取设备最新人群统计数据: deviceCode={}", deviceCode);
-        return ResponseEntity.ok(crowdStatisticsService.getLatest(deviceCode));
+    public AjaxResult getTourismDistribution(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        try {
+            return AjaxResult.success(crowdStatisticsService.getTourismDistribution(startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("获取景区分布失败：" + e.getMessage());
+        }
     }
 
     /**
-     * 获取高密度区域统计
+     * 获取设备分布
      */
-    @GetMapping("/high-density")
+    @GetMapping("/device-distribution")
     @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getHighDensity(
-            @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String tourismName,
+    public AjaxResult getDeviceDistribution(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
+        try {
+            return AjaxResult.success(crowdStatisticsService.getDeviceDistribution(startTime, endTime));
+        } catch (Exception e) {
+            return AjaxResult.error("获取设备分布失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取时间趋势
+     */
+    @GetMapping("/time-trend")
+    @ResponseBody
+    public AjaxResult getTimeTrend(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
-            @RequestParam(defaultValue = "0.7") BigDecimal densityThreshold) {
-        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, densityThreshold={}",
-                deviceCode, tourismName, startTime, endTime, densityThreshold);
-        return ResponseEntity.ok(crowdStatisticsService.getHighDensity(deviceCode, tourismName, startTime, endTime, densityThreshold.doubleValue()));
+            @RequestParam(defaultValue = "1") Integer interval) {
+        try {
+            return AjaxResult.success(crowdStatisticsService.getTimeTrend(startTime, endTime, interval));
+        } catch (Exception e) {
+            return AjaxResult.error("获取时间趋势失败：" + e.getMessage());
+        }
     }
-} 
+}

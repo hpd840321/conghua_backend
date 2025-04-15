@@ -1,0 +1,408 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# ECharts图表编码规范
+
+## 一、图表初始化规范
+
+### 1. 图表容器规范
+- 使用`div`元素作为图表容器
+- 容器必须有唯一的`id`属性
+- 容器必须有明确的宽高设置
+- 例如：
+  ```jsp
+  <div id="flowTrendChart" style="width: 100%; height: 400px;"></div>
+  ```
+
+### 2. 图表初始化规范
+- 在页面加载完成后初始化图表
+- 使用`echarts.init`方法初始化图表实例
+- 保存图表实例到变量中，便于后续操作
+- 例如：
+  ```javascript
+  let flowTrendChart;
+  
+  function initCharts() {
+      flowTrendChart = echarts.init(document.getElementById('flowTrendChart'));
+      // 设置图表配置
+      flowTrendChart.setOption({...});
+  }
+  ```
+
+### 3. 响应式处理规范
+- 监听窗口大小变化事件
+- 在窗口大小变化时调用`resize`方法
+- 例如：
+  ```javascript
+  $(window).resize(function() {
+      flowTrendChart.resize();
+  });
+  ```
+
+## 二、图表配置规范
+
+### 1. 主题规范
+- 使用统一的主题配置
+- 定义全局颜色方案
+- 例如：
+  ```javascript
+  const theme = {
+      color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272'],
+      backgroundColor: '#ffffff',
+      textStyle: {
+          color: '#333333'
+      }
+  };
+  ```
+
+### 2. 标题配置规范
+- 标题应简洁明了，反映图表内容
+- 标题位置应统一
+- 例如：
+  ```javascript
+  title: {
+      text: '客流趋势分析',
+      left: 'center',
+      top: 10,
+      textStyle: {
+          fontSize: 16,
+          fontWeight: 'normal'
+      }
+  }
+  ```
+
+### 3. 图例配置规范
+- 图例位置应统一
+- 图例样式应一致
+- 例如：
+  ```javascript
+  legend: {
+      data: ['进入人数', '离开人数', '净流量'],
+      bottom: 10,
+      textStyle: {
+          fontSize: 12
+      }
+  }
+  ```
+
+### 4. 坐标轴配置规范
+- X轴通常表示时间或类别
+- Y轴通常表示数值
+- 坐标轴样式应统一
+- 例如：
+  ```javascript
+  xAxis: {
+      type: 'category',
+      data: timeData,
+      axisLabel: {
+          rotate: 45,
+          formatter: function(value) {
+              return value.substring(5, 16); // 只显示月日和时间
+          }
+      }
+  },
+  yAxis: {
+      type: 'value',
+      name: '人数',
+      nameTextStyle: {
+          padding: [0, 0, 0, 40]
+      }
+  }
+  ```
+
+### 5. 提示框配置规范
+- 提示框应显示详细的数据信息
+- 提示框样式应统一
+- 例如：
+  ```javascript
+  tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+          let result = params[0].axisValue + '<br/>';
+          params.forEach(param => {
+              result += param.seriesName + ': ' + param.value + '<br/>';
+          });
+          return result;
+      }
+  }
+  ```
+
+## 三、图表类型规范
+
+### 1. 折线图规范
+- 用于展示趋势变化
+- 线条样式应统一
+- 例如：
+  ```javascript
+  series: [{
+      name: '进入人数',
+      type: 'line',
+      data: inData,
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 6,
+      lineStyle: {
+          width: 2
+      }
+  }]
+  ```
+
+### 2. 柱状图规范
+- 用于展示数量对比
+- 柱子样式应统一
+- 例如：
+  ```javascript
+  series: [{
+      name: '告警数量',
+      type: 'bar',
+      data: alertData,
+      barWidth: '60%',
+      itemStyle: {
+          borderRadius: [4, 4, 0, 0]
+      }
+  }]
+  ```
+
+### 3. 饼图规范
+- 用于展示占比分布
+- 饼图样式应统一
+- 例如：
+  ```javascript
+  series: [{
+      name: '告警类型分布',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: true,
+      itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+      },
+      label: {
+          show: true,
+          formatter: '{b}: {c} ({d}%)'
+      },
+      data: typeData
+  }]
+  ```
+
+### 4. 仪表盘规范
+- 用于展示单一指标的完成情况
+- 仪表盘样式应统一
+- 例如：
+  ```javascript
+  series: [{
+      name: '客流量',
+      type: 'gauge',
+      min: 0,
+      max: 1000,
+      splitNumber: 10,
+      axisLine: {
+          lineStyle: {
+              width: 30,
+              color: [
+                  [0.3, '#67e0e3'],
+                  [0.7, '#37a2da'],
+                  [1, '#fd666d']
+              ]
+          }
+      },
+      pointer: {
+          itemStyle: {
+              color: 'auto'
+          }
+      },
+      axisTick: {
+          distance: -30,
+          length: 8,
+          lineStyle: {
+              color: '#fff',
+              width: 2
+          }
+      },
+      splitLine: {
+          distance: -30,
+          length: 30,
+          lineStyle: {
+              color: '#fff',
+              width: 4
+          }
+      },
+      axisLabel: {
+          color: 'auto',
+          distance: 40,
+          fontSize: 12
+      },
+      detail: {
+          valueAnimation: true,
+          formatter: '{value} 人',
+          color: 'auto'
+      },
+      data: [{
+          value: 500
+      }]
+  }]
+  ```
+
+## 四、数据处理规范
+
+### 1. 数据格式化规范
+- 日期时间格式化
+- 数值格式化
+- 例如：
+  ```javascript
+  function formatDateTime(date) {
+      return moment(date).format('YYYY-MM-DD HH:mm:ss');
+  }
+  
+  function formatNumber(num) {
+      return num.toLocaleString();
+  }
+  ```
+
+### 2. 数据转换规范
+- 将后端数据转换为图表所需格式
+- 例如：
+  ```javascript
+  function transformChartData(data) {
+      const timeData = [];
+      const inData = [];
+      const outData = [];
+      const netData = [];
+      
+      data.forEach(item => {
+          timeData.push(formatDateTime(item.recordTime));
+          inData.push(item.inCount);
+          outData.push(item.outCount);
+          netData.push(item.inCount - item.outCount);
+      });
+      
+      return {
+          timeData,
+          inData,
+          outData,
+          netData
+      };
+  }
+  ```
+
+### 3. 数据更新规范
+- 使用`setOption`方法更新图表数据
+- 保持原有配置，只更新数据部分
+- 例如：
+  ```javascript
+  function updateChartData(data) {
+      const chartData = transformChartData(data);
+      flowTrendChart.setOption({
+          xAxis: {
+              data: chartData.timeData
+          },
+          series: [{
+              data: chartData.inData
+          }, {
+              data: chartData.outData
+          }, {
+              data: chartData.netData
+          }]
+      });
+  }
+  ```
+
+## 五、交互规范
+
+### 1. 事件处理规范
+- 使用`on`方法绑定事件
+- 事件处理函数应简洁明了
+- 例如：
+  ```javascript
+  flowTrendChart.on('click', function(params) {
+      if (params.componentType === 'series') {
+          // 处理点击事件
+          showDetail(params.data);
+      }
+  });
+  ```
+
+### 2. 数据钻取规范
+- 点击图表元素时显示详细信息
+- 使用模态框展示详细信息
+- 例如：
+  ```javascript
+  function showDetail(data) {
+      $('#detailModal').modal('show');
+      $('#detailContent').html(`
+          <p>时间：${data.time}</p>
+          <p>进入人数：${data.inCount}</p>
+          <p>离开人数：${data.outCount}</p>
+          <p>净流量：${data.inCount - data.outCount}</p>
+      `);
+  }
+  ```
+
+### 3. 图表联动规范
+- 多个图表之间可以联动
+- 联动时应保持数据一致性
+- 例如：
+  ```javascript
+  function initChartLinkage() {
+      // 点击趋势图时更新分布图
+      flowTrendChart.on('click', function(params) {
+          if (params.componentType === 'series') {
+              updateDistributionChart(params.data);
+          }
+      });
+  }
+  ```
+
+## 六、性能优化规范
+
+### 1. 数据量控制规范
+- 控制单次加载的数据量
+- 使用分页或时间范围限制
+- 例如：
+  ```javascript
+  function loadChartData(startTime, endTime) {
+      $.ajax({
+          url: '/api/flow-analysis/trend',
+          data: {
+              startTime: startTime,
+              endTime: endTime
+          },
+          success: function(res) {
+              if (res.code === 200) {
+                  updateChartData(res.data);
+              }
+          }
+      });
+  }
+  ```
+
+### 2. 渲染优化规范
+- 避免频繁更新图表
+- 使用`throttle`或`debounce`控制更新频率
+- 例如：
+  ```javascript
+  function updateChart() {
+      if (flowTrendChart) {
+          flowTrendChart.resize();
+      }
+  }
+  
+  $(window).resize(_.throttle(updateChart, 200));
+  ```
+
+### 3. 内存管理规范
+- 在组件销毁时释放图表实例
+- 例如：
+  ```javascript
+  function destroyChart() {
+      if (flowTrendChart) {
+          flowTrendChart.dispose();
+          flowTrendChart = null;
+      }
+  }
+  ```
+
+通过遵循以上ECharts图表编码规范，可以确保图表的一致性和可维护性，同时提高图表的性能和用户体验。

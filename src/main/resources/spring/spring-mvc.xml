@@ -10,6 +10,15 @@
                            http://www.springframework.org/schema/mvc
                            http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
+    <!-- 端口配置 -->
+    <bean id="serverProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="properties">
+            <props>
+                <prop key="server.port">8081</prop>
+            </props>
+        </property>
+    </bean>
+
     <!-- 扫描控制器 -->
     <context:component-scan base-package="com.scenic.ai.controller"/>
 

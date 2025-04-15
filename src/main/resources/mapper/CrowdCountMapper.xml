@@ -2,7 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.scenic.ai.mapper.CrowdCountMapper">
     
-    <resultMap id="CrowdCountMap" type="com.scenic.ai.domain.model.CrowdCount">
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.domain.model.CrowdCount">
         <id column="ID" property="id"/>
         <result column="DEVICE_CODE" property="deviceCode"/>
         <result column="DEVICE_NAME" property="deviceName"/>
@@ -17,34 +18,59 @@
         <result column="UPDATE_TIME" property="updateTime"/>
     </resultMap>
     
+    <!-- 基础列 -->
     <sql id="Base_Column_List">
         ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, ALG_NAME,
         TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
     </sql>
     
+    <!-- 条件查询片段 -->
+    <sql id="Query_Condition">
+        <where>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.algName != null and params.algName != ''">
+                AND ALG_NAME = #{params.algName}
+            </if>
+            <if test="params.startTime != null">
+                AND RECORD_TIME >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND RECORD_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 插入记录 -->
     <insert id="insert" parameterType="com.scenic.ai.domain.model.CrowdCount">
         INSERT INTO CLOUDWALK.CROWD_STATISTICS (
             DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, 
-            ALG_NAME, TASK_CODE, IMAGE_URL, RECORD_TIME
+            ALG_NAME, TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
         ) VALUES (
             #{deviceCode}, #{deviceName}, #{tourismName}, #{count}, #{density},
-            #{algName}, #{taskCode}, #{imageUrl}, #{recordTime}
+            #{algName}, #{taskCode}, #{imageUrl}, #{recordTime}, SYSTIMESTAMP, SYSTIMESTAMP
         )
     </insert>
     
+    <!-- 批量插入记录 -->
     <insert id="batchInsert" parameterType="java.util.List">
         INSERT INTO CLOUDWALK.CROWD_STATISTICS (
             DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY,
-            ALG_NAME, TASK_CODE, IMAGE_URL, RECORD_TIME
+            ALG_NAME, TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
         ) VALUES 
         <foreach collection="list" item="item" separator=",">
             (#{item.deviceCode}, #{item.deviceName}, #{item.tourismName},
              #{item.count}, #{item.density}, #{item.algName}, #{item.taskCode},
-             #{item.imageUrl}, #{item.recordTime})
+             #{item.imageUrl}, #{item.recordTime}, SYSTIMESTAMP, SYSTIMESTAMP)
         </foreach>
     </insert>
     
-    <select id="findByTimeRange" resultMap="CrowdCountMap">
+    <!-- 根据时间范围查询记录 -->
+    <select id="listByTimeRange" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
@@ -52,26 +78,30 @@
         ORDER BY RECORD_TIME DESC
     </select>
     
-    <select id="calculateAverageCount" resultType="java.lang.Double">
+    <!-- 获取平均人数 -->
+    <select id="getAverageCount" resultType="java.lang.Double">
         SELECT AVG(COUNT) 
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
         AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
     </select>
     
-    <select id="findMaxCount" resultType="java.lang.Integer">
+    <!-- 获取最大人数 -->
+    <select id="getMaxCount" resultType="java.lang.Integer">
         SELECT MAX(COUNT) 
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
         AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
     </select>
     
+    <!-- 删除历史数据 -->
     <delete id="deleteHistoricalData">
         DELETE FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE RECORD_TIME &lt; #{time}
     </delete>
     
-    <select id="findHighDensityAreas" resultMap="CrowdCountMap">
+    <!-- 获取高密度区域 -->
+    <select id="listHighDensityAreas" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
@@ -80,14 +110,16 @@
         ORDER BY COUNT DESC
     </select>
     
-    <select id="calculateDensity" resultType="java.lang.Double">
+    <!-- 获取区域密度 -->
+    <select id="getDensity" resultType="java.lang.Double">
         SELECT DENSITY 
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
         AND RECORD_TIME = #{time}
     </select>
     
-    <select id="analyzeTrend" resultMap="CrowdCountMap">
+    <!-- 获取人群趋势 -->
+    <select id="listTrend" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
@@ -95,21 +127,27 @@
         ORDER BY RECORD_TIME ASC
     </select>
     
-    <select id="findLatestCount" resultMap="CrowdCountMap">
+    <!-- 获取最新计数 -->
+    <select id="getLatestCount" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode}
         ORDER BY RECORD_TIME DESC
-        LIMIT 1
+        FETCH FIRST 1 ROWS ONLY
     </select>
     
-    <select id="findLatestCounts" resultMap="CrowdCountMap">
-        SELECT DISTINCT ON (DEVICE_CODE) <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.CROWD_STATISTICS 
-        ORDER BY DEVICE_CODE, RECORD_TIME DESC
+    <!-- 获取所有区域最新计数 -->
+    <select id="listLatestCounts" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY DEVICE_CODE ORDER BY RECORD_TIME DESC) AS RN
+            FROM CLOUDWALK.CROWD_STATISTICS
+        ) T
+        WHERE RN = 1
     </select>
     
-    <select id="calculateAverageDensity" resultType="java.lang.Double">
+    <!-- 获取平均密度 -->
+    <select id="getAverageDensity" resultType="java.lang.Double">
         SELECT AVG(DENSITY) 
         FROM CLOUDWALK.CROWD_STATISTICS 
         WHERE DEVICE_CODE = #{deviceCode} 
@@ -117,34 +155,22 @@
     </select>
     
     <!-- 分页查询 -->
-    <select id="getPage" resultMap="CrowdCountMap">
-        SELECT * FROM CLOUDWALK.CROWD_STATISTICS
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="algName != null and algName != ''">
-                AND ALG_NAME = #{algName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME &gt;= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
+    <select id="pageByConditions" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <include refid="Query_Condition"/>
         ORDER BY RECORD_TIME DESC
+        FETCH FIRST #{params.pageSize} ROWS ONLY OFFSET #{params.offset} ROWS
     </select>
     
     <!-- 获取详情分页 -->
-    <select id="getDetailsPage" resultMap="CrowdCountMap">
-        SELECT * FROM CLOUDWALK.CROWD_STATISTICS
+    <select id="pageDetails" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
         WHERE DEVICE_CODE = #{deviceCode}
         AND ALG_NAME = #{algName}
         AND RECORD_TIME BETWEEN #{recordBeginDate} AND #{recordEndDate}
         ORDER BY RECORD_TIME DESC
+        FETCH FIRST #{params.pageSize} ROWS ONLY OFFSET #{params.offset} ROWS
     </select>
 </mapper> 

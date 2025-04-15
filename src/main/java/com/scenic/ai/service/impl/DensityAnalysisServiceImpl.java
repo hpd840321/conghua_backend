@@ -1,13 +1,18 @@
 package com.scenic.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.scenic.ai.dao.DensityAnalysisMapper;
+import com.scenic.ai.common.exception.BusinessException;
+import com.scenic.ai.common.exception.ErrorCode;
+import com.scenic.ai.mapper.DensityAnalysisMapper;
 import com.scenic.ai.model.DensityAnalysis;
 import com.scenic.ai.service.IDensityAnalysisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,28 +29,32 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
-public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMapper, DensityAnalysis> implements IDensityAnalysisService {
+public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMapper, DensityAnalysis>
+        implements IDensityAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(DensityAnalysisServiceImpl.class);
-    
+
     private static final DateTimeFormatter HOUR_FORMATTER = DateTimeFormatter.ofPattern("HH:00");
+
+    @Autowired
+    private DensityAnalysisMapper densityAnalysisMapper;
 
     /**
      * 分页查询密度分析数据
      *
-     * @param page 分页参数
+     * @param page        分页参数
      * @param tourismName 景区名称
-     * @param deviceCode 设备编码
-     * @param algName 算法名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param deviceCode  设备编码
+     * @param algName     算法名称
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @return 分页结果
      */
     @Override
     public Page<DensityAnalysis> pageDensityAnalysis(Page<DensityAnalysis> page, String tourismName, String deviceCode,
-                                                    String algName, LocalDateTime startTime, LocalDateTime endTime) {
+            String algName, LocalDateTime startTime, LocalDateTime endTime) {
         LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
-        
+
         // 构建查询条件
         if (StringUtils.hasText(tourismName)) {
             wrapper.eq(DensityAnalysis::getTourismName, tourismName);
@@ -62,10 +71,10 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         if (endTime != null) {
             wrapper.le(DensityAnalysis::getRecordTime, endTime);
         }
-        
+
         // 按记录时间降序排序
         wrapper.orderByDesc(DensityAnalysis::getRecordTime);
-        
+
         return baseMapper.selectPage(page, wrapper);
     }
 
@@ -73,8 +82,8 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
      * 根据设备编码查询密度分析数据
      *
      * @param deviceCode 设备编码
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime  开始时间
+     * @param endTime    结束时间
      * @return 密度分析数据列表
      */
     @Override
@@ -89,8 +98,8 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
      * 根据景区名称查询密度分析数据
      *
      * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @return 密度分析数据列表
      */
     @Override
@@ -104,16 +113,17 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
     /**
      * 获取密度趋势数据
      *
-     * @param deviceCode 设备编码
+     * @param deviceCode  设备编码
      * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @return 密度趋势数据
      */
     @Override
-    public List<Map<String, Object>> getDensityTrend(String deviceCode, String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
+    public List<Map<String, Object>> getDensityTrend(String deviceCode, String tourismName, LocalDateTime startTime,
+            LocalDateTime endTime) {
         List<DensityAnalysis> densityList;
-        
+
         if (StringUtils.hasText(deviceCode)) {
             densityList = baseMapper.selectByDeviceCode(deviceCode, startTime, endTime);
         } else if (StringUtils.hasText(tourismName)) {
@@ -121,16 +131,16 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         } else {
             throw new IllegalArgumentException("设备编码和景区名称不能同时为空");
         }
-        
+
         // 按小时分组统计
         Map<String, List<DensityAnalysis>> hourGroups = densityList.stream()
                 .collect(Collectors.groupingBy(d -> d.getRecordTime().format(HOUR_FORMATTER)));
-        
+
         return hourGroups.entrySet().stream()
                 .map(entry -> {
                     Map<String, Object> result = new HashMap<>();
                     List<DensityAnalysis> hourStats = entry.getValue();
-                    
+
                     result.put("hour", entry.getKey());
                     result.put("avgDensity", hourStats.stream()
                             .mapToInt(DensityAnalysis::getDensityCount)
@@ -144,7 +154,7 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
                             .mapToInt(DensityAnalysis::getDensityCount)
                             .min()
                             .orElse(0));
-                    
+
                     return result;
                 })
                 .collect(Collectors.toList());
@@ -153,16 +163,17 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
     /**
      * 获取密度级别分布
      *
-     * @param deviceCode 设备编码
+     * @param deviceCode  设备编码
      * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @return 密度级别分布数据
      */
     @Override
-    public List<Map<String, Object>> getDensityLevelDistribution(String deviceCode, String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
+    public List<Map<String, Object>> getDensityLevelDistribution(String deviceCode, String tourismName,
+            LocalDateTime startTime, LocalDateTime endTime) {
         List<DensityAnalysis> densityList;
-        
+
         if (StringUtils.hasText(deviceCode)) {
             densityList = baseMapper.selectByDeviceCode(deviceCode, startTime, endTime);
         } else if (StringUtils.hasText(tourismName)) {
@@ -170,23 +181,23 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         } else {
             throw new IllegalArgumentException("设备编码和景区名称不能同时为空");
         }
-        
+
         // 按密度级别分组统计
         Map<String, List<DensityAnalysis>> levelGroups = densityList.stream()
                 .collect(Collectors.groupingBy(DensityAnalysis::getDensityLevel));
-        
+
         return levelGroups.entrySet().stream()
                 .map(entry -> {
                     Map<String, Object> result = new HashMap<>();
                     List<DensityAnalysis> levelStats = entry.getValue();
-                    
+
                     result.put("level", entry.getKey());
                     result.put("count", levelStats.size());
                     result.put("avgDensity", levelStats.stream()
                             .mapToInt(DensityAnalysis::getDensityCount)
                             .average()
                             .orElse(0));
-                    
+
                     return result;
                 })
                 .collect(Collectors.toList());
@@ -196,8 +207,8 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
      * 获取高峰时段
      *
      * @param deviceCode 设备编码
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime  开始时间
+     * @param endTime    结束时间
      * @return 高峰时段数据
      */
     @Override
@@ -205,18 +216,18 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         if (StringUtils.isEmpty(deviceCode)) {
             throw new IllegalArgumentException("设备编码不能为空");
         }
-        
+
         List<DensityAnalysis> densityList = baseMapper.selectByDeviceCode(deviceCode, startTime, endTime);
-        
+
         // 按小时分组统计
         Map<String, List<DensityAnalysis>> hourGroups = densityList.stream()
                 .collect(Collectors.groupingBy(d -> d.getRecordTime().format(HOUR_FORMATTER)));
-        
+
         return hourGroups.entrySet().stream()
                 .map(entry -> {
                     Map<String, Object> result = new HashMap<>();
                     List<DensityAnalysis> hourStats = entry.getValue();
-                    
+
                     result.put("hour", entry.getKey());
                     result.put("avgDensity", hourStats.stream()
                             .mapToInt(DensityAnalysis::getDensityCount)
@@ -227,7 +238,7 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
                             .max()
                             .orElse(0));
                     result.put("count", hourStats.size());
-                    
+
                     return result;
                 })
                 .sorted((a, b) -> Double.compare((Double) b.get("avgDensity"), (Double) a.get("avgDensity")))
@@ -238,8 +249,8 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
      * 获取总密度计数
      *
      * @param deviceCode 设备编码
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime  开始时间
+     * @param endTime    结束时间
      * @return 总密度计数
      */
     @Override
@@ -247,9 +258,9 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         if (StringUtils.isEmpty(deviceCode)) {
             throw new IllegalArgumentException("设备编码不能为空");
         }
-        
+
         List<DensityAnalysis> densityList = baseMapper.selectByDeviceCode(deviceCode, startTime, endTime);
-        
+
         return densityList.stream()
                 .mapToInt(DensityAnalysis::getDensityCount)
                 .sum();
@@ -266,20 +277,21 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         if (StringUtils.isEmpty(deviceCode)) {
             throw new IllegalArgumentException("设备编码不能为空");
         }
-        
+
         return baseMapper.selectLatestByDeviceCode(deviceCode);
     }
 
     /**
      * 根据时间范围和景区名称获取密度分析数据
      *
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @param tourismName 景区名称
      * @return 密度分析数据列表
      */
     @Override
-    public List<DensityAnalysis> getDensityByTimeRangeAndTourism(LocalDateTime startTime, LocalDateTime endTime, String tourismName) {
+    public List<DensityAnalysis> getDensityByTimeRangeAndTourism(LocalDateTime startTime, LocalDateTime endTime,
+            String tourismName) {
         if (StringUtils.isEmpty(tourismName)) {
             throw new IllegalArgumentException("景区名称不能为空");
         }
@@ -289,7 +301,7 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         if (startTime.isAfter(endTime)) {
             throw new IllegalArgumentException("开始时间不能晚于结束时间");
         }
-        
+
         return baseMapper.selectByTourismName(tourismName, startTime, endTime);
     }
 
@@ -297,12 +309,13 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
      * 获取密度统计概览
      *
      * @param tourismName 景区名称
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @return 密度统计概览
      */
     @Override
-    public Map<String, Object> getDensityStatistics(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
+    public Map<String, Object> getDensityStatistics(String tourismName, LocalDateTime startTime,
+            LocalDateTime endTime) {
         if (StringUtils.isEmpty(tourismName)) {
             throw new IllegalArgumentException("景区名称不能为空");
         }
@@ -316,14 +329,14 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
         try {
             // 获取指定景区和时间范围内的密度分析数据
             List<DensityAnalysis> densityList = baseMapper.selectByTourismName(tourismName, startTime, endTime);
-            
+
             // 初始化统计结果
             Map<String, Object> result = new HashMap<>();
             result.put("tourismName", tourismName);
             result.put("startTime", startTime);
             result.put("endTime", endTime);
             result.put("totalRecords", densityList.size());
-            
+
             if (densityList.isEmpty()) {
                 result.put("avgDensity", 0);
                 result.put("maxDensity", 0);
@@ -333,7 +346,7 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
                 result.put("lowDensityCount", 0);
                 return result;
             }
-            
+
             // 计算密度统计
             int totalDensity = 0;
             int maxDensity = Integer.MIN_VALUE;
@@ -341,18 +354,18 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
             int highDensityCount = 0;
             int mediumDensityCount = 0;
             int lowDensityCount = 0;
-            
+
             for (DensityAnalysis density : densityList) {
                 int densityValue = density.getDensityCount();
                 totalDensity += densityValue;
-                
+
                 if (densityValue > maxDensity) {
                     maxDensity = densityValue;
                 }
                 if (densityValue < minDensity) {
                     minDensity = densityValue;
                 }
-                
+
                 // 根据密度级别统计
                 String level = density.getDensityLevel();
                 if ("高".equals(level)) {
@@ -363,10 +376,10 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
                     lowDensityCount++;
                 }
             }
-            
+
             // 计算平均密度
             double avgDensity = densityList.isEmpty() ? 0 : (double) totalDensity / densityList.size();
-            
+
             // 设置统计结果
             result.put("avgDensity", avgDensity);
             result.put("maxDensity", maxDensity);
@@ -374,11 +387,138 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
             result.put("highDensityCount", highDensityCount);
             result.put("mediumDensityCount", mediumDensityCount);
             result.put("lowDensityCount", lowDensityCount);
-            
+
             return result;
         } catch (Exception e) {
             log.error("获取景区 {} 密度统计概览失败", tourismName, e);
             throw new RuntimeException("获取密度统计概览失败", e);
         }
     }
-} 
+
+    @Override
+    public List<DensityAnalysis> listByConditions(String tourismName, String deviceCode, String algName,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
+            if (StringUtils.hasText(tourismName)) {
+                wrapper.eq(DensityAnalysis::getTourismName, tourismName);
+            }
+            if (StringUtils.hasText(deviceCode)) {
+                wrapper.eq(DensityAnalysis::getDeviceCode, deviceCode);
+            }
+            if (StringUtils.hasText(algName)) {
+                wrapper.eq(DensityAnalysis::getAlgName, algName);
+            }
+            if (startTime != null) {
+                wrapper.ge(DensityAnalysis::getRecordTime, startTime);
+            }
+            if (endTime != null) {
+                wrapper.le(DensityAnalysis::getRecordTime, endTime);
+            }
+            wrapper.orderByDesc(DensityAnalysis::getRecordTime);
+            return list(wrapper);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("查询密度分析列表失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询密度分析列表失败");
+        }
+    }
+
+    @Override
+    public int countByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.ge(DensityAnalysis::getRecordTime, startTime)
+                    .le(DensityAnalysis::getRecordTime, endTime);
+            return count(wrapper).intValue();
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("统计时间范围内密度分析数量失败, startTime: {}, endTime: {}", startTime, endTime, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "统计时间范围内密度分析数量失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getDensityDistribution(String tourismName, String deviceCode,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
+            if (StringUtils.hasText(tourismName)) {
+                wrapper.eq(DensityAnalysis::getTourismName, tourismName);
+            }
+            if (StringUtils.hasText(deviceCode)) {
+                wrapper.eq(DensityAnalysis::getDeviceCode, deviceCode);
+            }
+            wrapper.ge(DensityAnalysis::getRecordTime, startTime)
+                    .le(DensityAnalysis::getRecordTime, endTime);
+            
+            List<DensityAnalysis> list = list(wrapper);
+            return list.stream()
+                    .collect(Collectors.groupingBy(DensityAnalysis::getDensityLevel,
+                            Collectors.collectingAndThen(
+                                    Collectors.toList(),
+                                    items -> {
+                                        Map<String, Object> result = new HashMap<>();
+                                        result.put("level", items.get(0).getDensityLevel());
+                                        result.put("count", items.size());
+                                        result.put("avgDensity", items.stream()
+                                                .mapToInt(DensityAnalysis::getDensityCount)
+                                                .average()
+                                                .orElse(0));
+                                        return result;
+                                    })))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取密度分布失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取密度分布失败");
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getTimeDistribution(String tourismName, String deviceCode,
+            LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
+            if (StringUtils.hasText(tourismName)) {
+                wrapper.eq(DensityAnalysis::getTourismName, tourismName);
+            }
+            if (StringUtils.hasText(deviceCode)) {
+                wrapper.eq(DensityAnalysis::getDeviceCode, deviceCode);
+            }
+            wrapper.ge(DensityAnalysis::getRecordTime, startTime)
+                    .le(DensityAnalysis::getRecordTime, endTime);
+            
+            List<DensityAnalysis> list = list(wrapper);
+            return list.stream()
+                    .collect(Collectors.groupingBy(
+                            item -> item.getRecordTime().format(HOUR_FORMATTER),
+                            Collectors.collectingAndThen(
+                                    Collectors.toList(),
+                                    items -> {
+                                        Map<String, Object> result = new HashMap<>();
+                                        result.put("hour", items.get(0).getRecordTime().format(HOUR_FORMATTER));
+                                        result.put("count", items.size());
+                                        result.put("avgDensity", items.stream()
+                                                .mapToInt(DensityAnalysis::getDensityCount)
+                                                .average()
+                                                .orElse(0));
+                                        return result;
+                                    })))
+                    .values()
+                    .stream()
+                    .collect(Collectors.toList());
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取时段分布失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.scenic.ai.mapper.CrowdStatisticsMapper">
-    <!-- 通用查询映射结果 -->
+    <!-- 基础结果映射 -->
     <resultMap id="BaseResultMap" type="com.scenic.ai.model.CrowdStatistics">
         <id column="ID" property="id"/>
         <result column="DEVICE_CODE" property="deviceCode"/>
@@ -9,623 +9,182 @@
         <result column="TOURISM_NAME" property="tourismName"/>
         <result column="COUNT" property="count"/>
         <result column="DENSITY" property="density"/>
-        <result column="ALG_NAME" property="algName"/>
-        <result column="TASK_CODE" property="taskCode"/>
-        <result column="IMAGE_URL" property="imageUrl"/>
         <result column="RECORD_TIME" property="recordTime"/>
         <result column="CREATE_TIME" property="createTime"/>
         <result column="UPDATE_TIME" property="updateTime"/>
     </resultMap>
 
-    <!-- 通用查询结果列 -->
+    <!-- 基础列名 -->
     <sql id="Base_Column_List">
-        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, ALG_NAME,
-        TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, RECORD_TIME, CREATE_TIME, UPDATE_TIME
     </sql>
 
-    <!-- 获取人群密度趋势数据 -->
-    <select id="getDensityTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
-            DENSITY as value
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
+    <!-- 通用查询条件 -->
+    <sql id="Common_Conditions">
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
         </if>
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        ORDER BY RECORD_TIME
-    </select>
-
-    <!-- 获取人群数量趋势数据 -->
-    <select id="getCountTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
-            COUNT as value
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE 1=1
         <if test="deviceCode != null and deviceCode != ''">
             AND DEVICE_CODE = #{deviceCode}
         </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
+        <if test="startTime != null">
+            AND RECORD_TIME &gt;= #{startTime}
         </if>
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        ORDER BY RECORD_TIME
-    </select>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+    </sql>
 
-    <!-- 获取高密度时段分布 -->
-    <select id="getHighDensityHours" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'HH24') as hour,
-            ROUND(AVG(DENSITY), 2) as avgDensity,
-            MAX(DENSITY) as maxDensity,
-            COUNT(*) as count
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE DENSITY >= #{threshold}
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
-        ORDER BY hour
-    </select>
+    <!-- 密度阈值条件 -->
+    <sql id="Density_Threshold_Condition">
+        AND DENSITY &gt;= 0.8
+    </sql>
 
-    <!-- 根据设备编码查询最新统计数据 -->
-    <select id="selectLatestByDevice" resultMap="BaseResultMap">
+    <!-- 基础查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE DEVICE_CODE = #{deviceCode}
-        ORDER BY RECORD_TIME DESC
-        FETCH FIRST 1 ROWS ONLY
+        WHERE ID = #{id}
     </select>
 
-    <!-- 根据景区名称查询统计数据 -->
-    <select id="selectByTourismName" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE TOURISM_NAME = #{tourismName}
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 统计时间范围内的平均密度和人数 -->
-    <select id="calculateStatistics" resultType="java.util.Map">
-        SELECT 
-            ROUND(AVG(DENSITY), 2) as avgDensity,
-            MAX(DENSITY) as maxDensity,
-            MIN(DENSITY) as minDensity,
-            ROUND(AVG(COUNT), 2) as avgCount,
-            MAX(COUNT) as maxCount,
-            MIN(COUNT) as minCount
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE DEVICE_CODE = #{deviceCode}
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-    </select>
-
-    <!-- 统计各景区人群密度分布 -->
-    <select id="countByDensityRange" resultType="java.util.Map">
-        SELECT 
-            TOURISM_NAME,
-            COUNT(CASE WHEN DENSITY < 0.3 THEN 1 END) as lowDensity,
-            COUNT(CASE WHEN DENSITY >= 0.3 AND DENSITY < 0.7 THEN 1 END) as mediumDensity,
-            COUNT(CASE WHEN DENSITY >= 0.7 THEN 1 END) as highDensity
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY TOURISM_NAME
-    </select>
-
-    <!-- 条件分页查询 -->
-    <select id="findByConditions" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
+    <!-- 分页查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_RECORD_TIME) */
+        <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS
         <where>
-            <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND DEVICE_CODE = #{params.deviceCode}
-            </if>
-            <if test="params.deviceName != null and params.deviceName != ''">
-                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
-            </if>
-            <if test="params.tourismName != null and params.tourismName != ''">
-                AND TOURISM_NAME = #{params.tourismName}
-            </if>
-            <if test="params.algName != null and params.algName != ''">
-                AND ALG_NAME = #{params.algName}
-            </if>
-            <if test="params.minDensity != null">
-                AND DENSITY >= #{params.minDensity}
-            </if>
-            <if test="params.maxDensity != null">
-                AND DENSITY &lt;= #{params.maxDensity}
-            </if>
-            <if test="params.startTime != null">
-                AND RECORD_TIME &gt;= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
-            </if>
+            <include refid="Common_Conditions"/>
         </where>
         ORDER BY RECORD_TIME DESC
-        OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
     </select>
 
-    <!-- 查询统计记录总数 -->
-    <select id="countRecords" resultType="java.lang.Long">
+    <!-- 统计查询 -->
+    <select id="selectCount" resultType="java.lang.Integer">
         SELECT COUNT(*)
         FROM CLOUDWALK.CROWD_STATISTICS
         <where>
-            <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND DEVICE_CODE = #{params.deviceCode}
-            </if>
-            <if test="params.deviceName != null and params.deviceName != ''">
-                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
-            </if>
-            <if test="params.tourismName != null and params.tourismName != ''">
-                AND TOURISM_NAME = #{params.tourismName}
-            </if>
-            <if test="params.algName != null and params.algName != ''">
-                AND ALG_NAME = #{params.algName}
-            </if>
-            <if test="params.minDensity != null">
-                AND DENSITY >= #{params.minDensity}
-            </if>
-            <if test="params.maxDensity != null">
-                AND DENSITY &lt;= #{params.maxDensity}
-            </if>
-            <if test="params.startTime != null">
-                AND RECORD_TIME &gt;= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
-            </if>
+            <include refid="Common_Conditions"/>
         </where>
     </select>
 
-    <!-- 根据设备编码查询 -->
-    <select id="selectByDeviceCode" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE DEVICE_CODE = #{deviceCode}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 统计时段人群分布 -->
-    <select id="countByHour" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'HH24') AS hour,
-            SUM(COUNT) AS total_count,
-            COUNT(1) AS record_count,
-            ROUND(AVG(COUNT), 2) AS avg_count,
-            ROUND(AVG(DENSITY), 4) AS avg_density
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
-        ORDER BY hour
-    </select>
-
-    <!-- 统计密度分布 -->
-    <select id="countByDensity" resultType="java.util.Map">
-        SELECT 
-            CASE 
-                WHEN DENSITY &lt;= 0.3 THEN '低密度'
-                WHEN DENSITY &lt;= 0.6 THEN '中密度'
-                ELSE '高密度'
-            END AS density_level,
-            COUNT(1) AS count,
-            ROUND(AVG(COUNT), 2) AS avg_count,
-            ROUND(AVG(DENSITY), 4) AS avg_density
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY 
-            CASE 
-                WHEN DENSITY &lt;= 0.3 THEN '低密度'
-                WHEN DENSITY &lt;= 0.6 THEN '中密度'
-                ELSE '高密度'
-            END
-        ORDER BY avg_density
-    </select>
-
-    <!-- 获取人群趋势数据 -->
-    <select id="getCrowdTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') AS time,
-            SUM(COUNT) AS total_count,
-            ROUND(AVG(DENSITY), 4) AS avg_density
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY RECORD_TIME
-        ORDER BY RECORD_TIME
-    </select>
-
-    <!-- 获取高密度区域统计 -->
-    <select id="getHighDensityStats" resultType="java.util.Map">
-        SELECT 
-            DEVICE_CODE as deviceCode,
-            DEVICE_NAME as deviceName,
-            COUNT(*) as occurrences,
-            ROUND(AVG(DENSITY), 2) as avgDensity,
-            MAX(DENSITY) as maxDensity,
-            MIN(DENSITY) as minDensity
-        FROM CLOUDWALK.CROWD_STATISTICS
-        WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName})
-        AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode})
-        AND DENSITY >= #{densityThreshold}
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY DEVICE_CODE, DEVICE_NAME
-        ORDER BY occurrences DESC
-    </select>
-
-    <!-- 根据时间范围和景区名称查询人群统计数据 -->
-    <select id="selectByTimeRangeAndTourism" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
-        FROM CROWD_STATISTICS
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 获取时段人群分布 -->
-    <select id="getHourDistribution" resultType="java.util.Map">
-        SELECT 
-            HOUR(record_time) as hour,
-            COUNT(*) as count,
-            AVG(density) as avg_density
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND device_code = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND tourism_name = #{tourismName}
-        </if>
-        AND record_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY HOUR(record_time)
-        ORDER BY hour
-    </select>
-
-    <!-- 获取密度分布 -->
-    <select id="getDensityDistribution" resultType="java.util.Map">
-        SELECT 
-            CASE 
-                WHEN density >= 0.8 THEN '高密度'
-                WHEN density >= 0.5 THEN '中密度'
-                ELSE '低密度'
-            END as density_level,
-            COUNT(*) as count
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND device_code = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND tourism_name = #{tourismName}
-        </if>
-        AND record_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY 
-            CASE 
-                WHEN density >= 0.8 THEN '高密度'
-                WHEN density >= 0.5 THEN '中密度'
-                ELSE '低密度'
-            END
-    </select>
-
-    <!-- 获取人群趋势 -->
-    <select id="getTrend" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(record_time, '%Y-%m-%d %H:00:00') as time_point,
-            AVG(density) as avg_density,
-            MAX(density) as max_density,
-            MIN(density) as min_density
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND device_code = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND tourism_name = #{tourismName}
-        </if>
-        AND record_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY DATE_FORMAT(record_time, '%Y-%m-%d %H:00:00')
-        ORDER BY time_point
-    </select>
-
-    <!-- 获取统计概览 -->
-    <select id="getOverview" resultType="java.util.Map">
-        SELECT 
-            AVG(density) as avg_density,
-            MAX(density) as max_density,
-            COUNT(*) as total_records,
-            SUM(CASE WHEN density >= 0.8 THEN 1 ELSE 0 END) as high_density_count
-        FROM CROWD_STATISTICS
-        WHERE tourism_name = #{tourismName}
-        AND record_time BETWEEN #{startTime} AND #{endTime}
-    </select>
-
-    <!-- 获取高密度区域统计 -->
-    <select id="getHighDensityAreas" resultType="java.util.Map">
-        SELECT 
-            device_code,
-            tourism_name,
-            MAX(density) as max_density,
-            COUNT(*) as high_density_count,
-            MAX(record_time) as latest_record_time
-        FROM CROWD_STATISTICS
-        WHERE density >= #{densityThreshold}
-        <if test="deviceCode != null and deviceCode != ''">
-            AND device_code = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND tourism_name = #{tourismName}
-        </if>
-        AND record_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY device_code, tourism_name
-        ORDER BY max_density DESC
-    </select>
-
-    <!-- 根据设备编码查询统计数据 -->
-    <select id="selectByDevice" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
-        FROM CROWD_STATISTICS
-        WHERE DEVICE_CODE = #{deviceCode}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 根据景区名称查询统计数据 -->
-    <select id="selectByTourism" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
-        FROM CROWD_STATISTICS
-        WHERE TOURISM_NAME = #{tourismName}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 获取设备最新人群统计数据 -->
-    <select id="selectLatestByDevice" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
-        FROM CROWD_STATISTICS
-        WHERE DEVICE_CODE = #{deviceCode}
-        ORDER BY RECORD_TIME DESC
-        FETCH FIRST 1 ROWS ONLY
-    </select>
-
-    <!-- 查询小时分布数据 -->
-    <select id="selectHourDistribution" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'HH24') as hour,
-            SUM(COUNT) as total_count,
-            COUNT(*) as record_count,
-            ROUND(AVG(COUNT), 2) as avg_count,
-            ROUND(AVG(DENSITY), 2) as avg_density
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
-        ORDER BY hour
-    </select>
-
-    <!-- 查询密度分布数据 -->
+    <!-- 密度分布查询 -->
     <select id="selectDensityDistribution" resultType="java.util.Map">
         SELECT 
             CASE 
-                WHEN DENSITY &lt; 0.3 THEN '低密度'
-                WHEN DENSITY &lt; 0.7 THEN '中密度'
-                ELSE '高密度'
-            END as density_level,
+                WHEN DENSITY &lt;= 0.2 THEN '0-0.2'
+                WHEN DENSITY &lt;= 0.4 THEN '0.2-0.4'
+                WHEN DENSITY &lt;= 0.6 THEN '0.4-0.6'
+                WHEN DENSITY &lt;= 0.8 THEN '0.6-0.8'
+                ELSE '0.8-1.0'
+            END as density_range,
             COUNT(*) as count,
             ROUND(AVG(COUNT), 2) as avg_count,
-            ROUND(AVG(DENSITY), 2) as avg_density
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY 
-            CASE 
-                WHEN DENSITY &lt; 0.3 THEN '低密度'
-                WHEN DENSITY &lt; 0.7 THEN '中密度'
-                ELSE '高密度'
-            END
-        ORDER BY 
-            CASE density_level
-                WHEN '低密度' THEN 1
-                WHEN '中密度' THEN 2
-                WHEN '高密度' THEN 3
-            END
+            ROUND(AVG(DENSITY), 4) as avg_density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        GROUP BY density_range
+        ORDER BY density_range
     </select>
 
-    <!-- 查询趋势数据 -->
-    <select id="selectTrend" resultType="java.util.Map">
+    <!-- 人数分布查询 -->
+    <select id="selectCountDistribution" resultType="java.util.Map">
         SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI') as time,
-            SUM(COUNT) as total_count,
-            ROUND(AVG(DENSITY), 2) as avg_density,
+            CASE 
+                WHEN COUNT &lt;= 10 THEN '0-10'
+                WHEN COUNT &lt;= 30 THEN '10-30'
+                WHEN COUNT &lt;= 50 THEN '30-50'
+                WHEN COUNT &lt;= 100 THEN '50-100'
+                ELSE '100+'
+            END as count_range,
+            COUNT(*) as count,
+            ROUND(AVG(DENSITY), 4) as avg_density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        GROUP BY count_range
+        ORDER BY count_range
+    </select>
+
+    <!-- 时间分布查询 -->
+    <select id="selectTimeDistribution" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00:00') as time_slot,
+            ROUND(AVG(COUNT), 2) as avg_count,
+            ROUND(AVG(DENSITY), 4) as avg_density,
             MAX(COUNT) as max_count,
             MIN(COUNT) as min_count
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        <if test="interval != null">
-            GROUP BY TO_CHAR(RECORD_TIME, #{interval})
-        </if>
-        <if test="interval == null">
-            GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI')
-        </if>
-        ORDER BY time
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00:00')
+        ORDER BY time_slot
     </select>
 
-    <!-- 查询概览数据 -->
+    <!-- 概览统计查询 -->
     <select id="selectOverview" resultType="java.util.Map">
         SELECT 
-            SUM(COUNT) as total_count,
-            ROUND(AVG(DENSITY), 2) as avg_density,
-            MAX(COUNT) as max_count,
+            COUNT(*) as total_records,
+            COUNT(DISTINCT DEVICE_CODE) as device_count,
+            ROUND(AVG(DENSITY), 4) as avg_density,
             MAX(DENSITY) as max_density,
-            MIN(COUNT) as min_count,
             MIN(DENSITY) as min_density,
-            COUNT(*) as record_count,
-            COUNT(DISTINCT DEVICE_CODE) as device_count
-        FROM CROWD_STATISTICS
-        WHERE 1=1
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
+            ROUND(AVG(COUNT), 2) as avg_count,
+            MAX(COUNT) as max_count,
+            MIN(COUNT) as min_count,
+            COUNT(CASE WHEN DENSITY &gt;= 0.8 THEN 1 END) as high_density_count
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
     </select>
 
-    <!-- 查询高密度区域数据 -->
-    <select id="selectHighDensity" resultType="java.util.Map">
+    <!-- 高密度区域查询 -->
+    <select id="selectHighDensityAreas" resultType="java.util.Map">
         SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_DENSITY) */
             DEVICE_CODE,
             DEVICE_NAME,
             COUNT(*) as occurrences,
-            ROUND(AVG(DENSITY), 2) as avg_density,
+            ROUND(AVG(DENSITY), 4) as avg_density,
             MAX(DENSITY) as max_density,
             MIN(DENSITY) as min_density,
-            MAX(COUNT) as max_count,
-            ROUND(AVG(COUNT), 2) as avg_count
-        FROM CROWD_STATISTICS
-        WHERE DENSITY >= #{densityThreshold,jdbcType=DECIMAL,defaultValue=0.7}
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
+            ROUND(AVG(COUNT), 2) as avg_count,
+            MAX(COUNT) as max_count
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+            <include refid="Density_Threshold_Condition"/>
+        </where>
         GROUP BY DEVICE_CODE, DEVICE_NAME
         ORDER BY avg_density DESC
         <if test="limit != null">
-            LIMIT #{limit}
+            FETCH FIRST #{limit} ROWS ONLY
         </if>
     </select>
 
-    <!-- 分页条件查询 -->
-    <select id="selectPage" resultMap="BaseResultMap">
-        SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_RECORD_TIME) */
+    <!-- 设备最新数据查询 -->
+    <select id="selectLatestByDevice" resultMap="BaseResultMap">
+        SELECT
         <include refid="Base_Column_List"/>
-        FROM CROWD_STATISTICS
-        <where>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="deviceName != null and deviceName != ''">
-                AND DEVICE_NAME LIKE '%' || #{deviceName} || '%'
-            </if>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
         ORDER BY RECORD_TIME DESC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
+    <!-- 密度统计查询 -->
+    <select id="selectDensityStats" resultType="java.util.Map">
+        SELECT 
+            ROUND(AVG(DENSITY), 4) as avg_density,
+            MAX(DENSITY) as max_density,
+            MIN(DENSITY) as min_density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
     </select>
 </mapper> 

@@ -1,0 +1,340 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Mapper相关规范要求
+
+## 一、命名规范
+
+1. **Mapper接口命名**
+   - 使用`XxxMapper`格式，其中`Xxx`为实体名称
+   - 例如：`AlertMapper`、`CrowdStatisticsMapper`、`DeviceMapper`
+
+2. **方法命名规范**
+   - 查询单个对象：使用`get`前缀，如`getById`、`getByDeviceCode`
+   - 查询列表：使用`list`前缀，如`listByTourism`、`listByStatus`
+   - 统计数量：使用`count`前缀，如`countByStatus`、`countByTourism`
+   - 分页查询：使用`page`前缀，如`pageByConditions`
+   - 插入操作：使用`insert`前缀，如`insert`、`insertBatch`
+   - 更新操作：使用`update`前缀，如`updateStatus`、`updateBatch`
+   - 删除操作：使用`delete`前缀，如`deleteById`、`deleteBatch`
+
+3. **XML文件命名**
+   - 与Mapper接口同名，如`AlertMapper.xml`、`CrowdStatisticsMapper.xml`
+
+## 二、接口定义规范
+
+1. **注解使用**
+   - 必须使用`@Mapper`注解标记接口
+   - 继承`BaseMapper<T>`获取通用CRUD方法
+   - 使用`@Param`注解标记多参数方法中的参数
+
+2. **方法参数规范**
+   - 单个参数：直接使用参数类型
+   - 多个参数：使用`@Param`注解标记
+   - 复杂查询条件：使用DTO对象封装参数
+
+3. **返回值规范**
+   - 单个对象：返回实体类型
+   - 列表查询：返回`List<实体类型>`
+   - 分页查询：返回`IPage<实体类型>`
+   - 统计查询：返回`Map<String, Object>`或具体数值类型
+
+## 三、XML映射规范
+
+1. **基本结构**
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   <mapper namespace="com.scenic.ai.mapper.XxxMapper">
+       <!-- 结果映射 -->
+       <resultMap id="BaseResultMap" type="com.scenic.ai.model.Xxx">
+           <!-- 字段映射 -->
+       </resultMap>
+       
+       <!-- 通用查询列 -->
+       <sql id="Base_Column_List">
+           <!-- 字段列表 -->
+       </sql>
+       
+       <!-- SQL语句 -->
+   </mapper>
+   ```
+
+2. **结果映射规范**
+   - 必须定义`BaseResultMap`作为基础结果映射
+   - 字段名使用大写，与数据库字段名一致
+   - 属性名使用驼峰命名，与Java实体属性一致
+
+3. **SQL片段规范**
+   - 使用`<sql>`标签定义可重用的SQL片段
+   - 必须定义`Base_Column_List`包含所有字段
+   - 复杂条件可抽取为独立SQL片段
+
+4. **动态SQL规范**
+   - 使用`<where>`标签替代WHERE关键字
+   - 使用`<if>`标签进行条件判断
+   - 使用`<foreach>`标签处理集合参数
+   - 使用`<choose>`、`<when>`、`<otherwise>`处理多条件分支
+
+## 四、SQL语句规范
+
+1. **基本规范**
+   - 关键字使用大写，如`SELECT`、`FROM`、`WHERE`
+   - 表名和字段名使用大写
+   - 使用达梦数据库特有的分页语法：`FETCH FIRST n ROWS ONLY OFFSET m ROWS`
+   - 避免使用`SELECT *`，明确指定查询字段
+
+2. **查询优化**
+   - 为常用查询条件创建索引
+   - 使用`EXISTS`代替`IN`进行子查询
+   - 合理使用`UNION ALL`代替`UNION`
+   - 避免在索引列上使用函数或运算
+
+3. **分页查询规范**
+   ```xml
+   <select id="pageByConditions" resultMap="BaseResultMap">
+       SELECT <include refid="Base_Column_List"/>
+       FROM TABLE_NAME
+       <where>
+           <!-- 条件 -->
+       </where>
+       ORDER BY CREATE_TIME DESC
+       FETCH FIRST #{params.pageSize} ROWS ONLY OFFSET #{params.offset} ROWS
+   </select>
+   ```
+
+4. **批量操作规范**
+   ```xml
+   <update id="updateBatch">
+       <foreach collection="list" item="item" separator=";">
+           UPDATE TABLE_NAME
+           SET FIELD = #{item.value},
+               UPDATE_TIME = SYSTIMESTAMP
+           WHERE ID = #{item.id}
+       </foreach>
+   </update>
+   ```
+
+## 五、特殊注意事项
+
+1. **达梦数据库特性**
+   - 使用`SYSTIMESTAMP`获取当前时间戳
+   - 使用`TO_CHAR`进行日期格式化
+   - 使用`IDENTITY`属性定义自增主键
+   - 不支持`LIMIT`语法，必须使用`FETCH FIRST n ROWS ONLY OFFSET m ROWS`
+
+2. **性能优化**
+   - 避免重复定义相同功能的SQL
+   - 合理使用索引提示
+   - 避免在循环中执行SQL
+   - 大量数据操作时使用批量处理
+
+3. **代码规范**
+   - 遵循最小修改原则，避免大规模重构
+   - 保持代码结构清晰，适当添加注释
+   - 确保SQL语句的可读性和可维护性
+
+通过遵循以上规范，可以确保Mapper接口和XML映射文件的质量，提高代码的可读性、可维护性和性能。
+
+
+SyncRecordMapper、SyncTaskMapper和RetryLogMapper   相关文件不用优化
+
+
+
+# Service层调用和命名规范（不使用DTO对象）
+
+## 一、命名规范
+
+1. **Service接口命名**
+   - 使用`IXxxService`格式，其中`Xxx`为实体名称
+   - 例如：`IAlertService`、`ICrowdStatisticsService`、`IDeviceService`
+
+2. **Service实现类命名**
+   - 使用`XxxServiceImpl`格式，其中`Xxx`为实体名称
+   - 例如：`AlertServiceImpl`、`CrowdStatisticsServiceImpl`、`DeviceServiceImpl`
+
+3. **方法命名规范**
+   - 查询单个对象：使用`get`前缀，如`getById`、`getByDeviceCode`
+   - 查询列表：使用`list`前缀，如`listByTourism`、`listByStatus`
+   - 统计数量：使用`count`前缀，如`countByStatus`、`countByTourism`
+   - 分页查询：使用`page`前缀，如`pageByConditions`
+   - 插入操作：使用`save`前缀，如`save`、`saveBatch`
+   - 更新操作：使用`update`前缀，如`updateStatus`、`updateBatch`
+   - 删除操作：使用`delete`前缀，如`deleteById`、`deleteBatch`
+   - 业务操作：使用动词+名词，如`processAlert`、`analyzeCrowdDensity`
+
+## 二、接口定义规范
+
+1. **注解使用**
+   - 接口使用`@Service`注解标记
+   - 实现类使用`@Service`注解标记
+   - 事务管理使用`@Transactional`注解，并指定`rollbackFor`属性
+
+2. **方法参数规范**
+   - 单个参数：直接使用参数类型
+   - 多个参数：直接使用多个参数，不使用DTO对象
+   - 分页参数：直接使用`pageNum`和`pageSize`参数
+
+3. **返回值规范**
+   - 单个对象：返回实体类型
+   - 列表查询：返回`List<实体类型>`
+   - 分页查询：返回`IPage<实体类型>`
+   - 统计查询：返回`Map<String, Object>`或具体数值类型
+   - 操作结果：返回`boolean`或`int`表示成功或失败
+
+## 三、实现类规范
+
+1. **基本结构**
+   ```java
+   @Service
+   @Transactional(rollbackFor = Exception.class)
+   public class XxxServiceImpl extends ServiceImpl<XxxMapper, Xxx> implements IXxxService {
+       
+       private static final Logger log = LoggerFactory.getLogger(XxxServiceImpl.class);
+       
+       private final XxxMapper xxxMapper;
+       
+       @Autowired
+       public XxxServiceImpl(XxxMapper xxxMapper) {
+           this.xxxMapper = xxxMapper;
+       }
+       
+       // 方法实现
+   }
+   ```
+
+2. **异常处理规范**
+   - 使用自定义异常类，如`BusinessException`、`SystemException`
+   - 在方法中捕获异常并转换为业务异常
+   - 记录异常日志，包含详细的错误信息
+
+3. **日志记录规范**
+   - 使用SLF4J进行日志记录
+   - 记录方法入口和出口信息
+   - 记录关键业务操作和异常信息
+   - 使用适当的日志级别（DEBUG、INFO、WARN、ERROR）
+
+4. **事务管理规范**
+   - 在方法级别使用`@Transactional`注解
+   - 指定`rollbackFor`属性为`Exception.class`
+   - 对于只读操作，使用`@Transactional(readOnly = true)`
+
+## 四、业务逻辑规范
+
+1. **参数校验**
+   - 在方法开始处进行参数校验
+   - 使用`StringUtils`、`CollectionUtils`等工具类进行空值检查
+   - 对于无效参数，抛出`BusinessException`异常
+
+2. **业务处理**
+   - 遵循单一职责原则，每个方法只做一件事
+   - 复杂业务逻辑拆分为多个小方法
+   - 使用领域驱动设计思想，将业务逻辑封装在领域模型中
+
+3. **数据访问**
+   - 通过Mapper接口访问数据库
+   - 避免在Service层直接编写SQL语句
+   - 对于复杂查询，直接传递多个参数
+
+4. **结果处理**
+   - 对查询结果进行必要的转换和处理
+   - 使用`BeanUtils`进行对象转换
+   - 对于分页查询，直接返回`IPage`对象
+
+## 五、代码示例
+
+1. **查询方法示例**
+   ```java
+   @Override
+   public CrowdStatistics getById(Long id) {
+       try {
+           if (id == null) {
+               throw new BusinessException(ErrorCode.PARAM_ERROR, "ID不能为空");
+           }
+           return crowdStatisticsMapper.getById(id);
+       } catch (Exception e) {
+           log.error("查询统计详情失败", e);
+           throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询统计详情失败");
+       }
+   }
+   ```
+
+2. **分页查询示例**
+   ```java
+   @Override
+   public IPage<FlowAnalysis> page(Integer pageNum, Integer pageSize, String tourismName, 
+           String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+       try {
+           Page<FlowAnalysis> page = new Page<>(pageNum, pageSize);
+           return flowAnalysisMapper.pageByConditions(page, tourismName, deviceCode, startTime, endTime);
+       } catch (Exception e) {
+           log.error("分页查询流量分析失败", e);
+           throw new BusinessException(ErrorCode.SYSTEM_ERROR, "分页查询流量分析失败");
+       }
+   }
+   ```
+
+3. **保存方法示例**
+   ```java
+   @Override
+   public boolean save(Alert alert) {
+       try {
+           if (alert == null) {
+               throw new BusinessException(ErrorCode.PARAM_ERROR, "告警信息不能为空");
+           }
+           return alertMapper.insert(alert) > 0;
+       } catch (Exception e) {
+           log.error("保存告警信息失败", e);
+           throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存告警信息失败");
+       }
+   }
+   ```
+
+4. **复杂查询示例**
+   ```java
+   @Override
+   public List<Map<String, Object>> getHourDistribution(String deviceCode, String tourismName,
+           LocalDateTime startTime, LocalDateTime endTime) {
+       try {
+           if (startTime == null || endTime == null) {
+               throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
+           }
+           if (startTime.isAfter(endTime)) {
+               throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间不能晚于结束时间");
+           }
+           return flowAnalysisMapper.countByHour(deviceCode, tourismName, startTime, endTime);
+       } catch (BusinessException e) {
+           throw e;
+       } catch (Exception e) {
+           log.error("获取时段客流分布失败", e);
+           throw new SystemException(ErrorCode.DATABASE_ERROR, "获取时段客流分布失败", e);
+       }
+   }
+   ```
+
+## 六、特殊注意事项
+
+1. **领域驱动设计**
+   - 将业务逻辑封装在领域模型中
+   - 使用领域事件处理复杂业务流程
+   - 遵循领域驱动设计的原则和模式
+
+2. **最小修改原则**
+   - 遵循最小修改原则，避免大规模重构
+   - 修改代码时，确保兼容现有功能
+   - 添加新功能时，尽量不修改现有代码
+
+3. **代码规范**
+   - 保持代码结构清晰，适当添加注释
+   - 使用常量定义固定值
+   - 避免硬编码，使用配置或常量
+
+4. **性能优化**
+   - 避免在循环中执行数据库操作
+   - 使用批量操作代替单条操作
+   - 合理使用缓存减少数据库访问
+
+
+
