@@ -3,7 +3,7 @@
 <mapper namespace="com.scenic.ai.mapper.AlertHandleRecordMapper">
     
     <!-- 基础结果映射 -->
-    <resultMap id="BaseResultMap" type="com.scenic.ai.domain.model.AlertHandleRecord">
+    <resultMap id="BaseResultMap" type="com.scenic.ai.entity.AlertHandleRecord">
         <id column="ID" property="id"/>
         <result column="ALERT_ID" property="alertId"/>
         <result column="HANDLER" property="handler"/>
@@ -107,7 +107,7 @@
     </select>
     
     <!-- 插入记录 -->
-    <insert id="insert" parameterType="com.scenic.ai.domain.model.AlertHandleRecord">
+    <insert id="insert" parameterType="com.scenic.ai.entity.AlertHandleRecord">
         INSERT INTO ALERT_HANDLE_RECORD (
             ALERT_ID, HANDLER, HANDLE_METHOD, HANDLE_RESULT, 
             HANDLE_TIME, REMARK, CREATE_TIME, UPDATE_TIME
@@ -118,7 +118,7 @@
     </insert>
     
     <!-- 更新记录 -->
-    <update id="update" parameterType="com.scenic.ai.domain.model.AlertHandleRecord">
+    <update id="update" parameterType="com.scenic.ai.entity.AlertHandleRecord">
         UPDATE ALERT_HANDLE_RECORD
         <set>
             <if test="handler != null">HANDLER = #{handler},</if>

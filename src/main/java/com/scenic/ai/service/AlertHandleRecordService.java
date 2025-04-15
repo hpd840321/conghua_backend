@@ -1,6 +1,6 @@
 package com.scenic.ai.service;
 
-import com.scenic.ai.domain.model.AlertHandleRecord;
+import com.scenic.ai.entity.AlertHandleRecord;
 import java.util.List;
 import java.util.Map;
 

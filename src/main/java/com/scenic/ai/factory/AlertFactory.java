@@ -1,16 +1,18 @@
 package com.scenic.ai.factory;
 
-import com.scenic.ai.model.Alert;
+import com.scenic.ai.entity.Alert;
 import com.scenic.ai.model.enums.AlertLevel;
 import com.scenic.ai.model.enums.AlertType;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 /**
  * 告警工厂类
  */
 public class AlertFactory {
-    
+
     /**
      * 创建告警
      */
@@ -25,12 +27,13 @@ public class AlertFactory {
         alert.setDescription(description);
         alert.setImageUrl(imageUrl);
         alert.setAlertStatus(0);
-        alert.setRecordTime(LocalDateTime.now());
-        alert.setCreateTime(LocalDateTime.now());
-        alert.setUpdateTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        alert.setRecordTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+        alert.setCreateTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+        alert.setUpdateTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
         return alert;
     }
-    
+
     /**
      * 创建人群密度告警
      */
@@ -42,7 +45,7 @@ public class AlertFactory {
                 AlertLevel.HIGH.getValue(),
                 description, imageUrl);
     }
-    
+
     /**
      * 创建人群数量告警
      */
@@ -54,4 +57,4 @@ public class AlertFactory {
                 AlertLevel.HIGH.getValue(),
                 description, imageUrl);
     }
-} 
+}

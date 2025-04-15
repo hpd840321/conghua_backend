@@ -2,7 +2,7 @@ package com.scenic.ai.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.scenic.ai.model.CrowdStatistics;
+import com.scenic.ai.entity.CrowdStatistics;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;

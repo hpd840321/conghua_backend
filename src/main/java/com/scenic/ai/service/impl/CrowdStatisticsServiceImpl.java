@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.scenic.ai.common.exception.BusinessException;
 import com.scenic.ai.common.enums.ErrorCode;
 import com.scenic.ai.mapper.CrowdStatisticsMapper;
-import com.scenic.ai.model.CrowdStatistics;
+import com.scenic.ai.entity.CrowdStatistics;
 import com.scenic.ai.service.ICrowdStatisticsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,66 +39,68 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
     private CrowdStatisticsMapper crowdStatisticsMapper;
 
     @Override
-    public boolean save(CrowdStatistics statistics) {
-        if (statistics == null) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "统计记录不能为空");
+    public boolean save(CrowdStatistics crowdStatistics) {
+        if (crowdStatistics == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
-        try {
-            return crowdStatisticsMapper.insert(statistics) > 0;
-        } catch (Exception e) {
-            log.error("保存人群统计记录失败", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存人群统计记录失败");
+        if (crowdStatistics.getDeviceCode() == null || crowdStatistics.getDeviceCode().isEmpty()) {
+            throw new BusinessException(ErrorCode.DEVICE_CODE_EMPTY);
         }
+        if (crowdStatistics.getDeviceName() == null || crowdStatistics.getDeviceName().isEmpty()) {
+            throw new BusinessException(ErrorCode.DEVICE_NAME_EMPTY);
+        }
+        if (crowdStatistics.getTourismName() == null || crowdStatistics.getTourismName().isEmpty()) {
+            throw new BusinessException(ErrorCode.TOURISM_NAME_EMPTY);
+        }
+        if (crowdStatistics.getCount() == null) {
+            throw new BusinessException(ErrorCode.CROWD_COUNT_EMPTY);
+        }
+        if (crowdStatistics.getDensity() == null) {
+            throw new BusinessException(ErrorCode.CROWD_DENSITY_EMPTY);
+        }
+        if (crowdStatistics.getRecordTime() == null) {
+            throw new BusinessException(ErrorCode.RECORD_TIME_EMPTY);
+        }
+        return baseMapper.insert(crowdStatistics) > 0;
     }
 
     @Override
     public CrowdStatistics getById(Long id) {
         if (id == null || id <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "统计记录ID不能为空");
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
-        try {
-            return crowdStatisticsMapper.getById(id);
-        } catch (Exception e) {
-            log.error("查询人群统计记录失败, id: {}", id, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询人群统计记录失败");
+        CrowdStatistics crowdStatistics = baseMapper.selectById(id);
+        if (crowdStatistics == null) {
+            throw new BusinessException(ErrorCode.CROWD_STATISTICS_NOT_FOUND);
         }
+        return crowdStatistics;
     }
 
     @Override
     public List<CrowdStatistics> listByDevice(String deviceCode) {
-        if (!StringUtils.hasText(deviceCode)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编号不能为空");
+        if (deviceCode == null || deviceCode.isEmpty()) {
+            throw new BusinessException(ErrorCode.DEVICE_CODE_EMPTY);
         }
-        try {
-            return crowdStatisticsMapper.listByDevice(deviceCode);
-        } catch (Exception e) {
-            log.error("查询设备人群统计记录失败, deviceCode: {}", deviceCode, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询设备人群统计记录失败");
-        }
+        return baseMapper.listByDevice(deviceCode);
     }
 
     @Override
     public List<CrowdStatistics> listByTourism(String tourismName) {
-        if (!StringUtils.hasText(tourismName)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "景区名称不能为空");
+        if (tourismName == null || tourismName.isEmpty()) {
+            throw new BusinessException(ErrorCode.TOURISM_NAME_EMPTY);
         }
-        try {
-            return crowdStatisticsMapper.listByTourism(tourismName);
-        } catch (Exception e) {
-            log.error("查询景区人群统计记录失败, tourismName: {}", tourismName, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询景区人群统计记录失败");
-        }
+        return baseMapper.listByTourism(tourismName);
     }
 
     @Override
     public List<CrowdStatistics> listByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.listByTimeRange(startTime, endTime);
-        } catch (Exception e) {
-            log.error("查询时间范围内人群统计记录失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询时间范围内人群统计记录失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.listByTimeRange(startTime, endTime);
     }
 
     @Override
@@ -107,98 +109,93 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
             String tourismName,
             LocalDateTime startTime,
             LocalDateTime endTime) {
-        if (page == null || page.getCurrent() <= 0 || page.getSize() <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "分页参数错误");
+        if (page == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
-        if (startTime != null && endTime != null) {
-            validateTimeRange(startTime, endTime);
+        if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
         }
-        try {
-            return crowdStatisticsMapper.pageByConditions(page, deviceCode, tourismName, startTime, endTime);
-        } catch (Exception e) {
-            log.error("分页查询人群统计记录失败", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "分页查询人群统计记录失败");
-        }
+        return baseMapper.pageByConditions(page, deviceCode, tourismName, startTime, endTime);
     }
 
     @Override
     public Integer countTotalCrowd(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.countTotalCrowd(startTime, endTime);
-        } catch (Exception e) {
-            log.error("统计总人数失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "统计总人数失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.countTotalCrowd(startTime, endTime);
     }
 
     @Override
     public Double getAverageDensity(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.getAverageDensity(startTime, endTime);
-        } catch (Exception e) {
-            log.error("计算平均密度失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "计算平均密度失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.getAverageDensity(startTime, endTime);
     }
 
     @Override
     public Integer getMaxCrowdCount(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.getMaxCrowdCount(startTime, endTime);
-        } catch (Exception e) {
-            log.error("获取最大人数失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取最大人数失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.getMaxCrowdCount(startTime, endTime);
     }
 
     @Override
     public Integer getMinCrowdCount(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.getMinCrowdCount(startTime, endTime);
-        } catch (Exception e) {
-            log.error("获取最小人数失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取最小人数失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.getMinCrowdCount(startTime, endTime);
     }
 
     @Override
     public List<Map<String, Object>> getTourismDistribution(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.getTourismDistribution(startTime, endTime);
-        } catch (Exception e) {
-            log.error("获取景区人数分布失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取景区人数分布失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.getTourismDistribution(startTime, endTime);
     }
 
     @Override
     public List<Map<String, Object>> getDeviceDistribution(LocalDateTime startTime, LocalDateTime endTime) {
-        validateTimeRange(startTime, endTime);
-        try {
-            return crowdStatisticsMapper.getDeviceDistribution(startTime, endTime);
-        } catch (Exception e) {
-            log.error("获取设备人数分布失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取设备人数分布失败");
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
         }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
+        return baseMapper.getDeviceDistribution(startTime, endTime);
     }
 
     @Override
     public List<Map<String, Object>> getTimeTrend(LocalDateTime startTime, LocalDateTime endTime, Integer interval) {
-        validateTimeRange(startTime, endTime);
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID);
+        }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
+        }
         if (interval == null || interval <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "时间间隔必须大于0");
+            throw new BusinessException(ErrorCode.PARAM_INVALID, "时间间隔必须大于0");
         }
-        try {
-            return crowdStatisticsMapper.getTimeTrend(startTime, endTime, interval);
-        } catch (Exception e) {
-            log.error("获取时间趋势数据失败, startTime: {}, endTime: {}, interval: {}", startTime, endTime, interval, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取时间趋势数据失败");
-        }
+        return baseMapper.getTimeTrend(startTime, endTime, interval);
     }
 
     @Override

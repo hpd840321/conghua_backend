@@ -2,7 +2,7 @@ package com.scenic.ai.service;
 
 import com.scenic.ai.domain.model.SyncProgress;
 import com.scenic.ai.exception.SyncException;
-import com.scenic.ai.model.RetryLog;
+import com.scenic.ai.entity.RetryLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
@@ -32,21 +32,21 @@ public class SyncService {
 
     // 同步进度跟踪
     private final Map<String, SyncProgress> progressMap = new ConcurrentHashMap<>();
-    
+
     /**
      * 构造函数
      * 
-     * @param syncRecordService 同步记录服务
+     * @param syncRecordService    同步记录服务
      * @param thirdPartyApiService 第三方API服务
-     * @param storageService 存储服务
-     * @param syncRetryTemplate 同步重试模板
-     * @param retryLogService 重试日志服务
+     * @param storageService       存储服务
+     * @param syncRetryTemplate    同步重试模板
+     * @param retryLogService      重试日志服务
      */
     public SyncService(SyncRecordService syncRecordService,
-                      ThirdPartyApiService thirdPartyApiService,
-                      StorageService storageService,
-                      RetryTemplate syncRetryTemplate,
-                      RetryLogService retryLogService) {
+            ThirdPartyApiService thirdPartyApiService,
+            StorageService storageService,
+            RetryTemplate syncRetryTemplate,
+            RetryLogService retryLogService) {
         this.syncRecordService = syncRecordService;
         this.thirdPartyApiService = thirdPartyApiService;
         this.storageService = storageService;
@@ -65,26 +65,25 @@ public class SyncService {
 
         try {
             log.info("开始{}同步任务", syncType);
-            
+
             // 获取上次同步记录
             Map<String, Object> lastRecord = syncRecordService.getLatestSyncRecord(syncType);
-            LocalDateTime lastSyncTime = lastRecord != null ? 
-                (LocalDateTime) lastRecord.get("syncTime") : null;
-            
+            LocalDateTime lastSyncTime = lastRecord != null ? (LocalDateTime) lastRecord.get("syncTime") : null;
+
             // 获取并处理数据
             syncRetryTemplate.execute(context -> {
                 // 记录重试次数
                 int retryCount = context.getRetryCount();
                 updateRetryLog(syncType, syncId, retryCount);
-                
+
                 // 执行同步逻辑
                 List<Map<String, Object>> data = thirdPartyApiService.getStatisticsData(lastSyncTime);
                 processData(data, progress);
-                
+
                 // 更新同步记录
                 syncRecordService.createSyncRecord(syncType, 1, null, data.size());
                 log.info("{}同步任务完成，处理{}条数据", syncType, data.size());
-                
+
                 return null;
             });
         } catch (Exception e) {
@@ -160,7 +159,7 @@ public class SyncService {
         log.setRetryCount(retryCount);
         retryLogService.saveOrUpdate(log);
     }
-    
+
     private void saveFailedRetryLog(String businessType, String businessId, String errorMessage) {
         RetryLog log = retryLogService.findByBusinessTypeAndId(businessType, businessId);
         if (log != null) {

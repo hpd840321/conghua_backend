@@ -3,7 +3,7 @@ package com.scenic.ai.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.scenic.ai.model.CrowdStatistics;
+import com.scenic.ai.entity.CrowdStatistics;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -320,8 +320,7 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
          * @param endTime   结束时间
          * @return 总人数
          */
-        Integer countTotalCrowd(@Param("startTime") LocalDateTime startTime,
-                        @Param("endTime") LocalDateTime endTime);
+        Integer countTotalCrowd(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
         /**
          * 统计指定时间范围内的平均密度
@@ -330,8 +329,7 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
          * @param endTime   结束时间
          * @return 平均密度
          */
-        Double getAverageDensity(@Param("startTime") LocalDateTime startTime,
-                        @Param("endTime") LocalDateTime endTime);
+        Double getAverageDensity(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
         /**
          * 获取指定时间范围内的最大人数
@@ -340,8 +338,7 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
          * @param endTime   结束时间
          * @return 最大人数
          */
-        Integer getMaxCrowdCount(@Param("startTime") LocalDateTime startTime,
-                        @Param("endTime") LocalDateTime endTime);
+        Integer getMaxCrowdCount(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
         /**
          * 获取指定时间范围内的最小人数
@@ -350,8 +347,7 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
          * @param endTime   结束时间
          * @return 最小人数
          */
-        Integer getMinCrowdCount(@Param("startTime") LocalDateTime startTime,
-                        @Param("endTime") LocalDateTime endTime);
+        Integer getMinCrowdCount(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
         /**
          * 获取各景区人数分布

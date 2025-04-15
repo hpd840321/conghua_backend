@@ -12,7 +12,7 @@ import com.scenic.ai.common.exception.BusinessException;
 import com.scenic.ai.common.exception.SystemException;
 import com.scenic.ai.common.util.QueryUtils;
 import com.scenic.ai.common.util.ValidationUtils;
-import com.scenic.ai.model.FlowAnalysis;
+import com.scenic.ai.entity.FlowAnalysis;
 import com.scenic.ai.mapper.FlowAnalysisMapper;
 import com.scenic.ai.service.IFlowAnalysisService;
 import org.slf4j.Logger;

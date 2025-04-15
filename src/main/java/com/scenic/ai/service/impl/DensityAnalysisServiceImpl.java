@@ -6,12 +6,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.scenic.ai.common.exception.BusinessException;
-import com.scenic.ai.common.exception.ErrorCode;
+import com.scenic.ai.common.enums.ErrorCode;
+import com.scenic.ai.domain.model.AlertDomain;
+import com.scenic.ai.dto.DensityTrendDTO;
 import com.scenic.ai.mapper.DensityAnalysisMapper;
-import com.scenic.ai.model.DensityAnalysis;
-import com.scenic.ai.service.IDensityAnalysisService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.scenic.ai.entity.DensityAnalysis;
+import com.scenic.ai.service.DensityAnalysisService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +28,11 @@ import java.util.stream.Collectors;
 /**
  * 密度分析服务实现类
  */
+@Slf4j
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMapper, DensityAnalysis>
-        implements IDensityAnalysisService {
-
-    private static final Logger log = LoggerFactory.getLogger(DensityAnalysisServiceImpl.class);
+        implements DensityAnalysisService {
 
     private static final DateTimeFormatter HOUR_FORMATTER = DateTimeFormatter.ofPattern("HH:00");
 
@@ -396,129 +396,96 @@ public class DensityAnalysisServiceImpl extends ServiceImpl<DensityAnalysisMappe
     }
 
     @Override
-    public List<DensityAnalysis> listByConditions(String tourismName, String deviceCode, String algName,
-            LocalDateTime startTime, LocalDateTime endTime) {
+    public List<AlertDomain> findExceedThresholdDensities() {
         try {
-            validateTimeRange(startTime, endTime);
-            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
-            if (StringUtils.hasText(tourismName)) {
-                wrapper.eq(DensityAnalysis::getTourismName, tourismName);
-            }
-            if (StringUtils.hasText(deviceCode)) {
-                wrapper.eq(DensityAnalysis::getDeviceCode, deviceCode);
-            }
-            if (StringUtils.hasText(algName)) {
-                wrapper.eq(DensityAnalysis::getAlgName, algName);
-            }
-            if (startTime != null) {
-                wrapper.ge(DensityAnalysis::getRecordTime, startTime);
-            }
-            if (endTime != null) {
-                wrapper.le(DensityAnalysis::getRecordTime, endTime);
-            }
-            wrapper.orderByDesc(DensityAnalysis::getRecordTime);
-            return list(wrapper);
-        } catch (BusinessException e) {
-            throw e;
+            return densityAnalysisMapper.findExceedThresholdDensities();
         } catch (Exception e) {
-            log.error("查询密度分析列表失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询密度分析列表失败");
+            log.error("查询超过阈值的密度记录失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询超过阈值的密度记录失败");
         }
     }
 
     @Override
-    public int countByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+    public List<DensityTrendDTO> analyzeDensityTrend(String areaId, LocalDateTime startTime, LocalDateTime endTime,
+            Integer interval) {
         try {
             validateTimeRange(startTime, endTime);
-            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
-            wrapper.ge(DensityAnalysis::getRecordTime, startTime)
-                    .le(DensityAnalysis::getRecordTime, endTime);
-            return count(wrapper).intValue();
+            return densityAnalysisMapper.analyzeDensityTrend(areaId, startTime, endTime, interval);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("统计时间范围内密度分析数量失败, startTime: {}, endTime: {}", startTime, endTime, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "统计时间范围内密度分析数量失败");
+            log.error("分析密度趋势失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "分析密度趋势失败");
         }
     }
 
     @Override
-    public List<Map<String, Object>> getDensityDistribution(String tourismName, String deviceCode,
+    public List<DensityAnalysis> listByConditions(String areaId, String deviceId, String algName,
             LocalDateTime startTime, LocalDateTime endTime) {
         try {
             validateTimeRange(startTime, endTime);
-            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
-            if (StringUtils.hasText(tourismName)) {
-                wrapper.eq(DensityAnalysis::getTourismName, tourismName);
-            }
-            if (StringUtils.hasText(deviceCode)) {
-                wrapper.eq(DensityAnalysis::getDeviceCode, deviceCode);
-            }
-            wrapper.ge(DensityAnalysis::getRecordTime, startTime)
-                    .le(DensityAnalysis::getRecordTime, endTime);
-            
-            List<DensityAnalysis> list = list(wrapper);
-            return list.stream()
-                    .collect(Collectors.groupingBy(DensityAnalysis::getDensityLevel,
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    items -> {
-                                        Map<String, Object> result = new HashMap<>();
-                                        result.put("level", items.get(0).getDensityLevel());
-                                        result.put("count", items.size());
-                                        result.put("avgDensity", items.stream()
-                                                .mapToInt(DensityAnalysis::getDensityCount)
-                                                .average()
-                                                .orElse(0));
-                                        return result;
-                                    })))
-                    .values()
-                    .stream()
-                    .collect(Collectors.toList());
+            return densityAnalysisMapper.listByConditions(areaId, deviceId, algName, startTime, endTime);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("获取密度分布失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取密度分布失败");
+            log.error("查询密度分析记录失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查询密度分析记录失败");
         }
     }
 
     @Override
-    public List<Map<String, Object>> getTimeDistribution(String tourismName, String deviceCode,
-            LocalDateTime startTime, LocalDateTime endTime) {
+    public long countByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
         try {
             validateTimeRange(startTime, endTime);
-            LambdaQueryWrapper<DensityAnalysis> wrapper = new LambdaQueryWrapper<>();
-            if (StringUtils.hasText(tourismName)) {
-                wrapper.eq(DensityAnalysis::getTourismName, tourismName);
-            }
-            if (StringUtils.hasText(deviceCode)) {
-                wrapper.eq(DensityAnalysis::getDeviceCode, deviceCode);
-            }
-            wrapper.ge(DensityAnalysis::getRecordTime, startTime)
-                    .le(DensityAnalysis::getRecordTime, endTime);
-            
-            List<DensityAnalysis> list = list(wrapper);
-            return list.stream()
-                    .collect(Collectors.groupingBy(
-                            item -> item.getRecordTime().format(HOUR_FORMATTER),
-                            Collectors.collectingAndThen(
-                                    Collectors.toList(),
-                                    items -> {
-                                        Map<String, Object> result = new HashMap<>();
-                                        result.put("hour", items.get(0).getRecordTime().format(HOUR_FORMATTER));
-                                        result.put("count", items.size());
-                                        result.put("avgDensity", items.stream()
-                                                .mapToInt(DensityAnalysis::getDensityCount)
-                                                .average()
-                                                .orElse(0));
-                                        return result;
-                                    })))
-                    .values()
-                    .stream()
-                    .collect(Collectors.toList());
+            return densityAnalysisMapper.countByTimeRange(startTime, endTime);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("获取时段分布失败, tourismName: {}, deviceCode: {}", tourismName, deviceCode, e);
+            log.error("统计时间范围内的记录数失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "统计时间范围内的记录数失败");
+        }
+    }
+
+    @Override
+    public Map<String, Object> getDensityDistribution(String areaId, String deviceId, LocalDateTime startTime,
+            LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            return densityAnalysisMapper.getDensityDistribution(areaId, deviceId, startTime, endTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取密度分布统计失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取密度分布统计失败");
+        }
+    }
+
+    @Override
+    public Map<String, Object> getTimeDistribution(String areaId, String deviceId, LocalDateTime startTime,
+            LocalDateTime endTime) {
+        try {
+            validateTimeRange(startTime, endTime);
+            return densityAnalysisMapper.getTimeDistribution(areaId, deviceId, startTime, endTime);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("获取时间分布统计失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取时间分布统计失败");
+        }
+    }
+
+    /**
+     * 验证时间范围的合法性
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     */
+    private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID, "开始时间和结束时间不能为空");
+        }
+        if (startTime.isAfter(endTime)) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID, "开始时间不能晚于结束时间");
+        }
+    }
 }

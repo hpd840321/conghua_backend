@@ -1,60 +1,60 @@
 package com.scenic.ai.util;
 
 import com.scenic.ai.domain.model.AlertDomain;
-import com.scenic.ai.model.Alert;
-import com.scenic.ai.model.enums.AlertLevel;
-import com.scenic.ai.model.enums.AlertStatus;
-import com.scenic.ai.model.enums.AlertType;
+import com.scenic.ai.entity.Alert;
+import com.scenic.ai.common.enums.AlertType;
+import com.scenic.ai.common.enums.AlertLevel;
+import com.scenic.ai.common.enums.AlertStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Alert实体与领域模型转换工具类
+ * 告警实体与领域模型转换器
  */
 public class AlertConverter {
-    
+
     /**
-     * 将数据库实体转换为领域模型
+     * 将告警实体转换为领域模型
      */
     public static AlertDomain toAlertDomain(Alert alert) {
         if (alert == null) {
             return null;
         }
+
         return AlertDomain.createWithValue(
-            alert.getAlertTypeEnum().name(),
-            alert.getAlertLevelEnum().name(),
-            alert.getDeviceCode(),
-            alert.getDeviceName(),
-            alert.getTourismName(),
-            alert.getDescription(),
-            alert.getValue()
+                alert.getAlertType(),
+                AlertLevel.fromValue(alert.getAlertLevel()).name(),
+                alert.getDeviceCode(),
+                alert.getDeviceName(),
+                alert.getTourismName(),
+                alert.getDescription(),
+                null // 由于Alert实体中没有value字段，这里传null
         );
     }
-    
+
     /**
-     * 将领域模型转换为数据库实体
+     * 将领域模型转换为告警实体
      */
     public static Alert toAlert(AlertDomain domain) {
         if (domain == null) {
             return null;
         }
+
         Alert alert = new Alert();
-        alert.setId(Long.parseLong(domain.getId()));
-        alert.setAlertType(AlertType.valueOf(domain.getType()).getValue());
+        alert.setAlertType(domain.getType());
         alert.setAlertLevel(AlertLevel.valueOf(domain.getLevel()).getValue());
         alert.setDeviceCode(domain.getDeviceCode());
         alert.setDeviceName(domain.getDeviceName());
         alert.setTourismName(domain.getTourismName());
         alert.setDescription(domain.getDescription());
-        alert.setValue(domain.getValue());
-        alert.setAlertStatus(AlertStatus.fromValue(0).getValue());  // 默认待处理状态
-        alert.setRecordTime(domain.getCreateTime());
+        alert.setAlertStatus(AlertStatus.valueOf(domain.getStatus()).getValue());
         alert.setCreateTime(domain.getCreateTime());
         alert.setUpdateTime(domain.getCreateTime());
+
         return alert;
     }
-    
+
     /**
      * 批量转换为领域模型
      */
@@ -63,10 +63,10 @@ public class AlertConverter {
             return null;
         }
         return alerts.stream()
-            .map(AlertConverter::toAlertDomain)
-            .collect(Collectors.toList());
+                .map(AlertConverter::toAlertDomain)
+                .collect(Collectors.toList());
     }
-    
+
     /**
      * 批量转换为数据库实体
      */
@@ -75,7 +75,7 @@ public class AlertConverter {
             return null;
         }
         return domains.stream()
-            .map(AlertConverter::toAlert)
-            .collect(Collectors.toList());
+                .map(AlertConverter::toAlert)
+                .collect(Collectors.toList());
     }
-} 
+}

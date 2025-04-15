@@ -5,7 +5,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <mapper namespace="com.scenic.ai.mapper.FlowAnalysisMapper">
     
     <!-- 通用查询结果列 -->
-    <resultMap type="com.scenic.ai.model.FlowAnalysis" id="BaseResultMap">
+    <resultMap type="com.scenic.ai.entity.FlowAnalysis" id="BaseResultMap">
         <id column="ID" property="id"/>
         <result column="DEVICE_CODE" property="deviceCode"/>
         <result column="TOURISM_NAME" property="tourismName"/>

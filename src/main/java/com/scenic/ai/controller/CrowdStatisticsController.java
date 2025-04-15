@@ -3,7 +3,7 @@ package com.scenic.ai.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scenic.ai.common.core.domain.AjaxResult;
-import com.scenic.ai.model.CrowdStatistics;
+import com.scenic.ai.entity.CrowdStatistics;
 import com.scenic.ai.service.ICrowdStatisticsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;

@@ -3,7 +3,7 @@
 <mapper namespace="com.scenic.ai.mapper.AlertMapper">
     
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.scenic.ai.model.Alert">
+    <resultMap id="BaseResultMap" type="com.scenic.ai.entity.Alert">
         <id column="ID" property="id"/>
         <result column="TOURISM_NAME" property="tourismName"/>
         <result column="DEVICE_CODE" property="deviceCode"/>

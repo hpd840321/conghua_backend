@@ -1,7 +1,7 @@
 package com.scenic.ai.util;
 
 import com.scenic.ai.domain.model.CrowdStatisticsDomain;
-import com.scenic.ai.model.CrowdStatistics;
+import com.scenic.ai.entity.CrowdStatistics;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
  * 人群统计转换器
  */
 public class CrowdStatisticsConverter {
-    
+
     /**
      * 将数据库实体转换为领域模型
      */
@@ -19,20 +19,19 @@ public class CrowdStatisticsConverter {
             return null;
         }
         return new CrowdStatisticsDomain(
-            String.valueOf(entity.getId()),
-            entity.getDeviceCode(),
-            entity.getDeviceName(),
-            entity.getTourismName(),
-            entity.getCount(),
-            entity.getDensity(),
-            entity.getAlgName(),
-            entity.getTaskCode(),
-            entity.getImageUrl(),
-            entity.getRecordTime(),
-            entity.getCreateTime()
-        );
+                String.valueOf(entity.getId()),
+                entity.getDeviceCode(),
+                entity.getDeviceName(),
+                entity.getTourismName(),
+                entity.getCount(),
+                entity.getDensity(),
+                entity.getAlgName(),
+                entity.getTaskCode(),
+                entity.getImageUrl(),
+                entity.getRecordTime(),
+                entity.getCreateTime());
     }
-    
+
     /**
      * 将领域模型转换为数据库实体
      */
@@ -55,7 +54,7 @@ public class CrowdStatisticsConverter {
         entity.setUpdateTime(domain.getCreateTime());
         return entity;
     }
-    
+
     /**
      * 批量转换为领域模型
      */
@@ -64,10 +63,10 @@ public class CrowdStatisticsConverter {
             return null;
         }
         return entities.stream()
-            .map(CrowdStatisticsConverter::toDomain)
-            .collect(Collectors.toList());
+                .map(CrowdStatisticsConverter::toDomain)
+                .collect(Collectors.toList());
     }
-    
+
     /**
      * 批量转换为数据库实体
      */
@@ -76,7 +75,7 @@ public class CrowdStatisticsConverter {
             return null;
         }
         return domains.stream()
-            .map(CrowdStatisticsConverter::toEntity)
-            .collect(Collectors.toList());
+                .map(CrowdStatisticsConverter::toEntity)
+                .collect(Collectors.toList());
     }
-} 
+}

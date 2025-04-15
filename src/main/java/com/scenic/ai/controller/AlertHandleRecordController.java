@@ -1,7 +1,7 @@
 package com.scenic.ai.controller;
 
 import com.scenic.ai.common.AjaxResult;
-import com.scenic.ai.domain.model.AlertHandleRecord;
+import com.scenic.ai.entity.AlertHandleRecord;
 import com.scenic.ai.service.AlertHandleRecordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

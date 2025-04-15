@@ -2,7 +2,7 @@ package com.scenic.ai.common.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.scenic.ai.model.FlowAnalysis;
+import com.scenic.ai.entity.FlowAnalysis;
 
 import java.time.LocalDateTime;
 

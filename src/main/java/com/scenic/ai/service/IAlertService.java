@@ -3,8 +3,8 @@ package com.scenic.ai.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.scenic.ai.model.Alert;
-import com.scenic.ai.model.AlertHandleRecord;
+import com.scenic.ai.entity.Alert;
+import com.scenic.ai.entity.AlertHandleRecord;
 
 import java.time.LocalDateTime;
 import java.util.Date;
