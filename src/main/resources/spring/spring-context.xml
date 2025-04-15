@@ -13,13 +13,11 @@
                            http://www.springframework.org/schema/aop
                            http://www.springframework.org/schema/aop/spring-aop.xsd">
 
-    <!-- 扫描组件 -->
-    <context:component-scan base-package="com.scenic.ai">
-        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
-    </context:component-scan>
-
     <!-- 加载属性文件 -->
     <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!-- 扫描服务层 -->
+    <context:component-scan base-package="com.scenic.ai.service"/>
 
     <!-- 数据源配置 -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
@@ -27,25 +25,22 @@
         <property name="jdbcUrl" value="${jdbc.url}"/>
         <property name="username" value="${jdbc.username}"/>
         <property name="password" value="${jdbc.password}"/>
-        <!-- 连接池配置 -->
-        <property name="maximumPoolSize" value="20"/>
+        <property name="maximumPoolSize" value="10"/>
         <property name="minimumIdle" value="5"/>
-        <property name="connectionTimeout" value="30000"/>
-        <property name="idleTimeout" value="600000"/>
-        <property name="maxLifetime" value="1800000"/>
+        <property name="idleTimeout" value="300000"/>
+        <property name="connectionTimeout" value="20000"/>
     </bean>
 
     <!-- MyBatis SqlSessionFactory配置 -->
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <bean id="sqlSessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
-        <property name="mapperLocations" value="classpath:mapper/**/*.xml"/>
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
-        <property name="typeAliasesPackage" value="com.scenic.ai.model"/>
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
     </bean>
 
-    <!-- Mapper扫描配置 -->
+    <!-- MyBatis Mapper扫描配置 -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-        <property name="basePackage" value="com.scenic.ai.dao"/>
+        <property name="basePackage" value="com.scenic.ai.mapper"/>
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
     </bean>
 
@@ -54,38 +49,34 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
-    <!-- 开启事务注解 -->
+    <!-- 事务注解驱动 -->
     <tx:annotation-driven transaction-manager="transactionManager"/>
 
-    <!-- 配置事务通知 -->
-    <tx:advice id="txAdvice" transaction-manager="transactionManager">
-        <tx:attributes>
-            <tx:method name="save*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
-            <tx:method name="insert*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
-            <tx:method name="add*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
-            <tx:method name="update*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
-            <tx:method name="delete*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
-            <tx:method name="remove*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
-            <tx:method name="get*" propagation="SUPPORTS" read-only="true"/>
-            <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
-            <tx:method name="select*" propagation="SUPPORTS" read-only="true"/>
-            <tx:method name="query*" propagation="SUPPORTS" read-only="true"/>
-            <tx:method name="count*" propagation="SUPPORTS" read-only="true"/>
-            <tx:method name="*" propagation="SUPPORTS" read-only="true"/>
-        </tx:attributes>
-    </tx:advice>
-
     <!-- AOP配置 -->
-    <aop:config>
-        <aop:pointcut id="txPointcut" expression="execution(* com.scenic.ai.service..*.*(..))"/>
-        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut"/>
-    </aop:config>
+    <aop:aspectj-autoproxy/>
 
-    <!-- 缓存配置 -->
+    <!-- 缓存管理器 -->
     <bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">
         <property name="cacheManager">
             <bean class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
                 <property name="configLocation" value="classpath:ehcache.xml"/>
+                <property name="shared" value="true"/>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- 重试模板 -->
+    <bean id="retryTemplate" class="org.springframework.retry.support.RetryTemplate">
+        <property name="retryPolicy">
+            <bean class="org.springframework.retry.policy.SimpleRetryPolicy">
+                <property name="maxAttempts" value="3"/>
+            </bean>
+        </property>
+        <property name="backOffPolicy">
+            <bean class="org.springframework.retry.backoff.ExponentialBackOffPolicy">
+                <property name="initialInterval" value="1000"/>
+                <property name="multiplier" value="2.0"/>
+                <property name="maxInterval" value="10000"/>
             </bean>
         </property>
     </bean>

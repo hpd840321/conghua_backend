@@ -4,14 +4,12 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
  * 告警处理记录实体类
  */
-@Data
 @TableName("ALERT_HANDLE_RECORD")
 public class AlertHandleRecord {
     
@@ -65,4 +63,76 @@ public class AlertHandleRecord {
      */
     @TableField("UPDATE_TIME")
     private LocalDateTime updateTime;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getAlertId() {
+        return alertId;
+    }
+
+    public void setAlertId(Long alertId) {
+        this.alertId = alertId;
+    }
+
+    public String getHandler() {
+        return handler;
+    }
+
+    public void setHandler(String handler) {
+        this.handler = handler;
+    }
+
+    public LocalDateTime getHandleTime() {
+        return handleTime;
+    }
+
+    public void setHandleTime(LocalDateTime handleTime) {
+        this.handleTime = handleTime;
+    }
+
+    public Integer getBeforeStatus() {
+        return beforeStatus;
+    }
+
+    public void setBeforeStatus(Integer beforeStatus) {
+        this.beforeStatus = beforeStatus;
+    }
+
+    public Integer getAfterStatus() {
+        return afterStatus;
+    }
+
+    public void setAfterStatus(Integer afterStatus) {
+        this.afterStatus = afterStatus;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
 } 

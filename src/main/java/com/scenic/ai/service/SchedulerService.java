@@ -1,9 +1,10 @@
 package com.scenic.ai.service;
 
-import com.scenic.ai.model.Alert;
 import com.scenic.ai.domain.model.AlertDomain;
+import com.scenic.ai.model.Alert;
 import com.scenic.ai.util.AlertConverter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -12,15 +13,16 @@ import java.util.List;
 /**
  * 调度服务
  */
-@Slf4j
 @Service
 public class SchedulerService {
     
-    private final AlertService alertService;
+    static final Logger log = LoggerFactory.getLogger(SchedulerService.class);
+    
+    private final IAlertService alertService;
     private final CrowdCountService crowdCountService;
     private final DensityAnalysisService densityAnalysisService;
     
-    public SchedulerService(AlertService alertService,
+    public SchedulerService(IAlertService alertService,
                           CrowdCountService crowdCountService,
                           DensityAnalysisService densityAnalysisService) {
         this.alertService = alertService;

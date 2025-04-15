@@ -1,8 +1,5 @@
 package com.scenic.ai.exception;
 
-import lombok.Getter;
-
-@Getter
 public class SyncException extends RuntimeException {
     private final SyncStage stage;
     private final String targetId;
@@ -45,6 +42,33 @@ public class SyncException extends RuntimeException {
 
     public SyncException withRetry(int newRetryCount) {
         return new SyncException(getMessage(), stage, targetId, newRetryCount);
+    }
+    
+    /**
+     * 获取同步阶段
+     * 
+     * @return 同步阶段
+     */
+    public SyncStage getStage() {
+        return stage;
+    }
+    
+    /**
+     * 获取目标ID
+     * 
+     * @return 目标ID
+     */
+    public String getTargetId() {
+        return targetId;
+    }
+    
+    /**
+     * 获取重试次数
+     * 
+     * @return 重试次数
+     */
+    public int getRetryCount() {
+        return retryCount;
     }
 
     public enum SyncStage {

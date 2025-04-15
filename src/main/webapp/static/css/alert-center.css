@@ -1,4 +1,185 @@
 /* 告警中心样式 */
+.alert-center-container {
+    padding: 20px;
+}
+
+/* 筛选条件区域 */
+.filter-section {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.filter-section .form-group {
+    margin-bottom: 15px;
+}
+
+.filter-section .btn-group {
+    margin-top: 10px;
+}
+
+/* 统计卡片区域 */
+.statistics-section {
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    height: 100%;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .stat-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.stat-card .stat-title {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-card .stat-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.stat-card.total-alerts {
+    border-left: 4px solid #1890ff;
+}
+
+.stat-card.pending-alerts {
+    border-left: 4px solid #faad14;
+}
+
+.stat-card.high-priority {
+    border-left: 4px solid #f5222d;
+}
+
+.stat-card.today-alerts {
+    border-left: 4px solid #52c41a;
+}
+
+/* 图表区域 */
+.chart-section {
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    height: 400px;
+}
+
+.chart-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 告警列表区域 */
+.alert-list-section {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.alert-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.alert-list-title {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.alert-table th {
+    background-color: #f5f5f5;
+}
+
+.alert-level-1 {
+    color: #52c41a;
+}
+
+.alert-level-2 {
+    color: #faad14;
+}
+
+.alert-level-3 {
+    color: #f5222d;
+}
+
+.alert-status-0 {
+    color: #faad14;
+}
+
+.alert-status-1 {
+    color: #52c41a;
+}
+
+/* 分页区域 */
+.pagination-section {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+/* 告警详情模态框 */
+.alert-detail-modal .modal-body {
+    padding: 20px;
+}
+
+.alert-detail-modal .detail-item {
+    margin-bottom: 15px;
+}
+
+.alert-detail-modal .detail-label {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.alert-detail-modal .detail-value {
+    color: #333;
+}
+
+.alert-detail-modal .detail-image {
+    max-width: 100%;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 15px;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+}
 
 /* 卡片样式 */
 .card {
@@ -70,149 +251,6 @@
 
 .table-striped tbody tr:nth-of-type(odd) {
     background-color: #fafafa;
-}
-
-/* 告警级别颜色 */
-.alert-level-1 {
-    color: #52c41a;
-}
-
-.alert-level-2 {
-    color: #faad14;
-}
-
-.alert-level-3 {
-    color: #f5222d;
-}
-
-/* 告警状态样式 */
-.alert-status-0 {
-    color: #f5222d;
-}
-
-.alert-status-1 {
-    color: #52c41a;
-}
-
-/* 图表容器 */
-.chart-card {
-    height: 100%;
-}
-
-.chart-container {
-    background-color: #fff;
-    padding: 1rem;
-    border-radius: 4px;
-}
-
-/* 分页样式 */
-.pagination-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1rem;
-}
-
-.pagination {
-    margin: 0;
-}
-
-/* 模态框样式 */
-.modal-header {
-    background-color: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.modal-footer {
-    background-color: #fafafa;
-    border-top: 1px solid #f0f0f0;
-}
-
-/* 统计概览卡片 */
-.overview-card {
-    text-align: center;
-    background-color: #fff;
-}
-
-.overview-card .card-title {
-    font-size: 14px;
-    color: #666;
-}
-
-.overview-card .card-text {
-    font-size: 24px;
-    color: #1890ff;
-    margin: 0;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .filter-card .row > div {
-        margin-bottom: 1rem;
-    }
-    
-    .overview-card {
-        margin-bottom: 1rem;
-    }
-    
-    .chart-card {
-        margin-bottom: 1rem;
-    }
-}
-
-/* 加载动画 */
-.loading {
-    position: relative;
-    min-height: 200px;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 30px;
-    height: 30px;
-    margin: -15px 0 0 -15px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #1890ff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* 表单样式优化 */
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-control {
-    border-radius: .25rem;
-    border: 1px solid #ced4da;
-}
-
-.form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-}
-
-/* 按钮样式优化 */
-.btn {
-    border-radius: .25rem;
-    transition: all .15s ease-in-out;
-}
-
-/* 表格样式优化 */
-.table {
-    margin-bottom: 0;
-}
-
-.table td, .table th {
-    padding: .75rem;
-    vertical-align: middle;
 }
 
 /* 告警状态样式 */

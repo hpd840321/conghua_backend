@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+当前项目禁止使用Spring  boot 相关技术架构，只准使用Spring  MVC相关技术架构。特别是pom.xml配置相关依赖包。

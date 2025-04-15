@@ -1,8 +1,9 @@
 package com.scenic.ai.scheduler;
 
 import com.scenic.ai.service.SyncService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +13,13 @@ import org.springframework.stereotype.Component;
  * 该组件负责定时调度数据同步任务。
  * 同步任务的执行频率可通过配置文件进行自定义。
  */
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class SyncScheduler {
-    private final SyncService syncService;
+
+    private static final Logger log = LoggerFactory.getLogger(SyncScheduler.class);
+    
+    @Autowired
+    private SyncService syncService;
 
     /**
      * 调度每日同步任务

@@ -1,22 +1,95 @@
 package com.scenic.ai.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scenic.ai.model.CrowdStatistics;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 人群统计Mapper接口
+ *
+ * @author scenic
+ * @date 2024-03-19
  */
 @Mapper
 public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
     
+    /**
+     * 分页查询
+     */
+    IPage<CrowdStatistics> selectPage(Page<CrowdStatistics> page,
+                                    @Param("tourismName") String tourismName,
+                                    @Param("deviceCode") String deviceCode,
+                                    @Param("startTime") Date startTime,
+                                    @Param("endTime") Date endTime);
+    
+    /**
+     * 根据设备编码查询
+     */
+    List<CrowdStatistics> selectByDevice(@Param("deviceCode") String deviceCode,
+                                       @Param("startTime") Date startTime,
+                                       @Param("endTime") Date endTime);
+    
+    /**
+     * 根据景区名称查询
+     */
+    List<CrowdStatistics> selectByTourism(@Param("tourismName") String tourismName,
+                                        @Param("startTime") Date startTime,
+                                        @Param("endTime") Date endTime);
+    
+    /**
+     * 获取时段分布
+     */
+    List<Map<String, Object>> selectHourDistribution(@Param("deviceCode") String deviceCode,
+                                                   @Param("tourismName") String tourismName,
+                                                   @Param("startTime") Date startTime,
+                                                   @Param("endTime") Date endTime);
+    
+    /**
+     * 获取密度分布
+     */
+    List<Map<String, Object>> selectDensityDistribution(@Param("deviceCode") String deviceCode,
+                                                      @Param("tourismName") String tourismName,
+                                                      @Param("startTime") Date startTime,
+                                                      @Param("endTime") Date endTime);
+    
+    /**
+     * 获取趋势数据
+     */
+    List<Map<String, Object>> selectTrend(@Param("deviceCode") String deviceCode,
+                                        @Param("tourismName") String tourismName,
+                                        @Param("startTime") Date startTime,
+                                        @Param("endTime") Date endTime);
+    
+    /**
+     * 获取统计概览
+     */
+    Map<String, Object> selectOverview(@Param("tourismName") String tourismName,
+                                     @Param("startTime") Date startTime,
+                                     @Param("endTime") Date endTime);
+    
+    /**
+     * 获取设备最新数据
+     */
+    CrowdStatistics selectLatestByDevice(@Param("deviceCode") String deviceCode);
+    
+    /**
+     * 获取高密度区域统计
+     */
+    List<Map<String, Object>> selectHighDensity(@Param("deviceCode") String deviceCode,
+                                              @Param("tourismName") String tourismName,
+                                              @Param("startTime") Date startTime,
+                                              @Param("endTime") Date endTime,
+                                              @Param("densityThreshold") BigDecimal densityThreshold);
+
     /**
      * 根据设备编码查询人群统计数据
      *
@@ -134,14 +207,6 @@ public interface CrowdStatisticsMapper extends BaseMapper<CrowdStatistics> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
     
-    /**
-     * 根据设备编码查询最新的人群统计数据
-     *
-     * @param deviceCode 设备编码
-     * @return 人群统计数据
-     */
-    CrowdStatistics selectLatestByDeviceCode(@Param("deviceCode") String deviceCode);
-
     /**
      * 获取时段人群分布
      */

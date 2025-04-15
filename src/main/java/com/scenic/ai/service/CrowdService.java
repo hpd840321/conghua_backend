@@ -2,8 +2,7 @@ package com.scenic.ai.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.scenic.ai.domain.model.CrowdStatistics;
+import com.scenic.ai.model.CrowdStatistics;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.Map;
 /**
  * 人群统计服务接口
  */
-public interface CrowdService extends IService<CrowdStatistics> {
+public interface CrowdService {
     
     /**
      * 分页查询人群统计数据

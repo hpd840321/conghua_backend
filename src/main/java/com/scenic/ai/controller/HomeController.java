@@ -1,20 +1,23 @@
 package com.scenic.ai.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-@Tag(name = "首页")
-@Slf4j
+/**
+ * 首页控制器
+ */
 @Controller
+@RequestMapping("/")
 public class HomeController {
 
-    @Operation(summary = "首页")
-    @GetMapping("/")
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
+    
+    @GetMapping
     public String index() {
-        log.info("访问系统首页");
-        return "redirect:/crowd/statistics/index";
+        log.info("访问首页");
+        return "index";
     }
 } 

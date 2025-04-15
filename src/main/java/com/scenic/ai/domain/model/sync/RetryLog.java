@@ -1,13 +1,10 @@
 package com.scenic.ai.domain.model.sync;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
 
 /**
  * 同步重试日志实体类
  */
-@Data
 public class RetryLog {
     
     /**
@@ -59,4 +56,85 @@ public class RetryLog {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getBusinessType() {
+        return businessType;
+    }
+
+    public void setBusinessType(String businessType) {
+        this.businessType = businessType;
+    }
+
+    public String getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(String businessId) {
+        this.businessId = businessId;
+    }
+
+    public Integer getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(Integer retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public Integer getMaxRetryCount() {
+        return maxRetryCount;
+    }
+
+    public void setMaxRetryCount(Integer maxRetryCount) {
+        this.maxRetryCount = maxRetryCount;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public LocalDateTime getNextRetryTime() {
+        return nextRetryTime;
+    }
+
+    public void setNextRetryTime(LocalDateTime nextRetryTime) {
+        this.nextRetryTime = nextRetryTime;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
 } 

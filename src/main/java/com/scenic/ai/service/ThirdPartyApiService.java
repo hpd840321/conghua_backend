@@ -2,8 +2,8 @@ package com.scenic.ai.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -33,10 +33,10 @@ import java.util.*;
  * @author 景区AI管理系统开发团队
  * @version 1.0
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ThirdPartyApiService {
+
+    static final Logger log = LoggerFactory.getLogger(ThirdPartyApiService.class);
 
     /**
      * RestTemplate实例，用于发送HTTP请求
@@ -63,6 +63,17 @@ public class ThirdPartyApiService {
      */
     @Value("${third-party.api-path:/api}")
     private String apiPath;
+    
+    /**
+     * 构造函数
+     * 
+     * @param restTemplate RestTemplate实例
+     * @param objectMapper ObjectMapper实例
+     */
+    public ThirdPartyApiService(RestTemplate restTemplate, ObjectMapper objectMapper) {
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * 获取统计数据

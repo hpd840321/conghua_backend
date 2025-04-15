@@ -1,7 +1,5 @@
 package com.scenic.ai.dto;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
 
 /**
@@ -11,7 +9,6 @@ import java.time.LocalDateTime;
  * @author scenic-AI
  * @version 1.0
  */
-@Data
 public class ThirdPartyDataDTO {
     
     /**
@@ -58,4 +55,76 @@ public class ThirdPartyDataDTO {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getDeviceCode() {
+        return deviceCode;
+    }
+
+    public void setDeviceCode(String deviceCode) {
+        this.deviceCode = deviceCode;
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
+
+    public String getTourismName() {
+        return tourismName;
+    }
+
+    public void setTourismName(String tourismName) {
+        this.tourismName = tourismName;
+    }
+
+    public String getAlarmEvent() {
+        return alarmEvent;
+    }
+
+    public void setAlarmEvent(String alarmEvent) {
+        this.alarmEvent = alarmEvent;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public Integer getCount() {
+        return count;
+    }
+
+    public void setCount(Integer count) {
+        this.count = count;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
 } 

@@ -1,9 +1,8 @@
 package com.scenic.ai.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.scenic.ai.domain.model.CrowdCount;
 import com.scenic.ai.domain.model.AlertDomain;
-import com.scenic.ai.model.Alert;
+import com.scenic.ai.domain.model.CrowdCount;
 
 import java.time.LocalDateTime;
 import java.util.List;

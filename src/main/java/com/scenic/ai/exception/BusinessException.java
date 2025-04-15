@@ -1,44 +1,47 @@
 package com.scenic.ai.exception;
 
-import lombok.Getter;
-
 /**
  * 业务异常类
  * 
- * @author scenic
+ * @author AI
+ * @date 2023-05-20
  */
-@Getter
 public class BusinessException extends RuntimeException {
-    
-    private static final long serialVersionUID = 1L;
     
     /**
      * 错误码
      */
-    private final Integer code;
+    private final int code;
     
     /**
-     * 错误消息
+     * 构造函数
+     * 
+     * @param code 错误码
+     * @param message 错误信息
      */
-    private final String message;
-    
-    public BusinessException(String message) {
-        this(500, message);
-    }
-    
-    public BusinessException(Integer code, String message) {
+    public BusinessException(int code, String message) {
         super(message);
         this.code = code;
-        this.message = message;
     }
     
-    public BusinessException(String message, Throwable cause) {
-        this(500, message, cause);
-    }
-    
-    public BusinessException(Integer code, String message, Throwable cause) {
+    /**
+     * 构造函数
+     * 
+     * @param code 错误码
+     * @param message 错误信息
+     * @param cause 原始异常
+     */
+    public BusinessException(int code, String message, Throwable cause) {
         super(message, cause);
         this.code = code;
-        this.message = message;
+    }
+    
+    /**
+     * 获取错误码
+     * 
+     * @return 错误码
+     */
+    public int getCode() {
+        return code;
     }
 } 

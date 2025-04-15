@@ -4,7 +4,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.scenic.ai.mapper.RetryLogMapper;
 import com.scenic.ai.model.RetryLog;
 import com.scenic.ai.service.RetryLogService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +16,11 @@ import java.util.Map;
 /**
  * 重试日志服务实现类
  */
-@Slf4j
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class RetryLogServiceImpl extends ServiceImpl<RetryLogMapper, RetryLog> implements RetryLogService {
+    
+    private static final Logger log = LoggerFactory.getLogger(RetryLogServiceImpl.class);
     
     @Override
     public RetryLog createRetryLog(String businessType, String businessId, int maxRetryCount, String errorMessage) {

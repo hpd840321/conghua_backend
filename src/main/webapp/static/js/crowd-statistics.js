@@ -28,6 +28,9 @@ $(function() {
     let maxDensityTrendChart = null;
     let highDensityTrendChart = null;
     let totalRecordsTrendChart = null;
+    let hourDistributionChart = null;
+    let densityDistributionChart = null;
+    let trendChart = null;
 
     // 确保图表容器存在后再初始化
     try {
@@ -49,6 +52,15 @@ $(function() {
         if (document.getElementById('totalRecordsTrend')) {
             totalRecordsTrendChart = echarts.init(document.getElementById('totalRecordsTrend'));
         }
+        if (document.getElementById('hourDistributionChart')) {
+            hourDistributionChart = echarts.init(document.getElementById('hourDistributionChart'));
+        }
+        if (document.getElementById('densityDistributionChart')) {
+            densityDistributionChart = echarts.init(document.getElementById('densityDistributionChart'));
+        }
+        if (document.getElementById('trendChart')) {
+            trendChart = echarts.init(document.getElementById('trendChart'));
+        }
     } catch (error) {
         console.error('图表初始化失败:', error);
         toastr.error('图表初始化失败，请刷新页面重试');
@@ -57,6 +69,7 @@ $(function() {
     // 当前页码
     let currentPage = 1;
     const pageSize = 10;
+    let totalPages = 1;
 
     // 表单验证
     function validateForm() {
@@ -233,6 +246,9 @@ $(function() {
                 hideLoading('table');
                 hideLoading();
             });
+
+        // 加载图表数据
+        loadChartData(params);
     }
 
     // 更新密度分布图表
@@ -674,7 +690,7 @@ $(function() {
 
     // 更新分页
     function updatePagination(total) {
-        const totalPages = Math.ceil(total / pageSize);
+        totalPages = Math.ceil(total / pageSize);
         const pagination = $('#pagination');
         pagination.empty();
 
@@ -803,7 +819,8 @@ $(function() {
     $(window).resize(function() {
         try {
             [densityDistChart, densityTrendChart, avgDensityTrendChart, 
-             maxDensityTrendChart, highDensityTrendChart, totalRecordsTrendChart]
+             maxDensityTrendChart, highDensityTrendChart, totalRecordsTrendChart,
+             hourDistributionChart, densityDistributionChart, trendChart]
                 .forEach(chart => {
                     if (chart) {
                         chart.resize();
@@ -813,6 +830,69 @@ $(function() {
             console.error('图表重绘失败:', error);
         }
     });
+
+    // 加载下拉框选项
+    function loadSelectOptions() {
+        // 加载景区列表
+        $.get('/api/v1/device/tourism-list', function(data) {
+            const tourismSelect = $('#tourismName');
+            data.forEach(function(item) {
+                tourismSelect.append(new Option(item.name, item.name));
+            });
+        });
+
+        // 加载设备列表
+        $.get('/api/v1/device/list', function(data) {
+            const deviceSelect = $('#deviceCode');
+            data.forEach(function(item) {
+                deviceSelect.append(new Option(item.deviceName, item.deviceCode));
+            });
+        });
+    }
+
+    // 加载图表数据
+    function loadChartData(params) {
+        // 加载时段分布数据
+        $.get('/api/v1/crowd-statistics/distribution/hour', params, function(data) {
+            const hours = data.map(item => item.hour);
+            const counts = data.map(item => item.totalCount);
+            hourDistributionChart.setOption({
+                xAxis: {
+                    data: hours
+                },
+                series: [{
+                    data: counts
+                }]
+            });
+        });
+
+        // 加载密度分布数据
+        $.get('/api/v1/crowd-statistics/distribution/density', params, function(data) {
+            const densityData = data.map(item => ({
+                name: item.densityLevel,
+                value: item.count
+            }));
+            densityDistributionChart.setOption({
+                series: [{
+                    data: densityData
+                }]
+            });
+        });
+
+        // 加载趋势数据
+        $.get('/api/v1/crowd-statistics/trend', params, function(data) {
+            const times = data.map(item => item.time);
+            const counts = data.map(item => item.totalCount);
+            trendChart.setOption({
+                xAxis: {
+                    data: times
+                },
+                series: [{
+                    data: counts
+                }]
+            });
+        });
+    }
 
     // 初始加载
     loadData();

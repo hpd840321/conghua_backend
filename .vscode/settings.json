@@ -1,4 +1,27 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.home": "D:\\Program Files\\jdk-17.0.0.1",
+    "java.jdt.ls.java.home": "D:\\Program Files\\jdk-17.0.0.1",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-17",
+            "path": "D:\\Program Files\\jdk-17.0.0.1",
+            "default": true
+        }
+    ],
+    "java.project.sourcePaths": [
+        "src/main/java"
+    ],
+    "java.project.outputPath": "target/classes",
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar"
+    ],
+    "tomcat.home": "D:\\apache-tomcat-11.0.6",
+    "tomcat.workspace": "${workspaceFolder}",
+    "java.debug.settings.hotCodeReplace": "auto",
+    "java.format.settings.url": ".vscode/java-formatter.xml",
+    "java.format.settings.profile": "GoogleStyle",
+    "editor.formatOnSave": true,
+    "java.format.enabled": true
 }

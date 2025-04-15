@@ -4,16 +4,12 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
 
 /**
  * 人群计数实体类
  */
-@Data
-@Accessors(chain = true)
 @TableName("CROWD_STATISTICS")
 public class CrowdCount {
     
@@ -52,6 +48,114 @@ public class CrowdCount {
     
     @TableField("UPDATE_TIME")
     private LocalDateTime updateTime;
+
+    public Long getId() {
+        return id;
+    }
+
+    public CrowdCount setId(Long id) {
+        this.id = id;
+        return this;
+    }
+
+    public String getDeviceCode() {
+        return deviceCode;
+    }
+
+    public CrowdCount setDeviceCode(String deviceCode) {
+        this.deviceCode = deviceCode;
+        return this;
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public CrowdCount setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+        return this;
+    }
+
+    public String getTourismName() {
+        return tourismName;
+    }
+
+    public CrowdCount setTourismName(String tourismName) {
+        this.tourismName = tourismName;
+        return this;
+    }
+
+    public Integer getCount() {
+        return count;
+    }
+
+    public CrowdCount setCount(Integer count) {
+        this.count = count;
+        return this;
+    }
+
+    public Double getDensity() {
+        return density;
+    }
+
+    public CrowdCount setDensity(Double density) {
+        this.density = density;
+        return this;
+    }
+
+    public String getAlgName() {
+        return algName;
+    }
+
+    public CrowdCount setAlgName(String algName) {
+        this.algName = algName;
+        return this;
+    }
+
+    public String getTaskCode() {
+        return taskCode;
+    }
+
+    public CrowdCount setTaskCode(String taskCode) {
+        this.taskCode = taskCode;
+        return this;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public CrowdCount setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+        return this;
+    }
+
+    public LocalDateTime getRecordTime() {
+        return recordTime;
+    }
+
+    public CrowdCount setRecordTime(LocalDateTime recordTime) {
+        this.recordTime = recordTime;
+        return this;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public CrowdCount setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+        return this;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public CrowdCount setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+        return this;
+    }
     
     /**
      * 验证数据有效性

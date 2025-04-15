@@ -1,506 +1,186 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.scenic.ai.dao.FlowAnalysisMapper">
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.scenic.ai.model.FlowAnalysis">
-        <id column="ID" property="id"/>
-        <result column="DEVICE_CODE" property="deviceCode"/>
-        <result column="DEVICE_NAME" property="deviceName"/>
-        <result column="TOURISM_NAME" property="tourismName"/>
-        <result column="FLOW_COUNT" property="flowCount"/>
-        <result column="FLOW_DIRECTION" property="flowDirection"/>
-        <result column="ALG_NAME" property="algName"/>
-        <result column="TASK_CODE" property="taskCode"/>
-        <result column="IMAGE_URL" property="imageUrl"/>
-        <result column="RECORD_TIME" property="recordTime"/>
-        <result column="CREATE_TIME" property="createTime"/>
-        <result column="UPDATE_TIME" property="updateTime"/>
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.FlowAnalysisMapper">
+    
+    <resultMap type="com.scenic.ai.model.FlowAnalysis" id="FlowAnalysisResult">
+        <id property="id" column="id"/>
+        <result property="deviceCode" column="device_code"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="tourismName" column="tourism_name"/>
+        <result property="flowCount" column="flow_count"/>
+        <result property="flowDirection" column="flow_direction"/>
+        <result property="algName" column="alg_name"/>
+        <result property="taskCode" column="task_code"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="recordTime" column="record_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, FLOW_COUNT, FLOW_DIRECTION, ALG_NAME,
-        TASK_CODE, IMAGE_URL, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+    <sql id="selectFlowAnalysisVo">
+        select id, device_code, device_name, tourism_name, flow_count, flow_direction, 
+        alg_name, task_code, image_url, record_time, create_time, update_time
+        from flow_analysis
     </sql>
 
-    <!-- 获取客流量趋势数据 -->
-    <select id="getFlowTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
-            SUM(FLOW_COUNT) as count
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE (#{tourismName} IS NULL OR TOURISM_NAME = #{tourismName})
-        AND (#{deviceCode} IS NULL OR DEVICE_CODE = #{deviceCode})
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS')
-        ORDER BY time
-    </select>
-
-    <!-- 获取客流方向分布数据 -->
-    <select id="getFlowDirectionDistribution" resultType="java.util.Map">
-        SELECT 
-            FLOW_DIRECTION as direction,
-            ROUND(AVG(FLOW_COUNT), 2) as count
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY FLOW_DIRECTION
-    </select>
-
-    <!-- 获取客流高峰时段数据 -->
-    <select id="getPeakHours" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'HH24') as hour,
-            ROUND(AVG(FLOW_COUNT), 2) as count
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
-        ORDER BY hour
-    </select>
-
-    <!-- 根据时间范围和景区名称查询客流分析数据 -->
-    <select id="selectByTimeRangeAndTourism" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-    
-    <!-- 根据设备编码查询最新的客流分析数据 -->
-    <select id="selectLatestByDeviceCode" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        ORDER BY RECORD_TIME DESC
-        FETCH FIRST 1 ROWS ONLY
-    </select>
-
-    <!-- 根据设备编码和时间范围查询客流数据 -->
-    <select id="findByDeviceAndTime" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 统计时间范围内的客流总量 -->
-    <select id="calculateTotalFlow" resultType="java.util.Map">
-        SELECT 
-            SUM(FLOW_COUNT) as totalFlow,
-            AVG(FLOW_COUNT) as avgFlow,
-            MAX(FLOW_COUNT) as maxFlow,
-            MIN(FLOW_COUNT) as minFlow
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-    </select>
-
-    <!-- 统计流动方向分布 -->
-    <select id="countByDirection" resultType="java.util.Map">
-        SELECT 
-            FLOW_DIRECTION as direction,
-            COUNT(*) as count,
-            SUM(FLOW_COUNT) as totalFlow
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY FLOW_DIRECTION
-    </select>
-
-    <!-- 统计时段分布 -->
-    <select id="countByHour" resultType="java.util.Map">
-        SELECT 
-            EXTRACT(HOUR FROM RECORD_TIME) as hour,
-            SUM(FLOW_COUNT) as totalFlow,
-            AVG(FLOW_COUNT) as avgFlow,
-            MAX(FLOW_COUNT) as maxFlow
-        FROM CLOUDWALK.FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        AND RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
-        ORDER BY hour
-    </select>
-
-    <!-- 条件分页查询 -->
-    <select id="findByConditions" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM CLOUDWALK.FLOW_ANALYSIS
+    <select id="selectFlowAnalysisList" parameterType="com.scenic.ai.model.FlowAnalysis" resultMap="FlowAnalysisResult">
+        <include refid="selectFlowAnalysisVo"/>
         <where>
-            <if test="params.deviceCode != null">
-                AND DEVICE_CODE = #{params.deviceCode}
+            <if test="deviceCode != null and deviceCode != ''">
+                AND device_code = #{deviceCode}
             </if>
-            <if test="params.deviceName != null">
-                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+            <if test="tourismName != null and tourismName != ''">
+                AND tourism_name like concat('%', #{tourismName}, '%')
             </if>
-            <if test="params.tourismName != null">
-                AND TOURISM_NAME = #{params.tourismName}
+            <if test="startTime != null">
+                AND record_time >= #{startTime}
             </if>
-            <if test="params.flowDirection != null">
-                AND FLOW_DIRECTION = #{params.flowDirection}
-            </if>
-            <if test="params.startTime != null">
-                AND RECORD_TIME &gt;= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
+            <if test="endTime != null">
+                AND record_time &lt;= #{endTime}
             </if>
         </where>
-        ORDER BY RECORD_TIME DESC
-        <if test="params.offset != null and params.limit != null">
-            OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
-        </if>
+        order by record_time desc
     </select>
 
-    <!-- 查询记录总数 -->
-    <select id="countRecords" resultType="java.lang.Long">
-        SELECT COUNT(1)
-        FROM CLOUDWALK.FLOW_ANALYSIS
+    <select id="selectFlowAnalysisById" parameterType="Long" resultMap="FlowAnalysisResult">
+        <include refid="selectFlowAnalysisVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertFlowAnalysis" parameterType="com.scenic.ai.model.FlowAnalysis" useGeneratedKeys="true" keyProperty="id">
+        insert into flow_analysis
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceCode != null">device_code,</if>
+            <if test="deviceName != null">device_name,</if>
+            <if test="tourismName != null">tourism_name,</if>
+            <if test="flowCount != null">flow_count,</if>
+            <if test="flowDirection != null">flow_direction,</if>
+            <if test="algName != null">alg_name,</if>
+            <if test="taskCode != null">task_code,</if>
+            <if test="imageUrl != null">image_url,</if>
+            <if test="recordTime != null">record_time,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="deviceCode != null">#{deviceCode},</if>
+            <if test="deviceName != null">#{deviceName},</if>
+            <if test="tourismName != null">#{tourismName},</if>
+            <if test="flowCount != null">#{flowCount},</if>
+            <if test="flowDirection != null">#{flowDirection},</if>
+            <if test="algName != null">#{algName},</if>
+            <if test="taskCode != null">#{taskCode},</if>
+            <if test="imageUrl != null">#{imageUrl},</if>
+            <if test="recordTime != null">#{recordTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateFlowAnalysis" parameterType="com.scenic.ai.model.FlowAnalysis">
+        update flow_analysis
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="deviceCode != null">device_code = #{deviceCode},</if>
+            <if test="deviceName != null">device_name = #{deviceName},</if>
+            <if test="tourismName != null">tourism_name = #{tourismName},</if>
+            <if test="flowCount != null">flow_count = #{flowCount},</if>
+            <if test="flowDirection != null">flow_direction = #{flowDirection},</if>
+            <if test="algName != null">alg_name = #{algName},</if>
+            <if test="taskCode != null">task_code = #{taskCode},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="recordTime != null">record_time = #{recordTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteFlowAnalysisById" parameterType="Long">
+        delete from flow_analysis where id = #{id}
+    </delete>
+
+    <delete id="deleteFlowAnalysisByIds" parameterType="Long">
+        delete from flow_analysis where id in 
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectTotalFlowCount" resultType="Integer">
+        select sum(flow_count) from flow_analysis
         <where>
-            <if test="params.deviceCode != null">
-                AND DEVICE_CODE = #{params.deviceCode}
+            <if test="startTime != null">
+                AND record_time >= #{startTime}
             </if>
-            <if test="params.deviceName != null">
-                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
-            </if>
-            <if test="params.tourismName != null">
-                AND TOURISM_NAME = #{params.tourismName}
-            </if>
-            <if test="params.flowDirection != null">
-                AND FLOW_DIRECTION = #{params.flowDirection}
-            </if>
-            <if test="params.startTime != null">
-                AND RECORD_TIME &gt;= #{params.startTime}
-            </if>
-            <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
+            <if test="endTime != null">
+                AND record_time &lt;= #{endTime}
             </if>
         </where>
     </select>
 
-    <!-- 根据设备编码查询客流数据 -->
-    <select id="selectByDeviceCode" resultType="com.scenic.ai.model.FlowAnalysis">
-        SELECT *
-        FROM FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
+    <select id="selectFlowDirectionStats" resultMap="FlowAnalysisResult">
+        select flow_direction, sum(flow_count) as flow_count
+        from flow_analysis
+        <where>
+            <if test="startTime != null">
+                AND record_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND record_time &lt;= #{endTime}
+            </if>
+        </where>
+        group by flow_direction
     </select>
     
-    <!-- 根据景区名称查询客流数据 -->
-    <select id="selectByTourismName" resultType="com.scenic.ai.model.FlowAnalysis">
-        SELECT *
-        FROM FLOW_ANALYSIS
-        WHERE TOURISM_NAME = #{tourismName}
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        ORDER BY RECORD_TIME DESC
-    </select>
-    
-    <!-- 统计时段客流分布 -->
-    <select id="countByHour" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'HH24') AS hour,
-            SUM(FLOW_COUNT) AS total_count,
-            COUNT(1) AS record_count,
-            ROUND(AVG(FLOW_COUNT), 2) AS avg_count
-        FROM FLOW_ANALYSIS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
-        ORDER BY hour
-    </select>
-    
-    <!-- 统计客流方向分布 -->
-    <select id="countByDirection" resultType="java.util.Map">
-        SELECT 
-            FLOW_DIRECTION,
-            COUNT(1) AS count,
-            SUM(FLOW_COUNT) AS total_count,
-            ROUND(AVG(FLOW_COUNT), 2) AS avg_count
-        FROM FLOW_ANALYSIS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY FLOW_DIRECTION
-        ORDER BY count DESC
-    </select>
-    
-    <!-- 获取客流趋势 -->
-    <select id="getFlowTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') AS time,
-            SUM(FLOW_COUNT) AS flow_count
-        FROM FLOW_ANALYSIS
-        WHERE 1=1
-        <if test="deviceCode != null and deviceCode != ''">
-            AND DEVICE_CODE = #{deviceCode}
-        </if>
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
-        <if test="startTime != null">
-            AND RECORD_TIME >= #{startTime}
-        </if>
-        <if test="endTime != null">
-            AND RECORD_TIME &lt;= #{endTime}
-        </if>
-        GROUP BY RECORD_TIME
-        ORDER BY RECORD_TIME
-    </select>
-    
-    <!-- 条件分页查询 -->
-    <select id="findByConditions" resultMap="BaseResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
-        FROM FLOW_ANALYSIS
+    <!-- 分页查询客流分析数据 -->
+    <select id="selectFlowAnalysisPage" resultMap="FlowAnalysisResult">
+        <include refid="selectFlowAnalysisVo"/>
         <where>
             <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND DEVICE_CODE = #{params.deviceCode}
+                AND device_code = #{params.deviceCode}
             </if>
             <if test="params.deviceName != null and params.deviceName != ''">
-                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+                AND device_name like concat('%', #{params.deviceName}, '%')
             </if>
             <if test="params.tourismName != null and params.tourismName != ''">
-                AND TOURISM_NAME = #{params.tourismName}
+                AND tourism_name like concat('%', #{params.tourismName}, '%')
             </if>
             <if test="params.flowDirection != null and params.flowDirection != ''">
-                AND FLOW_DIRECTION = #{params.flowDirection}
+                AND flow_direction = #{params.flowDirection}
             </if>
             <if test="params.startTime != null">
-                AND RECORD_TIME >= #{params.startTime}
+                AND record_time >= #{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
+                AND record_time &lt;= #{params.endTime}
             </if>
         </where>
-        ORDER BY RECORD_TIME DESC
-        <if test="params.offset != null and params.limit != null">
-            OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
-        </if>
+        order by record_time desc
     </select>
     
-    <!-- 查询记录总数 -->
-    <select id="countRecords" resultType="java.lang.Long">
-        SELECT COUNT(*)
-        FROM FLOW_ANALYSIS
+    <!-- 查询客流分析记录总数 -->
+    <select id="selectFlowAnalysisCount" resultType="Long">
+        select count(1) from flow_analysis
         <where>
             <if test="params.deviceCode != null and params.deviceCode != ''">
-                AND DEVICE_CODE = #{params.deviceCode}
+                AND device_code = #{params.deviceCode}
             </if>
             <if test="params.deviceName != null and params.deviceName != ''">
-                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+                AND device_name like concat('%', #{params.deviceName}, '%')
             </if>
             <if test="params.tourismName != null and params.tourismName != ''">
-                AND TOURISM_NAME = #{params.tourismName}
+                AND tourism_name like concat('%', #{params.tourismName}, '%')
             </if>
             <if test="params.flowDirection != null and params.flowDirection != ''">
-                AND FLOW_DIRECTION = #{params.flowDirection}
+                AND flow_direction = #{params.flowDirection}
             </if>
             <if test="params.startTime != null">
-                AND RECORD_TIME >= #{params.startTime}
+                AND record_time >= #{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND RECORD_TIME &lt;= #{params.endTime}
+                AND record_time &lt;= #{params.endTime}
             </if>
         </where>
-    </select>
-
-    <!-- 分页条件查询 -->
-    <select id="selectPage" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM FLOW_ANALYSIS
-        <where>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="deviceName != null and deviceName != ''">
-                AND DEVICE_NAME LIKE '%' || #{deviceName} || '%'
-            </if>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        ORDER BY RECORD_TIME DESC
-    </select>
-
-    <!-- 按小时统计客流量 -->
-    <select id="selectHourlyFlow" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'HH24') as hour,
-            SUM(FLOW_COUNT) as total_flow,
-            COUNT(*) as record_count,
-            ROUND(AVG(FLOW_COUNT), 2) as avg_flow
-        FROM FLOW_ANALYSIS
-        <where>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY TO_CHAR(RECORD_TIME, 'HH24')
-        ORDER BY hour
-    </select>
-
-    <!-- 按方向统计客流量 -->
-    <select id="selectDirectionFlow" resultType="java.util.Map">
-        SELECT 
-            FLOW_DIRECTION as direction,
-            SUM(FLOW_COUNT) as total_flow,
-            COUNT(*) as record_count,
-            ROUND(AVG(FLOW_COUNT), 2) as avg_flow
-        FROM FLOW_ANALYSIS
-        <where>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY FLOW_DIRECTION
-    </select>
-
-    <!-- 客流趋势分析 -->
-    <select id="selectFlowTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
-            SUM(FLOW_COUNT) as total_flow,
-            FLOW_DIRECTION as direction
-        FROM FLOW_ANALYSIS
-        <where>
-            <if test="deviceCode != null and deviceCode != ''">
-                AND DEVICE_CODE = #{deviceCode}
-            </if>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY RECORD_TIME, FLOW_DIRECTION
-        ORDER BY RECORD_TIME
-    </select>
-
-    <!-- 客流统计概览 -->
-    <select id="selectFlowOverview" resultType="java.util.Map">
-        SELECT 
-            COUNT(*) as record_count,
-            SUM(FLOW_COUNT) as total_flow,
-            ROUND(AVG(FLOW_COUNT), 2) as avg_flow,
-            MAX(FLOW_COUNT) as max_flow
-        FROM FLOW_ANALYSIS
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-    </select>
-
-    <!-- 设备客流排名 -->
-    <select id="selectDeviceFlowRank" resultType="java.util.Map">
-        SELECT 
-            DEVICE_CODE,
-            DEVICE_NAME,
-            SUM(FLOW_COUNT) as total_flow,
-            COUNT(*) as record_count,
-            ROUND(AVG(FLOW_COUNT), 2) as avg_flow,
-            MAX(FLOW_COUNT) as max_flow
-        FROM FLOW_ANALYSIS
-        <where>
-            <if test="tourismName != null and tourismName != ''">
-                AND TOURISM_NAME = #{tourismName}
-            </if>
-            <if test="startTime != null">
-                AND RECORD_TIME >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND RECORD_TIME &lt;= #{endTime}
-            </if>
-        </where>
-        GROUP BY DEVICE_CODE, DEVICE_NAME
-        ORDER BY total_flow DESC
-    </select>
-
-    <!-- 查询设备最新客流数据 -->
-    <select id="selectLatestByDevice" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM FLOW_ANALYSIS
-        WHERE DEVICE_CODE = #{deviceCode}
-        ORDER BY RECORD_TIME DESC
-        FETCH FIRST 1 ROWS ONLY
     </select>
 </mapper> 

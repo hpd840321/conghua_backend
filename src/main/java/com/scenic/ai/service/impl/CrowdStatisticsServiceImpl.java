@@ -6,18 +6,24 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.scenic.ai.dao.CrowdStatisticsMapper;
 import com.scenic.ai.model.CrowdStatistics;
-import com.scenic.ai.service.CrowdStatisticsService;
+import com.scenic.ai.service.ICrowdStatisticsService;
 import com.scenic.ai.exception.BusinessException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.scenic.ai.exception.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 人群统计服务实现类
@@ -26,63 +32,63 @@ import java.util.*;
  * @author scenic
  * @date 2024-03-19
  */
-@Slf4j
 @Service
-@Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMapper, CrowdStatistics> 
-        implements CrowdStatisticsService {
+@Transactional(rollbackFor = Exception.class)
+public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMapper, CrowdStatistics> implements ICrowdStatisticsService {
 
-    private final CrowdStatisticsMapper crowdStatisticsMapper;
+    private static final Logger log = LoggerFactory.getLogger(CrowdStatisticsServiceImpl.class);
+    
+    @Autowired
+    private CrowdStatisticsMapper crowdStatisticsMapper;
+    
+    private static final DateTimeFormatter HOUR_FORMATTER = DateTimeFormatter.ofPattern("HH:00");
     
     // 密度阈值常量
     private static final BigDecimal HIGH_DENSITY_THRESHOLD = new BigDecimal("0.8");
     private static final BigDecimal MEDIUM_DENSITY_THRESHOLD = new BigDecimal("0.5");
 
     /**
+     * 构造函数，注入依赖
+     */
+    public CrowdStatisticsServiceImpl(CrowdStatisticsMapper crowdStatisticsMapper) {
+        this.crowdStatisticsMapper = crowdStatisticsMapper;
+    }
+
+    /**
      * 分页查询人群统计数据
      *
-     * @param page 分页参数
-     * @param deviceCode 设备编码
+     * @param pageNum 页码
+     * @param pageSize 每页大小
      * @param tourismName 景区名称
+     * @param deviceCode 设备编码
      * @param startTime 开始时间
      * @param endTime 结束时间
      * @return 分页结果
      */
     @Override
-    public IPage<CrowdStatistics> page(Page<CrowdStatistics> page, String deviceCode, String tourismName,
-                                      LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("分页查询人群统计数据: page={}, deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                page, deviceCode, tourismName, startTime, endTime);
-        
-        // 参数校验
-        Assert.notNull(page, "分页参数不能为空");
-        Assert.isTrue(page.getCurrent() > 0, "页码必须大于0");
-        Assert.isTrue(page.getSize() > 0, "每页大小必须大于0");
-                
+    public IPage<CrowdStatistics> getPage(Integer pageNum, Integer pageSize, String tourismName,
+                                        String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+        Page<CrowdStatistics> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<CrowdStatistics> wrapper = new LambdaQueryWrapper<>();
         
+        // 构建查询条件
         if (StringUtils.hasText(tourismName)) {
             wrapper.eq(CrowdStatistics::getTourismName, tourismName);
         }
         if (StringUtils.hasText(deviceCode)) {
             wrapper.eq(CrowdStatistics::getDeviceCode, deviceCode);
         }
-        if (startTime != null && endTime != null) {
-            if (startTime.isAfter(endTime)) {
-                throw new BusinessException("开始时间不能晚于结束时间");
-            }
-            wrapper.between(CrowdStatistics::getRecordTime, startTime, endTime);
+        if (startTime != null) {
+            wrapper.ge(CrowdStatistics::getRecordTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(CrowdStatistics::getRecordTime, endTime);
         }
         
+        // 按记录时间降序排序
         wrapper.orderByDesc(CrowdStatistics::getRecordTime);
         
-        try {
-            return page(page, wrapper);
-        } catch (Exception e) {
-            log.error("分页查询人群统计数据失败: {}", e.getMessage());
-            throw new BusinessException("查询失败");
-        }
+        return crowdStatisticsMapper.selectPage(page, wrapper);
     }
 
     /**
@@ -95,10 +101,16 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      */
     @Override
     public List<CrowdStatistics> getByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("根据设备编码查询统计数据: deviceCode={}, startTime={}, endTime={}", deviceCode, startTime, endTime);
-        Assert.hasText(deviceCode, "设备编码不能为空");
-        validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.selectByDevice(deviceCode, startTime, endTime);
+        LambdaQueryWrapper<CrowdStatistics> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CrowdStatistics::getDeviceCode, deviceCode);
+        if (startTime != null) {
+            wrapper.ge(CrowdStatistics::getRecordTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(CrowdStatistics::getRecordTime, endTime);
+        }
+        wrapper.orderByDesc(CrowdStatistics::getRecordTime);
+        return crowdStatisticsMapper.selectList(wrapper);
     }
 
     /**
@@ -111,10 +123,16 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      */
     @Override
     public List<CrowdStatistics> getByTourism(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("根据景区名称查询统计数据: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
-        Assert.hasText(tourismName, "景区名称不能为空");
-        validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.selectByTourism(tourismName, startTime, endTime);
+        LambdaQueryWrapper<CrowdStatistics> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CrowdStatistics::getTourismName, tourismName);
+        if (startTime != null) {
+            wrapper.ge(CrowdStatistics::getRecordTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(CrowdStatistics::getRecordTime, endTime);
+        }
+        wrapper.orderByDesc(CrowdStatistics::getRecordTime);
+        return crowdStatisticsMapper.selectList(wrapper);
     }
 
     /**
@@ -129,10 +147,31 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
     @Override
     public List<Map<String, Object>> getHourDistribution(String deviceCode, String tourismName,
                                                         LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("获取时段人群分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                deviceCode, tourismName, startTime, endTime);
-        validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.selectHourDistribution(deviceCode, tourismName, startTime, endTime);
+        List<CrowdStatistics> statistics = getStatisticsList(deviceCode, tourismName, startTime, endTime);
+        
+        // 按小时分组统计
+        Map<String, List<CrowdStatistics>> hourGroups = statistics.stream()
+                .collect(Collectors.groupingBy(s -> s.getRecordTime().format(HOUR_FORMATTER)));
+        
+        return hourGroups.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> result = new HashMap<>();
+                    List<CrowdStatistics> hourStats = entry.getValue();
+                    
+                    result.put("hour", entry.getKey());
+                    result.put("total_count", hourStats.stream().mapToInt(CrowdStatistics::getCount).sum());
+                    result.put("record_count", hourStats.size());
+                    result.put("avg_count", hourStats.stream().mapToInt(CrowdStatistics::getCount).average().orElse(0));
+                    result.put("avg_density", hourStats.stream()
+                            .map(CrowdStatistics::getDensity)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0));
+                    
+                    return result;
+                })
+                .sorted(Comparator.comparing(m -> (String) m.get("hour")))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -146,11 +185,30 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      */
     @Override
     public List<Map<String, Object>> getDensityDistribution(String deviceCode, String tourismName,
-                                                          LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("获取密度分布: deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                deviceCode, tourismName, startTime, endTime);
-        validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.selectDensityDistribution(deviceCode, tourismName, startTime, endTime);
+                                                           LocalDateTime startTime, LocalDateTime endTime) {
+        List<CrowdStatistics> statistics = getStatisticsList(deviceCode, tourismName, startTime, endTime);
+        
+        // 定义密度等级
+        Map<String, List<CrowdStatistics>> densityGroups = statistics.stream()
+                .collect(Collectors.groupingBy(s -> getDensityLevel(s.getDensity())));
+        
+        return densityGroups.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> result = new HashMap<>();
+                    List<CrowdStatistics> densityStats = entry.getValue();
+                    
+                    result.put("density_level", entry.getKey());
+                    result.put("count", densityStats.size());
+                    result.put("avg_count", densityStats.stream().mapToInt(CrowdStatistics::getCount).average().orElse(0));
+                    result.put("avg_density", densityStats.stream()
+                            .map(CrowdStatistics::getDensity)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0));
+                    
+                    return result;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -164,11 +222,19 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      */
     @Override
     public List<Map<String, Object>> getTrend(String deviceCode, String tourismName,
-                                            LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("获取人群趋势: deviceCode={}, tourismName={}, startTime={}, endTime={}",
-                deviceCode, tourismName, startTime, endTime);
-        validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.selectTrend(deviceCode, tourismName, startTime, endTime);
+                                             LocalDateTime startTime, LocalDateTime endTime) {
+        List<CrowdStatistics> statistics = getStatisticsList(deviceCode, tourismName, startTime, endTime);
+        
+        return statistics.stream()
+                .map(s -> {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("time", s.getRecordTime());
+                    result.put("total_count", s.getCount());
+                    result.put("avg_density", s.getDensity());
+                    return result;
+                })
+                .sorted(Comparator.comparing(m -> (LocalDateTime) m.get("time")))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -181,10 +247,24 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      */
     @Override
     public Map<String, Object> getOverview(String tourismName, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("获取统计概览: tourismName={}, startTime={}, endTime={}", tourismName, startTime, endTime);
-        Assert.hasText(tourismName, "景区名称不能为空");
-        validateTimeRange(startTime, endTime);
-        return crowdStatisticsMapper.selectOverview(tourismName, startTime, endTime);
+        List<CrowdStatistics> statistics = getStatisticsList(null, tourismName, startTime, endTime);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalCount", statistics.stream().mapToInt(CrowdStatistics::getCount).sum());
+        result.put("avgDensity", statistics.stream()
+                .map(CrowdStatistics::getDensity)
+                .mapToDouble(BigDecimal::doubleValue)
+                .average()
+                .orElse(0));
+        result.put("maxCount", statistics.stream().mapToInt(CrowdStatistics::getCount).max().orElse(0));
+        result.put("maxDensity", statistics.stream()
+                .map(CrowdStatistics::getDensity)
+                .mapToDouble(BigDecimal::doubleValue)
+                .max()
+                .orElse(0));
+        result.put("recordCount", statistics.size());
+        
+        return result;
     }
 
     /**
@@ -194,10 +274,20 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      * @return 最新统计数据
      */
     @Override
-    public CrowdStatistics getLatestByDevice(String deviceCode) {
-        log.info("获取设备最新人群统计数据: deviceCode={}", deviceCode);
-        Assert.hasText(deviceCode, "设备编码不能为空");
-        return crowdStatisticsMapper.selectLatestByDevice(deviceCode);
+    public CrowdStatistics getLatest(String deviceCode) {
+        if (StringUtils.isEmpty(deviceCode)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "设备编码不能为空");
+        }
+        try {
+            CrowdStatistics statistics = crowdStatisticsMapper.selectLatestByDevice(deviceCode);
+            if (statistics == null) {
+                throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "未找到设备编码为 " + deviceCode + " 的统计数据");
+            }
+            return statistics;
+        } catch (Exception e) {
+            log.error("获取设备 {} 最新统计数据失败", deviceCode, e);
+            throw new BusinessException(ErrorCode.QUERY_ERROR, "获取最新统计数据失败");
+        }
     }
 
     /**
@@ -211,28 +301,79 @@ public class CrowdStatisticsServiceImpl extends ServiceImpl<CrowdStatisticsMappe
      * @return 高密度区域统计数据
      */
     @Override
-    public List<Map<String, Object>> getHighDensityAreas(String deviceCode, String tourismName,
-                                                        LocalDateTime startTime, LocalDateTime endTime,
-                                                        Double densityThreshold) {
-        log.info("获取高密度区域统计: deviceCode={}, tourismName={}, startTime={}, endTime={}, densityThreshold={}",
-                deviceCode, tourismName, startTime, endTime, densityThreshold);
-        validateTimeRange(startTime, endTime);
-        Assert.notNull(densityThreshold, "密度阈值不能为空");
-        Assert.isTrue(densityThreshold > 0 && densityThreshold <= 1.0, "密度阈值必须在0到1之间");
-        return crowdStatisticsMapper.selectHighDensity(deviceCode, tourismName, startTime, endTime, densityThreshold);
+    public List<Map<String, Object>> getHighDensity(String deviceCode, String tourismName,
+                                                   LocalDateTime startTime, LocalDateTime endTime,
+                                                   Double densityThreshold) {
+        List<CrowdStatistics> statistics = getStatisticsList(deviceCode, tourismName, startTime, endTime);
+        
+        // 按设备分组统计高密度区域
+        Map<String, List<CrowdStatistics>> deviceGroups = statistics.stream()
+                .filter(s -> s.getDensity().doubleValue() >= densityThreshold)
+                .collect(Collectors.groupingBy(CrowdStatistics::getDeviceCode));
+        
+        return deviceGroups.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> result = new HashMap<>();
+                    List<CrowdStatistics> deviceStats = entry.getValue();
+                    CrowdStatistics first = deviceStats.get(0);
+                    
+                    result.put("deviceCode", entry.getKey());
+                    result.put("deviceName", first.getDeviceName());
+                    result.put("occurrences", deviceStats.size());
+                    result.put("avgDensity", deviceStats.stream()
+                            .map(CrowdStatistics::getDensity)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0));
+                    result.put("maxDensity", deviceStats.stream()
+                            .map(CrowdStatistics::getDensity)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .max()
+                            .orElse(0));
+                    result.put("minDensity", deviceStats.stream()
+                            .map(CrowdStatistics::getDensity)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .min()
+                            .orElse(0));
+                    
+                    return result;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
-     * 验证时间范围的有效性
-     *
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * 获取统计数据列表
      */
-    private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
-        Assert.notNull(startTime, "开始时间不能为空");
-        Assert.notNull(endTime, "结束时间不能为空");
-        if (startTime.isAfter(endTime)) {
-            throw new BusinessException("开始时间不能晚于结束时间");
+    private List<CrowdStatistics> getStatisticsList(String deviceCode, String tourismName,
+                                                   LocalDateTime startTime, LocalDateTime endTime) {
+        LambdaQueryWrapper<CrowdStatistics> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(deviceCode)) {
+            wrapper.eq(CrowdStatistics::getDeviceCode, deviceCode);
+        }
+        if (StringUtils.hasText(tourismName)) {
+            wrapper.eq(CrowdStatistics::getTourismName, tourismName);
+        }
+        if (startTime != null) {
+            wrapper.ge(CrowdStatistics::getRecordTime, startTime);
+        }
+        if (endTime != null) {
+            wrapper.le(CrowdStatistics::getRecordTime, endTime);
+        }
+        wrapper.orderByAsc(CrowdStatistics::getRecordTime);
+        return crowdStatisticsMapper.selectList(wrapper);
+    }
+
+    /**
+     * 获取密度等级
+     */
+    private String getDensityLevel(BigDecimal density) {
+        double value = density.doubleValue();
+        if (value < 0.3) {
+            return "低密度";
+        } else if (value < 0.7) {
+            return "中密度";
+        } else {
+            return "高密度";
         }
     }
 }

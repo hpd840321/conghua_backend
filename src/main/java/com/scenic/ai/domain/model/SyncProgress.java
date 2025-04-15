@@ -1,16 +1,11 @@
 package com.scenic.ai.domain.model;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 /**
  * 同步进度领域模型
  * 用于跟踪数据同步的进度和状态
  */
-@Getter
-@Setter
 public class SyncProgress {
     /**
      * 同步状态枚举
@@ -45,6 +40,54 @@ public class SyncProgress {
         this.status = SyncStatus.STARTED;
         this.startTime = LocalDateTime.now();
         this.lastUpdateTime = this.startTime;
+    }
+
+    public String getSyncId() {
+        return syncId;
+    }
+
+    public void setSyncId(String syncId) {
+        this.syncId = syncId;
+    }
+
+    public float getProgress() {
+        return progress;
+    }
+
+    public void setProgress(float progress) {
+        this.progress = progress;
+    }
+
+    public SyncStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(SyncStatus status) {
+        this.status = status;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getLastUpdateTime() {
+        return lastUpdateTime;
+    }
+
+    public void setLastUpdateTime(LocalDateTime lastUpdateTime) {
+        this.lastUpdateTime = lastUpdateTime;
     }
 
     /**

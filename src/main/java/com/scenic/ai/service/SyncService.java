@@ -3,8 +3,8 @@ package com.scenic.ai.service;
 import com.scenic.ai.domain.model.SyncProgress;
 import com.scenic.ai.exception.SyncException;
 import com.scenic.ai.model.RetryLog;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * 同步服务
  * 负责处理数据同步任务
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class SyncService {
+    private static final Logger log = LoggerFactory.getLogger(SyncService.class);
+
     private final SyncRecordService syncRecordService;
     private final ThirdPartyApiService thirdPartyApiService;
     private final StorageService storageService;
@@ -32,6 +32,27 @@ public class SyncService {
 
     // 同步进度跟踪
     private final Map<String, SyncProgress> progressMap = new ConcurrentHashMap<>();
+    
+    /**
+     * 构造函数
+     * 
+     * @param syncRecordService 同步记录服务
+     * @param thirdPartyApiService 第三方API服务
+     * @param storageService 存储服务
+     * @param syncRetryTemplate 同步重试模板
+     * @param retryLogService 重试日志服务
+     */
+    public SyncService(SyncRecordService syncRecordService,
+                      ThirdPartyApiService thirdPartyApiService,
+                      StorageService storageService,
+                      RetryTemplate syncRetryTemplate,
+                      RetryLogService retryLogService) {
+        this.syncRecordService = syncRecordService;
+        this.thirdPartyApiService = thirdPartyApiService;
+        this.storageService = storageService;
+        this.syncRetryTemplate = syncRetryTemplate;
+        this.retryLogService = retryLogService;
+    }
 
     /**
      * 执行同步任务
@@ -128,7 +149,7 @@ public class SyncService {
     }
 
     private void updateRetryLog(String businessType, String businessId, int retryCount) {
-        RetryLog log = retryLogService.getByBusinessTypeAndId(businessType, businessId);
+        RetryLog log = retryLogService.findByBusinessTypeAndId(businessType, businessId);
         if (log == null) {
             log = new RetryLog();
             log.setBusinessType(businessType);
@@ -141,7 +162,7 @@ public class SyncService {
     }
     
     private void saveFailedRetryLog(String businessType, String businessId, String errorMessage) {
-        RetryLog log = retryLogService.getByBusinessTypeAndId(businessType, businessId);
+        RetryLog log = retryLogService.findByBusinessTypeAndId(businessType, businessId);
         if (log != null) {
             log.setStatus("FAILED");
             log.setErrorMessage(errorMessage);

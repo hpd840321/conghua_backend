@@ -20,6 +20,15 @@
         </processorPath>
         <module name="tourism" />
       </profile>
+      <profile name="Annotation profile for scenic-ai-management" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
+        </processorPath>
+        <module name="scenic-ai-management" />
+      </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">

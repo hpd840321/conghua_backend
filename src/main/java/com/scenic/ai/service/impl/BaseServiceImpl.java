@@ -1,67 +1,61 @@
 package com.scenic.ai.service.impl;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.scenic.ai.service.BaseService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * 基础服务实现类
- * @param <T> 领域模型类型
- * @param <ID> ID类型
+ * @param <M> Mapper类型
+ * @param <T> 实体类型
  */
-@Slf4j
-public abstract class BaseServiceImpl<T, ID> implements BaseService<T, ID> {
+@Transactional(rollbackFor = Exception.class)
+public abstract class BaseServiceImpl<M extends BaseMapper<T>, T> extends ServiceImpl<M, T> implements BaseService<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(BaseServiceImpl.class);
     
     @Override
-    @Transactional
-    public void save(T entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public boolean save(T entity) {
         log.info("保存实体: {}", entity);
-        doSave(entity);
+        return super.save(entity);
     }
-    
+
     @Override
-    @Transactional
-    public int batchSave(List<T> entities) {
-        if (entities == null || entities.isEmpty()) {
-            return 0;
-        }
-        log.info("批量保存实体, 数量: {}", entities.size());
-        return doBatchSave(entities);
+    @Transactional(rollbackFor = Exception.class)
+    public boolean removeById(Serializable id) {
+        log.info("删除实体: id={}", id);
+        return super.removeById(id);
     }
-    
+
     @Override
-    public List<T> findByTimeRange(ID id, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("查询时间范围内的记录: id={}, startTime={}, endTime={}", id, startTime, endTime);
-        return doFindByTimeRange(id, startTime, endTime);
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteHistoricalData(LocalDateTime beforeTime) {
+        log.info("删除历史数据: beforeTime={}", beforeTime);
+        doDeleteHistoricalData(beforeTime);
     }
-    
+
     @Override
-    @Transactional
-    public int deleteHistoricalData(LocalDateTime time) {
-        log.info("删除历史数据: time={}", time);
-        return doDeleteHistoricalData(time);
+    public List<T> findByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        log.info("查询时间范围内的记录: startTime={}, endTime={}", startTime, endTime);
+        return doFindByTimeRange(startTime, endTime);
     }
     
     /**
-     * 实际的保存操作
+     * 具体的历史数据删除实现
+     * @param beforeTime 删除该时间之前的数据
      */
-    protected abstract void doSave(T entity);
-    
-    /**
-     * 实际的批量保存操作
-     */
-    protected abstract int doBatchSave(List<T> entities);
+    protected abstract void doDeleteHistoricalData(LocalDateTime beforeTime);
     
     /**
      * 实际的时间范围查询操作
      */
-    protected abstract List<T> doFindByTimeRange(ID id, LocalDateTime startTime, LocalDateTime endTime);
-    
-    /**
-     * 实际的历史数据删除操作
-     */
-    protected abstract int doDeleteHistoricalData(LocalDateTime time);
+    protected abstract List<T> doFindByTimeRange(LocalDateTime startTime, LocalDateTime endTime);
 } 

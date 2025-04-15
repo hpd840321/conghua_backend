@@ -10,10 +10,10 @@
                            http://www.springframework.org/schema/mvc
                            http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-    <!-- 开启注解扫描 -->
+    <!-- 扫描控制器 -->
     <context:component-scan base-package="com.scenic.ai.controller"/>
 
-    <!-- 开启SpringMVC注解驱动 -->
+    <!-- 启用Spring MVC注解 -->
     <mvc:annotation-driven>
         <mvc:message-converters>
             <!-- JSON转换器 -->
@@ -22,27 +22,51 @@
                     <bean class="com.fasterxml.jackson.databind.ObjectMapper">
                         <property name="dateFormat">
                             <bean class="java.text.SimpleDateFormat">
-                                <constructor-arg value="yyyy-MM-dd HH:mm:ss"/>
+                                <constructor-arg type="java.lang.String" value="yyyy-MM-dd HH:mm:ss"/>
                             </bean>
+                        </property>
+                        <!-- 添加Java8时间模块支持 -->
+                        <property name="modules">
+                            <list>
+                                <bean class="com.fasterxml.jackson.datatype.jsr310.JavaTimeModule"/>
+                            </list>
                         </property>
                     </bean>
                 </property>
             </bean>
+            <!-- String转换器 -->
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                <constructor-arg value="UTF-8"/>
+            </bean>
         </mvc:message-converters>
     </mvc:annotation-driven>
 
-    <!-- 静态资源访问 -->
-    <mvc:resources mapping="/static/**" location="/WEB-INF/static/"/>
+    <!-- 静态资源映射 -->
+    <mvc:resources mapping="/static/**" location="/static/"/>
+    <mvc:resources mapping="/WEB-INF/static/**" location="/WEB-INF/static/"/>
 
     <!-- 视图解析器 -->
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/WEB-INF/jsp/"/>
         <property name="suffix" value=".jsp"/>
-        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
     </bean>
 
     <!-- 文件上传解析器 -->
-    <bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver"/>
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="10485760"/> <!-- 10MB -->
+        <property name="maxInMemorySize" value="4096"/>
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
+
+    <!-- 拦截器配置 -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/static/**"/>
+            <mvc:exclude-mapping path="/login"/>
+            <bean class="com.scenic.ai.interceptor.LoginInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
 
     <!-- 异常处理器 -->
     <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">

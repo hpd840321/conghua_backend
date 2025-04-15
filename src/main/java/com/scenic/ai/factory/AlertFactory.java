@@ -17,17 +17,17 @@ public class AlertFactory {
     public static Alert createAlert(String deviceCode, String deviceName, String tourismName,
             String alertType, Integer alertLevel, String description, String imageUrl) {
         Alert alert = new Alert();
-        alert.setDeviceCode(deviceCode)
-             .setDeviceName(deviceName)
-             .setTourismName(tourismName)
-             .setAlertType(alertType)
-             .setAlertLevel(alertLevel)
-             .setDescription(description)
-             .setImageUrl(imageUrl)
-             .setAlertStatus(0)
-             .setRecordTime(LocalDateTime.now())
-             .setCreateTime(LocalDateTime.now())
-             .setUpdateTime(LocalDateTime.now());
+        alert.setDeviceCode(deviceCode);
+        alert.setDeviceName(deviceName);
+        alert.setTourismName(tourismName);
+        alert.setAlertType(alertType);
+        alert.setAlertLevel(alertLevel);
+        alert.setDescription(description);
+        alert.setImageUrl(imageUrl);
+        alert.setAlertStatus(0);
+        alert.setRecordTime(LocalDateTime.now());
+        alert.setCreateTime(LocalDateTime.now());
+        alert.setUpdateTime(LocalDateTime.now());
         return alert;
     }
     

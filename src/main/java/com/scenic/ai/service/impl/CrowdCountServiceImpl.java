@@ -2,18 +2,17 @@ package com.scenic.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.scenic.ai.domain.model.CrowdCount;
 import com.scenic.ai.domain.model.AlertDomain;
-import com.scenic.ai.model.Alert;
-import com.scenic.ai.factory.AlertFactory;
+import com.scenic.ai.domain.model.CrowdCount;
 import com.scenic.ai.mapper.CrowdCountMapper;
-import com.scenic.ai.service.AlertService;
 import com.scenic.ai.service.CrowdCountService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import com.scenic.ai.service.IAlertService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,11 +23,11 @@ import java.util.stream.Collectors;
 /**
  * 人群计数服务实现类
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
-@Transactional
+@Transactional(rollbackFor = Exception.class)
 public class CrowdCountServiceImpl implements CrowdCountService {
+    
+    private static final Logger log = LoggerFactory.getLogger(CrowdCountServiceImpl.class);
     
     // 密度告警阈值
     private static final double DENSITY_THRESHOLD = 0.8;
@@ -37,19 +36,28 @@ public class CrowdCountServiceImpl implements CrowdCountService {
     
     private final CrowdCountMapper crowdCountMapper;
     private final Map<String, Integer> thresholds = new ConcurrentHashMap<>();
-    private final AlertService alertService;
+    private final IAlertService alertService;
+    
+    /**
+     * 构造函数注入依赖
+     */
+    @Autowired
+    public CrowdCountServiceImpl(CrowdCountMapper crowdCountMapper, IAlertService alertService) {
+        this.crowdCountMapper = crowdCountMapper;
+        this.alertService = alertService;
+    }
     
     @Override
     public Page<CrowdCount> getPage(Page<CrowdCount> page, String tourismName, String deviceCode,
                                    String algName, LocalDateTime startTime, LocalDateTime endTime) {
         LambdaQueryWrapper<CrowdCount> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(tourismName)) {
+        if (StringUtils.hasText(tourismName)) {
             wrapper.eq(CrowdCount::getTourismName, tourismName);
         }
-        if (StringUtils.isNotBlank(deviceCode)) {
+        if (StringUtils.hasText(deviceCode)) {
             wrapper.eq(CrowdCount::getDeviceCode, deviceCode);
         }
-        if (StringUtils.isNotBlank(algName)) {
+        if (StringUtils.hasText(algName)) {
             wrapper.eq(CrowdCount::getAlgName, algName);
         }
         if (startTime != null) {
@@ -66,10 +74,10 @@ public class CrowdCountServiceImpl implements CrowdCountService {
     public Page<CrowdCount> getDetailsPage(Page<CrowdCount> page, String deviceCode, String algName,
                                          LocalDateTime recordBeginDate, LocalDateTime recordEndDate) {
         LambdaQueryWrapper<CrowdCount> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(deviceCode)) {
+        if (StringUtils.hasText(deviceCode)) {
             wrapper.eq(CrowdCount::getDeviceCode, deviceCode);
         }
-        if (StringUtils.isNotBlank(algName)) {
+        if (StringUtils.hasText(algName)) {
             wrapper.eq(CrowdCount::getAlgName, algName);
         }
         if (recordBeginDate != null) {

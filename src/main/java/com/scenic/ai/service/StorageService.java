@@ -1,8 +1,8 @@
 package com.scenic.ai.service;
 
 import com.scenic.ai.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,14 +20,23 @@ import java.util.UUID;
 /**
  * 存储服务，用于处理图片和其他文件的存储、检索和删除
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class StorageService {
     private final ThirdPartyApiService thirdPartyApiService;
 
     @Value("${storage.base-path}")
     private String storagePath;
+
+    static final Logger log = LoggerFactory.getLogger(StorageService.class);
+    
+    /**
+     * 构造函数
+     * 
+     * @param thirdPartyApiService 第三方API服务
+     */
+    public StorageService(ThirdPartyApiService thirdPartyApiService) {
+        this.thirdPartyApiService = thirdPartyApiService;
+    }
 
     /**
      * 从第三方API下载图片并存储到本地

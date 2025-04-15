@@ -24,12 +24,15 @@ public enum AlertLevel {
         return description;
     }
 
-    public static AlertLevel fromValue(int value) {
-        for (AlertLevel level : AlertLevel.values()) {
-            if (level.value == value) {
+    public static AlertLevel fromValue(Integer value) {
+        if (value == null) {
+            return null;
+        }
+        for (AlertLevel level : values()) {
+            if (level.getValue() == value) {
                 return level;
             }
         }
-        throw new IllegalArgumentException("Invalid AlertLevel value: " + value);
+        return null;
     }
 } 

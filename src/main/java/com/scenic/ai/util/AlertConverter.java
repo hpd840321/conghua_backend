@@ -28,7 +28,7 @@ public class AlertConverter {
             alert.getDeviceName(),
             alert.getTourismName(),
             alert.getDescription(),
-            null  // 暂不处理value字段
+            alert.getValue()
         );
     }
     
@@ -39,15 +39,20 @@ public class AlertConverter {
         if (domain == null) {
             return null;
         }
-        return new Alert()
-            .setAlertType(domain.getType())
-            .setAlertLevel(AlertLevel.valueOf(domain.getLevel()).getValue())
-            .setDeviceCode(domain.getDeviceCode())
-            .setDeviceName(domain.getDeviceName())
-            .setTourismName(domain.getTourismName())
-            .setDescription(domain.getDescription())
-            .setAlertStatus(AlertStatus.fromValue(0).getValue())  // 默认待处理状态
-            .setRecordTime(domain.getCreateTime());
+        Alert alert = new Alert();
+        alert.setId(Long.parseLong(domain.getId()));
+        alert.setAlertType(AlertType.valueOf(domain.getType()).getValue());
+        alert.setAlertLevel(AlertLevel.valueOf(domain.getLevel()).getValue());
+        alert.setDeviceCode(domain.getDeviceCode());
+        alert.setDeviceName(domain.getDeviceName());
+        alert.setTourismName(domain.getTourismName());
+        alert.setDescription(domain.getDescription());
+        alert.setValue(domain.getValue());
+        alert.setAlertStatus(AlertStatus.fromValue(0).getValue());  // 默认待处理状态
+        alert.setRecordTime(domain.getCreateTime());
+        alert.setCreateTime(domain.getCreateTime());
+        alert.setUpdateTime(domain.getCreateTime());
+        return alert;
     }
     
     /**

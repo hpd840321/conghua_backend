@@ -1,14 +1,11 @@
 package com.scenic.ai.domain.model;
 
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
 /**
  * 告警领域模型
  * 表示系统中的一个告警实体
  */
-@Getter
 public class AlertDomain {
     private final String id;
     private final String type;
@@ -142,6 +139,76 @@ public class AlertDomain {
         return new AlertDomain(this.id, this.type, this.level, this.deviceCode,
                         this.deviceName, this.tourismName, this.description,
                         this.value, this.createTime, newStatus);
+    }
+    
+    /**
+     * 获取告警ID
+     */
+    public String getId() {
+        return id;
+    }
+    
+    /**
+     * 获取告警类型
+     */
+    public String getType() {
+        return type;
+    }
+    
+    /**
+     * 获取告警级别
+     */
+    public String getLevel() {
+        return level;
+    }
+    
+    /**
+     * 获取设备编码
+     */
+    public String getDeviceCode() {
+        return deviceCode;
+    }
+    
+    /**
+     * 获取设备名称
+     */
+    public String getDeviceName() {
+        return deviceName;
+    }
+    
+    /**
+     * 获取景区名称
+     */
+    public String getTourismName() {
+        return tourismName;
+    }
+    
+    /**
+     * 获取告警描述
+     */
+    public String getDescription() {
+        return description;
+    }
+    
+    /**
+     * 获取告警值
+     */
+    public Double getValue() {
+        return value;
+    }
+    
+    /**
+     * 获取创建时间
+     */
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+    
+    /**
+     * 获取告警状态
+     */
+    public String getStatus() {
+        return status;
     }
     
     @Override

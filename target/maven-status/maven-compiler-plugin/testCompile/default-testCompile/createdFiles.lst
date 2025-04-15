@@ -1,0 +1,6 @@
+com\scenic\ai\mapper\AlertMapperTest.class
+com\scenic\ai\controller\AlertStatisticsControllerTest.class
+com\scenic\ai\service\impl\AlertHandlingRecordServiceImplTest.class
+com\scenic\ai\service\impl\AlertHandlingRecordServiceIntegrationTest.class
+com\scenic\ai\service\CrowdStatisticsServiceTest.class
+com\scenic\ai\service\impl\AlertServiceImplTest.class

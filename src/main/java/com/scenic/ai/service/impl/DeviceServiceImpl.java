@@ -8,6 +8,8 @@ import com.scenic.ai.mapper.DeviceMapper;
 import com.scenic.ai.model.Device;
 import com.scenic.ai.service.DeviceService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,8 @@ import java.util.List;
  */
 @Service
 public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> implements DeviceService {
+
+    private static final Logger log = LoggerFactory.getLogger(DeviceServiceImpl.class);
 
     @Override
     public List<Device> list() {

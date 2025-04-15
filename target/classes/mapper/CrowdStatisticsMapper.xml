@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.scenic.ai.dao.CrowdStatisticsMapper">
+<mapper namespace="com.scenic.ai.mapper.CrowdStatisticsMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.scenic.ai.model.CrowdStatistics">
         <id column="ID" property="id"/>
@@ -78,7 +78,7 @@
     </select>
 
     <!-- 根据设备编码查询最新统计数据 -->
-    <select id="selectLatestByDeviceCode" resultMap="BaseResultMap">
+    <select id="selectLatestByDevice" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM CLOUDWALK.CROWD_STATISTICS
         WHERE DEVICE_CODE = #{deviceCode}
@@ -509,22 +509,29 @@
                 WHEN DENSITY &lt; 0.7 THEN '中密度'
                 ELSE '高密度'
             END
-        ORDER BY avg_density
+        ORDER BY 
+            CASE density_level
+                WHEN '低密度' THEN 1
+                WHEN '中密度' THEN 2
+                WHEN '高密度' THEN 3
+            END
     </select>
 
     <!-- 查询趋势数据 -->
     <select id="selectTrend" resultType="java.util.Map">
         SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI:SS') as time,
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI') as time,
             SUM(COUNT) as total_count,
-            ROUND(AVG(DENSITY), 2) as avg_density
+            ROUND(AVG(DENSITY), 2) as avg_density,
+            MAX(COUNT) as max_count,
+            MIN(COUNT) as min_count
         FROM CROWD_STATISTICS
         WHERE 1=1
-        <if test="tourismName != null and tourismName != ''">
-            AND TOURISM_NAME = #{tourismName}
-        </if>
         <if test="deviceCode != null and deviceCode != ''">
             AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
         </if>
         <if test="startTime != null">
             AND RECORD_TIME >= #{startTime}
@@ -532,8 +539,13 @@
         <if test="endTime != null">
             AND RECORD_TIME &lt;= #{endTime}
         </if>
-        GROUP BY RECORD_TIME
-        ORDER BY RECORD_TIME
+        <if test="interval != null">
+            GROUP BY TO_CHAR(RECORD_TIME, #{interval})
+        </if>
+        <if test="interval == null">
+            GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:MI')
+        </if>
+        ORDER BY time
     </select>
 
     <!-- 查询概览数据 -->
@@ -542,7 +554,9 @@
             SUM(COUNT) as total_count,
             ROUND(AVG(DENSITY), 2) as avg_density,
             MAX(COUNT) as max_count,
-            ROUND(MAX(DENSITY), 2) as max_density,
+            MAX(DENSITY) as max_density,
+            MIN(COUNT) as min_count,
+            MIN(DENSITY) as min_density,
             COUNT(*) as record_count,
             COUNT(DISTINCT DEVICE_CODE) as device_count
         FROM CROWD_STATISTICS
@@ -560,15 +574,17 @@
 
     <!-- 查询高密度区域数据 -->
     <select id="selectHighDensity" resultType="java.util.Map">
-        SELECT 
+        SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_DENSITY) */
             DEVICE_CODE,
             DEVICE_NAME,
             COUNT(*) as occurrences,
             ROUND(AVG(DENSITY), 2) as avg_density,
-            ROUND(MAX(DENSITY), 2) as max_density,
-            ROUND(MIN(DENSITY), 2) as min_density
+            MAX(DENSITY) as max_density,
+            MIN(DENSITY) as min_density,
+            MAX(COUNT) as max_count,
+            ROUND(AVG(COUNT), 2) as avg_count
         FROM CROWD_STATISTICS
-        WHERE DENSITY >= #{densityThreshold}
+        WHERE DENSITY >= #{densityThreshold,jdbcType=DECIMAL,defaultValue=0.7}
         <if test="tourismName != null and tourismName != ''">
             AND TOURISM_NAME = #{tourismName}
         </if>
@@ -583,11 +599,14 @@
         </if>
         GROUP BY DEVICE_CODE, DEVICE_NAME
         ORDER BY avg_density DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
     </select>
 
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
-        SELECT 
+        SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_RECORD_TIME) */
         <include refid="Base_Column_List"/>
         FROM CROWD_STATISTICS
         <where>
