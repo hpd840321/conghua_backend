@@ -16,7 +16,7 @@ public interface DensityAnalysisService {
         /**
          * 查找超过阈值的密度记录并生成告警
          */
-        List<AlertDomain> findExceedThresholdDensities();
+        List<AlertDomain> listExceedThresholdDensities();
 
         /**
          * 分析指定时间范围内的密度趋势

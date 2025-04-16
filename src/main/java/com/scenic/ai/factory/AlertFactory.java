@@ -5,8 +5,6 @@ import com.scenic.ai.model.enums.AlertLevel;
 import com.scenic.ai.model.enums.AlertType;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 /**
  * 告警工厂类
@@ -28,9 +26,9 @@ public class AlertFactory {
         alert.setImageUrl(imageUrl);
         alert.setAlertStatus(0);
         LocalDateTime now = LocalDateTime.now();
-        alert.setRecordTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
-        alert.setCreateTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
-        alert.setUpdateTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+        alert.setRecordTime(now);
+        alert.setCreateTime(now);
+        alert.setUpdateTime(now);
         return alert;
     }
 

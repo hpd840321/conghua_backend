@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
@@ -27,9 +28,9 @@ import java.util.List;
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     private static final Logger log = LoggerFactory.getLogger(WebConfig.class);
-    
+
     @Value("${spring.mvc.view.prefix:/WEB-INF/jsp/}")
     private String viewPrefix;
 
@@ -38,7 +39,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${spring.web.resources.static-locations:classpath:/static/,classpath:/META-INF/resources/}")
     private String[] staticLocations;
-    
+
     @Bean
     public InternalResourceViewResolver viewResolver() {
         log.info("Initializing view resolver");
@@ -49,34 +50,34 @@ public class WebConfig implements WebMvcConfigurer {
         resolver.setOrder(1);
         resolver.setExposeContextBeansAsAttributes(true);
         resolver.setExposedContextBeanNames("springMacroRequestContext");
-        
+
         log.info("View resolver configuration:");
         log.info("+ View Prefix: {}", viewPrefix);
         log.info("+ View Suffix: {}", viewSuffix);
-        
+
         return resolver;
     }
-    
+
     @Override
-    public void configureViewResolvers(ViewResolverRegistry registry) {
+    public void configureViewResolvers(@NonNull ViewResolverRegistry registry) {
         log.debug("Configuring view resolver registry");
         registry.viewResolver(viewResolver());
     }
-    
+
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         log.info("Configuring resource handlers");
-        
+
         // 静态资源路径
         registry.addResourceHandler("/static/**")
                 .addResourceLocations(staticLocations)
                 .setCachePeriod(3600);
-        
+
         // JSP资源路径 - 使用META-INF/resources目录
         registry.addResourceHandler("/WEB-INF/jsp/**")
                 .addResourceLocations("classpath:/META-INF/resources/WEB-INF/jsp/")
                 .setCachePeriod(0);
-        
+
         log.info("Resource mapping configuration:");
         log.info("+ Static Resource Locations: {}", String.join(", ", staticLocations));
         log.info("+ JSP Resource Location: classpath:/META-INF/resources/WEB-INF/jsp/");
@@ -86,7 +87,7 @@ public class WebConfig implements WebMvcConfigurer {
      * 配置跨域
      */
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
@@ -99,7 +100,7 @@ public class WebConfig implements WebMvcConfigurer {
      * 配置消息转换器
      */
     @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+    public void configureMessageConverters(@NonNull List<HttpMessageConverter<?>> converters) {
         converters.add(new MappingJackson2HttpMessageConverter(objectMapper()));
     }
 
@@ -109,19 +110,18 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        
+
         // 注册Java 8时间模块
         JavaTimeModule javaTimeModule = new JavaTimeModule();
         javaTimeModule.addSerializer(
                 LocalDateTime.class,
-                new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        );
+                new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         objectMapper.registerModule(javaTimeModule);
-        
+
         // 注册自定义模块
         SimpleModule simpleModule = new SimpleModule();
         objectMapper.registerModule(simpleModule);
-        
+
         return objectMapper;
     }
-} 
+}

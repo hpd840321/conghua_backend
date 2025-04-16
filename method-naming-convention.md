@@ -1,0 +1,436 @@
+# 景区AI系统方法命名规范
+
+## 一、基本原则
+
+1. **语义清晰原则**
+   - 方法名应清晰表达其功能和意图
+   - 避免使用模糊不清的动词或名词
+   - 方法名应反映业务领域概念
+
+2. **一致性原则**
+   - 相同功能的方法应使用相同的前缀
+   - 相似功能的方法应使用相似的前缀
+   - 保持整个项目的方法命名风格一致
+
+3. **最小修改原则**
+   - 遵循最小修改原则，避免大规模重构
+   - 修改代码时，确保兼容现有功能
+   - 添加新功能时，尽量不修改现有代码
+
+4. **领域驱动设计原则**
+   - 方法名应反映领域模型和业务概念
+   - 使用领域专家能够理解的术语
+   - 避免使用技术实现细节作为方法名
+
+## 二、方法命名规范详解
+
+### 1. 查询单个对象的方法命名
+
+对于查询单个对象的方法，必须使用"get"前缀，表示获取单个实体：
+
+```
+getById - 根据ID获取单个对象
+getByCode - 根据编码获取单个对象
+getLatestByDevice - 获取设备最新告警
+getByUniqueKey - 根据唯一键获取对象
+getByDeviceCode - 根据设备编码获取对象
+getByTourismName - 根据景区名称获取对象
+```
+
+**示例**：
+```java
+public Alert getById(Long id) {
+    // 实现代码
+}
+
+public Alert getLatestByDevice(String deviceCode) {
+    // 实现代码
+}
+```
+
+### 2. 查询列表的方法命名
+
+对于查询多个对象的方法，必须使用"list"前缀，表示获取多个实体：
+
+```
+listByDevice - 根据设备查询告警列表
+listByTourism - 根据景区查询告警列表
+listByTimeRange - 根据时间范围查询告警列表
+listByConditions - 根据条件查询告警列表
+listUnhandledAlerts - 查询未处理告警列表
+listByStatus - 根据状态查询告警列表
+listByLevelAndStatus - 根据级别和状态查询告警列表
+```
+
+**示例**：
+```java
+public List<Alert> listByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public List<Alert> listByConditions(String deviceCode, String alertType, String tourism,
+        Integer level, Integer status, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 3. 分页查询的方法命名
+
+对于分页查询的方法，必须使用"page"前缀：
+
+```
+pageByConditions - 根据条件分页查询告警
+pageByTimeRange - 根据时间范围分页查询告警
+pageByDevice - 根据设备分页查询告警
+pageByTourism - 根据景区分页查询告警
+```
+
+**示例**：
+```java
+public IPage<Alert> pageByConditions(Integer pageNum, Integer pageSize, String deviceCode,
+        String alertType, String tourism, Integer level, Integer status,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 4. 统计计数的方法命名
+
+对于统计计数的方法，必须使用"count"前缀：
+
+```
+countByConditions - 根据条件统计告警数量
+countByTimeRange - 根据时间范围统计告警数量
+countByLevelAndStatus - 根据级别和状态统计数量
+countUnhandledAlerts - 统计未处理告警数量
+countPendingAlerts - 统计待处理告警数量
+```
+
+**示例**：
+```java
+public int countByConditions(String tourismName, String deviceCode, String alertType,
+        Integer alertLevel, Integer alertStatus, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public int countUnhandledAlerts(String deviceCode, String tourismName) {
+    // 实现代码
+}
+```
+
+### 5. 分布统计的方法命名
+
+对于分布统计的方法，必须使用"count"前缀加上分布类型：
+
+```
+countTypeDistribution - 统计告警类型分布
+countLevelDistribution - 统计告警级别分布
+countStatusDistribution - 统计告警状态分布
+countTimeDistribution - 统计告警时段分布
+countDeviceDistribution - 统计设备分布
+countTourismDistribution - 统计景区分布
+```
+
+**示例**：
+```java
+public List<Map<String, Object>> countTypeDistribution(String tourismName, String deviceCode,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public List<Map<String, Object>> countLevelDistribution(String tourismName, String deviceCode,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 6. 趋势分析的方法命名
+
+对于趋势分析的方法，必须使用"count"前缀加上趋势类型：
+
+```
+countTrend - 统计告警趋势
+countByTypeAndTimeRange - 统计类型和时间范围的趋势
+countByStatusAndTimeRange - 统计状态和时间范围的趋势
+countByDeviceAndTimeRange - 统计设备和时间范围的趋势
+countByLevelAndTimeRange - 统计级别和时间范围的趋势
+countByTourismAndTimeRange - 统计景区和时间范围的趋势
+```
+
+**示例**：
+```java
+public List<Map<String, Object>> countByTypeAndTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public List<Map<String, Object>> countByLevelAndTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 7. 更新操作的方法命名
+
+对于更新操作的方法，必须使用"update"或"handle"前缀：
+
+```
+updateStatus - 更新告警状态
+handleBatchStatus - 批量处理告警状态
+handleAlert - 处理告警
+handleBatchUpdate - 批量更新告警
+```
+
+**示例**：
+```java
+public boolean updateStatus(Long id, Integer status) {
+    // 实现代码
+}
+
+public boolean handleAlert(Long alertId, String description) {
+    // 实现代码
+}
+```
+
+### 8. 创建操作的方法命名
+
+对于创建操作的方法，必须使用"create"或"insert"前缀：
+
+```
+createAlert - 创建告警
+insertAlert - 插入告警
+```
+
+**示例**：
+```java
+public boolean createAlert(Alert alert) {
+    // 实现代码
+}
+```
+
+### 9. 删除操作的方法命名
+
+对于删除操作的方法，必须使用"delete"或"remove"前缀：
+
+```
+deleteById - 根据ID删除告警
+removeByConditions - 根据条件删除告警
+```
+
+**示例**：
+```java
+public boolean deleteById(Long id) {
+    // 实现代码
+}
+```
+
+### 10. 其他操作的方法命名
+
+对于其他操作的方法，必须使用动词+名词的形式：
+
+```
+processAlert - 处理告警
+batchHandleAlerts - 批量处理告警
+```
+
+**示例**：
+```java
+public boolean processAlert(Long id) {
+    // 实现代码
+}
+
+public boolean batchHandleAlerts(List<Long> ids) {
+    // 实现代码
+}
+```
+
+## 三、特殊情况处理
+
+### 1. 获取概览数据的方法命名
+
+对于获取概览数据的方法，可以使用"get"前缀加上"Overview"：
+
+```
+getOverview - 获取告警概览
+getAlertStatistics - 获取告警统计信息
+```
+
+**示例**：
+```java
+public Map<String, Object> getOverview(String tourismName, String deviceCode, LocalDateTime startTime,
+        LocalDateTime endTime) {
+    // 实现代码
+}
+
+public Map<String, Object> getAlertStatistics(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 2. 获取分布数据的方法命名
+
+对于获取分布数据的方法，可以使用"get"前缀加上分布类型：
+
+```
+getTypeDistribution - 获取告警类型分布
+getLevelDistribution - 获取告警级别分布
+getTimeDistribution - 获取告警时段分布
+getDeviceDistribution - 获取设备分布
+getTourismDistribution - 获取景区分布
+```
+
+**示例**：
+```java
+public Map<String, Object> getTypeDistribution(String tourismName, String deviceCode,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public Map<String, Object> getLevelDistribution(String tourismName, String deviceCode,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 3. 获取趋势数据的方法命名
+
+对于获取趋势数据的方法，可以使用"get"前缀加上"Trend"：
+
+```
+getTrend - 获取告警趋势
+```
+
+**示例**：
+```java
+public Map<String, Object> getTrend(String deviceCode, String alertType, LocalDateTime startTime,
+        LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+## 四、方法命名规范应用示例
+
+### 1. 查询单个对象的方法
+
+```java
+// 正确示例
+public Alert getById(Long id) {
+    // 实现代码
+}
+
+public Alert getLatestByDevice(String deviceCode) {
+    // 实现代码
+}
+
+// 错误示例
+public Alert findById(Long id) {
+    // 实现代码
+}
+
+public Alert selectLatestByDevice(String deviceCode) {
+    // 实现代码
+}
+```
+
+### 2. 查询列表的方法
+
+```java
+// 正确示例
+public List<Alert> listByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public List<Alert> listByConditions(String deviceCode, String alertType, String tourism,
+        Integer level, Integer status, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+// 错误示例
+public List<Alert> findByDevice(String deviceCode, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public List<Alert> selectByConditions(String deviceCode, String alertType, String tourism,
+        Integer level, Integer status, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 3. 分页查询的方法
+
+```java
+// 正确示例
+public IPage<Alert> pageByConditions(Integer pageNum, Integer pageSize, String deviceCode,
+        String alertType, String tourism, Integer level, Integer status,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+// 错误示例
+public IPage<Alert> findByConditions(Integer pageNum, Integer pageSize, String deviceCode,
+        String alertType, String tourism, Integer level, Integer status,
+        LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+```
+
+### 4. 统计计数的方法
+
+```java
+// 正确示例
+public int countByConditions(String tourismName, String deviceCode, String alertType,
+        Integer alertLevel, Integer alertStatus, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public int countUnhandledAlerts(String deviceCode, String tourismName) {
+    // 实现代码
+}
+
+// 错误示例
+public int getCountByConditions(String tourismName, String deviceCode, String alertType,
+        Integer alertLevel, Integer alertStatus, LocalDateTime startTime, LocalDateTime endTime) {
+    // 实现代码
+}
+
+public int getUnhandledAlertsCount(String deviceCode, String tourismName) {
+    // 实现代码
+}
+```
+
+## 五、方法命名规范检查清单
+
+在代码审查或开发过程中，可以使用以下清单检查方法命名是否符合规范：
+
+1. 查询单个对象的方法是否使用"get"前缀？
+2. 查询列表的方法是否使用"list"前缀？
+3. 分页查询的方法是否使用"page"前缀？
+4. 统计计数的方法是否使用"count"前缀？
+5. 分布统计的方法是否使用"count"前缀加上分布类型？
+6. 趋势分析的方法是否使用"count"前缀加上趋势类型？
+7. 更新操作的方法是否使用"update"或"handle"前缀？
+8. 创建操作的方法是否使用"create"或"insert"前缀？
+9. 删除操作的方法是否使用"delete"或"remove"前缀？
+10. 其他操作的方法是否使用动词+名词的形式？
+
+## 六、方法命名规范实施建议
+
+1. **代码审查**
+   - 在代码审查过程中，将方法命名规范作为检查项
+   - 对不符合规范的方法名提出修改建议
+
+2. **重构计划**
+   - 制定方法命名规范的重构计划
+   - 分阶段进行重构，避免一次性大规模修改
+
+3. **文档更新**
+   - 更新项目文档，添加方法命名规范说明
+   - 在代码注释中引用方法命名规范
+
+4. **团队培训**
+   - 对开发团队进行方法命名规范培训
+   - 通过示例说明规范的应用
+
+5. **工具支持**
+   - 使用静态代码分析工具检查方法命名
+   - 配置IDE提示，帮助开发人员遵循规范
+
+通过遵循以上方法命名规范，可以确保代码的一致性和可读性，提高代码的可维护性和可理解性，同时符合领域驱动设计的原则。 

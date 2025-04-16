@@ -1,10 +1,9 @@
 package com.scenic.ai.util;
 
-import com.scenic.ai.domain.model.AlertDomain;
-import com.scenic.ai.entity.Alert;
-import com.scenic.ai.common.enums.AlertType;
 import com.scenic.ai.common.enums.AlertLevel;
 import com.scenic.ai.common.enums.AlertStatus;
+import com.scenic.ai.domain.model.AlertDomain;
+import com.scenic.ai.entity.Alert;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +47,7 @@ public class AlertConverter {
         alert.setDeviceName(domain.getDeviceName());
         alert.setTourismName(domain.getTourismName());
         alert.setDescription(domain.getDescription());
-        alert.setAlertStatus(AlertStatus.valueOf(domain.getStatus()).getValue());
+        alert.setAlertStatus(AlertStatus.valueOf(domain.getStatus()).getCode());
         alert.setCreateTime(domain.getCreateTime());
         alert.setUpdateTime(domain.getCreateTime());
 

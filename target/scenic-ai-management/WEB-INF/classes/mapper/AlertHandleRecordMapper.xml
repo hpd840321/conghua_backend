@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.AlertHandleRecordMapper">
+    
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.entity.AlertHandleRecord">
+        <id column="ID" property="id"/>
+        <result column="ALERT_ID" property="alertId"/>
+        <result column="HANDLER" property="handler"/>
+        <result column="HANDLE_METHOD" property="handleMethod"/>
+        <result column="HANDLE_RESULT" property="handleResult"/>
+        <result column="HANDLE_TIME" property="handleTime"/>
+        <result column="REMARK" property="remark"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        ID, ALERT_ID, HANDLER, HANDLE_METHOD, HANDLE_RESULT, HANDLE_TIME, REMARK, CREATE_TIME, UPDATE_TIME
+    </sql>
+    
+    <!-- 条件查询片段 -->
+    <sql id="Query_Condition">
+        <where>
+            <if test="params.alertId != null">
+                AND ALERT_ID = #{params.alertId}
+            </if>
+            <if test="params.handler != null and params.handler != ''">
+                AND HANDLER = #{params.handler}
+            </if>
+            <if test="params.handleMethod != null and params.handleMethod != ''">
+                AND HANDLE_METHOD = #{params.handleMethod}
+            </if>
+            <if test="params.handleResult != null and params.handleResult != ''">
+                AND HANDLE_RESULT = #{params.handleResult}
+            </if>
+            <if test="params.startTime != null">
+                AND HANDLE_TIME >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND HANDLE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 根据告警ID查询处理记录 -->
+    <select id="listByAlertId" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT_HANDLE_RECORD
+        WHERE ALERT_ID = #{alertId}
+        ORDER BY HANDLE_TIME DESC
+    </select>
+    
+    <!-- 根据处理人查询处理记录 -->
+    <select id="listByHandler" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT_HANDLE_RECORD
+        WHERE HANDLER = #{handler}
+        ORDER BY HANDLE_TIME DESC
+    </select>
+    
+    <!-- 统计处理方式分布 -->
+    <select id="countByHandleMethod" resultType="java.util.Map">
+        SELECT 
+            HANDLE_METHOD as method,
+            COUNT(1) as count
+        FROM ALERT_HANDLE_RECORD
+        <where>
+            <if test="startTime != null">
+                AND HANDLE_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND HANDLE_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY HANDLE_METHOD
+    </select>
+    
+    <!-- 统计处理结果分布 -->
+    <select id="countByHandleResult" resultType="java.util.Map">
+        SELECT 
+            HANDLE_RESULT as result,
+            COUNT(1) as count
+        FROM ALERT_HANDLE_RECORD
+        <where>
+            <if test="startTime != null">
+                AND HANDLE_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND HANDLE_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY HANDLE_RESULT
+    </select>
+    
+    <!-- 分页查询 -->
+    <select id="pageByConditions" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT_HANDLE_RECORD
+        <include refid="Query_Condition"/>
+        ORDER BY HANDLE_TIME DESC
+        OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
+    </select>
+    
+    <!-- 插入记录 -->
+    <insert id="insert" parameterType="com.scenic.ai.entity.AlertHandleRecord">
+        INSERT INTO ALERT_HANDLE_RECORD (
+            ALERT_ID, HANDLER, HANDLE_METHOD, HANDLE_RESULT, 
+            HANDLE_TIME, REMARK, CREATE_TIME, UPDATE_TIME
+        ) VALUES (
+            #{alertId}, #{handler}, #{handleMethod}, #{handleResult},
+            #{handleTime}, #{remark}, NOW(), NOW()
+        )
+    </insert>
+    
+    <!-- 更新记录 -->
+    <update id="update" parameterType="com.scenic.ai.entity.AlertHandleRecord">
+        UPDATE ALERT_HANDLE_RECORD
+        <set>
+            <if test="handler != null">HANDLER = #{handler},</if>
+            <if test="handleMethod != null">HANDLE_METHOD = #{handleMethod},</if>
+            <if test="handleResult != null">HANDLE_RESULT = #{handleResult},</if>
+            <if test="handleTime != null">HANDLE_TIME = #{handleTime},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            UPDATE_TIME = NOW()
+        </set>
+        WHERE ID = #{id}
+    </update>
+    
+    <!-- 删除记录 -->
+    <delete id="delete">
+        DELETE FROM ALERT_HANDLE_RECORD WHERE ID = #{id}
+    </delete>
+</mapper> 

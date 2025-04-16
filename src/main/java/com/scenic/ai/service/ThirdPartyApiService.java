@@ -43,7 +43,7 @@ public class ThirdPartyApiService {
      * 通过构造函数注入，支持自定义配置（如代理、超时设置等）
      */
     private final RestTemplate restTemplate;
-    
+
     /**
      * ObjectMapper实例，用于JSON序列化和反序列化
      * 通过构造函数注入，支持自定义配置（如日期格式处理等）
@@ -63,7 +63,7 @@ public class ThirdPartyApiService {
      */
     @Value("${third-party.api-path:/api}")
     private String apiPath;
-    
+
     /**
      * 构造函数
      * 
@@ -80,27 +80,29 @@ public class ThirdPartyApiService {
      */
     public List<Map<String, Object>> getStatisticsData(LocalDateTime startTime) {
         String url = baseUrl + "/api/statistics";
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        
+
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        
+
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-            url,
-            HttpMethod.GET,
-            entity,
-            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
-        );
-        
+                url,
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                });
+
         return response.getBody();
     }
 
     /**
      * 获取详细数据
      */
-    public List<Map<String, Object>> getDetailedData(String deviceCode, String algName, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("获取详细数据: deviceCode={}, algName={}, startTime={}, endTime={}", deviceCode, algName, startTime, endTime);
+    public List<Map<String, Object>> getDetailedData(String deviceCode, String algName, LocalDateTime startTime,
+            LocalDateTime endTime) {
+        log.info("获取详细数据: deviceCode={}, algName={}, startTime={}, endTime={}", deviceCode, algName, startTime,
+                endTime);
         try {
             Map<String, Object> request = new HashMap<>();
             request.put("pageSize", 100);
@@ -108,7 +110,7 @@ public class ThirdPartyApiService {
             request.put("algName", algName);
             request.put("recordBeginDate", formatDate(startTime));
             request.put("recordEndDate", formatDate(endTime));
-            
+
             List<Map<String, Object>> allResults = new ArrayList<>();
             int pageNo = 1;
 
@@ -116,10 +118,12 @@ public class ThirdPartyApiService {
             do {
                 request.put("pageNo", pageNo);
                 response = fetchDetailedPage(request);
-                
+
                 if (response != null && response.containsKey("data")) {
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> data = (Map<String, Object>) response.get("data");
                     if (data != null && data.containsKey("rows")) {
+                        @SuppressWarnings("unchecked")
                         List<Map<String, Object>> rows = (List<Map<String, Object>>) data.get("rows");
                         if (rows != null && !rows.isEmpty()) {
                             allResults.addAll(rows);
@@ -151,10 +155,10 @@ public class ThirdPartyApiService {
      */
     private String buildUrl(String path) {
         return UriComponentsBuilder
-            .fromHttpUrl(baseUrl)
-            .path(apiPath)
-            .path(path)
-            .toUriString();
+                .fromHttpUrl(baseUrl)
+                .path(apiPath)
+                .path(path)
+                .toUriString();
     }
 
     /**
@@ -169,24 +173,26 @@ public class ThirdPartyApiService {
 
     /**
      * 获取统计数据分页
+     * 注意：此方法当前未在本地使用，但保留以备将来扩展
      */
+    @SuppressWarnings("unused")
     private Map<String, Object> fetchStatisticsPage(Map<String, Object> request) {
         try {
             String url = buildUrl("/client/third/getPage");
-            
+
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, buildHeaders());
-            
+
             ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                entity,
-                String.class
-            );
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    String.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {});
+                return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {
+                });
             }
-            
+
             return null;
         } catch (Exception e) {
             log.error("获取统计数据分页失败", e);
@@ -213,13 +219,14 @@ public class ThirdPartyApiService {
             ResponseEntity<String> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    entity, 
+                    entity,
                     String.class);
-            
+
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {});
+                return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {
+                });
             }
-            
+
             return null;
         } catch (Exception e) {
             log.error("获取详细数据分页失败", e);
@@ -232,6 +239,7 @@ public class ThirdPartyApiService {
      */
     private boolean isMorePages(Map<String, Object> response) {
         try {
+            @SuppressWarnings("unchecked")
             Map<String, Object> data = (Map<String, Object>) response.get("data");
             int pageNo = (int) data.get("pageNo");
             int totalPage = (int) data.get("totalPage");

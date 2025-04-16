@@ -1,11 +1,11 @@
 package com.scenic.ai.service;
 
-import com.scenic.ai.mapper.RetryLogMapper;
-import com.scenic.ai.entity.RetryLog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.scenic.ai.common.enums.ErrorCode;
 import com.scenic.ai.common.exception.BusinessException;
+import com.scenic.ai.entity.RetryLog;
+import com.scenic.ai.mapper.RetryLogMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -79,10 +79,10 @@ public class RetryLogService {
      */
     public RetryLog createRetryLog(String businessType, String businessId, int maxRetryCount, String errorMessage) {
         if (businessType == null || businessId == null) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "业务类型和业务ID不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "业务类型和业务ID不能为空");
         }
         if (maxRetryCount <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "最大重试次数必须大于0");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "最大重试次数必须大于0");
         }
 
         RetryLog retryLog = new RetryLog();
@@ -92,7 +92,7 @@ public class RetryLogService {
         retryLog.setMaxRetryCount(maxRetryCount);
         retryLog.setStatus(0);
         retryLog.setErrorMessage(errorMessage);
-        retryLog.setNextRetryTime(LocalDateTime.now().plusMinutes(5));
+        retryLog.setNextRetryTime(LocalDateTime.now().plusMinutes(DEFAULT_RETRY_INTERVAL));
         retryLog.setCreateTime(LocalDateTime.now());
         retryLog.setUpdateTime(LocalDateTime.now());
 
@@ -111,7 +111,7 @@ public class RetryLogService {
      */
     public boolean updateRetryInfo(Long id, int retryCount, LocalDateTime nextRetryTime, String errorMessage) {
         if (id == null || id <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "ID不能为空或小于等于0");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "ID不能为空或小于等于0");
         }
         if (nextRetryTime == null) {
             throw new BusinessException(ErrorCode.NEXT_RETRY_TIME_EMPTY);
@@ -140,7 +140,7 @@ public class RetryLogService {
      */
     public boolean updateStatus(Long id, Integer status, String errorMessage) {
         if (id == null || id <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "ID不能为空或小于等于0");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "ID不能为空或小于等于0");
         }
         if (status == null) {
             throw new BusinessException(ErrorCode.STATUS_EMPTY);
@@ -214,7 +214,7 @@ public class RetryLogService {
      */
     public List<Map<String, Object>> countByBusinessType(LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime == null || endTime == null) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "开始时间和结束时间不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
         }
         if (startTime.isAfter(endTime)) {
             throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
@@ -231,7 +231,7 @@ public class RetryLogService {
      */
     public List<Map<String, Object>> countByStatus(LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime == null || endTime == null) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "开始时间和结束时间不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "开始时间和结束时间不能为空");
         }
         if (startTime.isAfter(endTime)) {
             throw new BusinessException(ErrorCode.START_TIME_AFTER_END_TIME);
@@ -247,58 +247,57 @@ public class RetryLogService {
      */
     public List<RetryLog> findByConditions(Map<String, Object> params) {
         if (params == null) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "查询参数不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "查询参数不能为空");
         }
         return retryLogMapper.findByConditions(params);
     }
 
     /**
-     * 统计符合条件的记录数
+     * 统计记录数
      * 
      * @param params 查询参数
      * @return 记录数
      */
     public Long countRecords(Map<String, Object> params) {
         if (params == null) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "查询参数不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "查询参数不能为空");
         }
         return retryLogMapper.countRecords(params);
     }
 
     /**
-     * 清理成功的重试日志
+     * 清理成功日志
      * 
-     * @param beforeTime 清理该时间之前的日志
+     * @param beforeTime 清理该时间之前的成功日志
      * @return 清理的记录数
      */
     public int cleanSuccessLogs(LocalDateTime beforeTime) {
         if (beforeTime == null) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "清理时间不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "清理时间不能为空");
         }
-        try {
-            return retryLogMapper.cleanSuccessLogs(beforeTime);
-        } catch (Exception e) {
-            log.error("清理成功的重试日志失败", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "清理成功的重试日志失败");
-        }
+        return retryLogMapper.cleanSuccessLogs(beforeTime);
     }
 
+    /**
+     * 保存重试日志
+     * 
+     * @param businessType 业务类型
+     * @param businessId   业务ID
+     * @param errorMessage 错误信息
+     */
     public void saveRetryLog(String businessType, String businessId, String errorMessage) {
-        if (businessType == null || businessType.isEmpty()) {
-            throw new BusinessException(ErrorCode.BUSINESS_TYPE_EMPTY);
-        }
-        if (businessId == null || businessId.isEmpty()) {
-            throw new BusinessException(ErrorCode.BUSINESS_ID_EMPTY);
+        if (businessType == null || businessId == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "业务类型和业务ID不能为空");
         }
 
         RetryLog retryLog = new RetryLog();
         retryLog.setBusinessType(businessType);
         retryLog.setBusinessId(businessId);
         retryLog.setRetryCount(0);
-        retryLog.setMaxRetryCount(3);
+        retryLog.setMaxRetryCount(MAX_RETRY_COUNT);
         retryLog.setStatus(0);
         retryLog.setErrorMessage(errorMessage);
-        retryLog.setNextRetryTime(LocalDateTime.now().plusMinutes(5));
+        retryLog.setNextRetryTime(LocalDateTime.now().plusMinutes(DEFAULT_RETRY_INTERVAL));
         retryLog.setCreateTime(LocalDateTime.now());
         retryLog.setUpdateTime(LocalDateTime.now());
 

@@ -52,10 +52,10 @@ public class SchedulerService {
      * 检查人流量告警
      */
     private void checkFlowAlerts() {
-        List<AlertDomain> alertDomains = crowdCountService.findExceedThresholdCounts();
+        List<AlertDomain> alertDomains = crowdCountService.listExceedThresholdCounts();
         List<Alert> alerts = AlertConverter.toAlerts(alertDomains);
         for (Alert alert : alerts) {
-            alertService.createAlert(alert);
+            alertService.save(alert);
         }
     }
 
@@ -63,10 +63,10 @@ public class SchedulerService {
      * 检查密度告警
      */
     private void checkDensityAlerts() {
-        List<AlertDomain> alertDomains = densityAnalysisService.findExceedThresholdDensities();
+        List<AlertDomain> alertDomains = densityAnalysisService.listExceedThresholdDensities();
         List<Alert> alerts = AlertConverter.toAlerts(alertDomains);
         for (Alert alert : alerts) {
-            alertService.createAlert(alert);
+            alertService.save(alert);
         }
     }
 

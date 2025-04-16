@@ -1,7 +1,7 @@
 package com.scenic.ai.service.impl;
 
+import com.scenic.ai.common.exception.BusinessException;
 import com.scenic.ai.entity.AlertHandleRecord;
-import com.scenic.ai.exception.BusinessException;
 import com.scenic.ai.mapper.AlertHandleRecordMapper;
 import com.scenic.ai.service.AlertHandleRecordService;
 import org.slf4j.Logger;

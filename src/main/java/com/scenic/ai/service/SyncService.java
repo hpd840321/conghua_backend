@@ -1,8 +1,8 @@
 package com.scenic.ai.service;
 
 import com.scenic.ai.domain.model.SyncProgress;
-import com.scenic.ai.exception.SyncException;
 import com.scenic.ai.entity.RetryLog;
+import com.scenic.ai.exception.SyncException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
@@ -129,7 +129,8 @@ public class SyncService {
             try {
                 String localPath = syncRetryTemplate.execute(context -> {
                     log.debug("尝试下载图片，重试次数：{}", context.getRetryCount());
-                    byte[] imageData = thirdPartyApiService.downloadImage(imageUrl);
+                    // 下载图片但不保存到变量中
+                    thirdPartyApiService.downloadImage(imageUrl);
                     return storageService.downloadAndStore(imageUrl);
                 });
                 data.put("localImagePath", localPath);
@@ -154,18 +155,18 @@ public class SyncService {
             log.setBusinessType(businessType);
             log.setBusinessId(businessId);
             log.setMaxRetryCount(3);
-            log.setStatus("RETRYING");
+            log.setStatus(0); // 使用整数状态：0-待重试
         }
         log.setRetryCount(retryCount);
-        retryLogService.saveOrUpdate(log);
+        retryLogService.saveRetryLog(businessType, businessId, null);
     }
 
     private void saveFailedRetryLog(String businessType, String businessId, String errorMessage) {
         RetryLog log = retryLogService.findByBusinessTypeAndId(businessType, businessId);
         if (log != null) {
-            log.setStatus("FAILED");
+            log.setStatus(2); // 使用整数状态：2-重试失败
             log.setErrorMessage(errorMessage);
-            retryLogService.updateById(log);
+            retryLogService.updateStatus(log.getId(), 2, errorMessage);
         }
     }
 }

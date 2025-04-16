@@ -1,5 +1,8 @@
 package com.scenic.ai.exception;
 
+import com.scenic.ai.common.enums.ErrorCode;
+import com.scenic.ai.common.exception.BusinessException;
+import com.scenic.ai.common.exception.SystemException;
 import net.sf.jsqlparser.util.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +57,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleValidationException(ValidationException e) {
         log.warn("参数验证异常", e);
         Map<String, Object> response = new HashMap<>();
-        response.put("code", ErrorCode.PARAM_ERROR);
+        response.put("code", ErrorCode.PARAM_ERROR.getCode());
         response.put("message", e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
@@ -66,7 +69,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException e) {
         log.warn("资源不存在", e);
         Map<String, Object> response = new HashMap<>();
-        response.put("code", ErrorCode.DATA_NOT_FOUND);
+        response.put("code", ErrorCode.NOT_FOUND_ERROR.getCode());
         response.put("message", e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
@@ -78,8 +81,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleException(Exception e) {
         log.error("未知异常", e);
         Map<String, Object> response = new HashMap<>();
-        response.put("code", ErrorCode.SYSTEM_ERROR);
+        response.put("code", ErrorCode.SYSTEM_ERROR.getCode());
         response.put("message", "系统异常，请联系管理员");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-} 
+}

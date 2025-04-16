@@ -1,0 +1,276 @@
+/* 基础布局样式 */
+body {
+    margin: 0;
+    padding: 0;
+    background: #f0f2f5;
+    font-family: -apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Helvetica Neue,Helvetica,Arial,sans-serif;
+}
+
+/* 左侧菜单 */
+.side-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 200px;
+    background: #001529;
+    color: #fff;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.menu-logo {
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.menu-item {
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    color: rgba(255,255,255,0.65);
+}
+
+.menu-item i {
+    margin-right: 10px;
+    width: 16px;
+}
+
+.menu-item:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+}
+
+.menu-item.active {
+    color: #fff;
+    background: #1890ff;
+}
+
+/* 顶部标题栏 */
+.header {
+    position: fixed;
+    top: 0;
+    left: 200px;
+    right: 0;
+    height: 60px;
+    background: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0,21,41,0.08);
+    z-index: 999;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: rgba(0,0,0,0.85);
+}
+
+/* 主内容区 */
+.main-content {
+    margin-left: 200px;
+    padding: 80px 24px 24px;
+    min-height: 100vh;
+}
+
+/* 筛选条件区域 */
+.filter-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* 数据表格 */
+.data-table {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.data-table .table {
+    margin-bottom: 0;
+}
+
+.data-table .table th {
+    border-top: none;
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.data-table .table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.data-table .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 告警类型标签 */
+.alert-type-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.type-gathering {
+    background-color: #ffebee;
+    color: #e53935;
+}
+
+.type-density {
+    background-color: #e8eaf6;
+    color: #3949ab;
+}
+
+.type-flow {
+    background-color: #e0f2f1;
+    color: #00897b;
+}
+
+/* 告警级别和状态标签 */
+.alert-level-badge .badge,
+.alert-status-badge .badge {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* 操作按钮 */
+.action-buttons {
+    white-space: nowrap;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+}
+
+.action-buttons .btn i {
+    font-size: 14px;
+}
+
+/* 分页样式 */
+.pagination {
+    margin: 0;
+}
+
+.pagination .page-link {
+    padding: 6px 12px;
+    color: #666;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #ccc;
+}
+
+/* 表格信息显示 */
+.table-info {
+    color: #666;
+    font-size: 13px;
+    margin: 10px 0;
+}
+
+/* 无数据提示 */
+.no-data {
+    padding: 30px 0;
+    text-align: center;
+    color: #999;
+}
+
+.no-data i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* 记录时间样式 */
+.record-time {
+    font-size: 13px;
+    color: #666;
+}
+
+/* 表格行高亮 */
+.table-danger {
+    background-color: #fff3f3 !important;
+}
+
+.table-warning {
+    background-color: #fff8e1 !important;
+}
+
+.table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* 图表容器 */
+.chart-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.chart-header {
+    margin-bottom: 16px;
+}
+
+/* 统计卡片 */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,21,41,0.08);
+}
+
+.stat-card h5 {
+    margin: 0 0 10px;
+    color: rgba(0,0,0,0.65);
+}
+
+.stat-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(0,0,0,0.85);
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .side-menu {
+        transform: translateX(-200px);
+    }
+    .header, .main-content {
+        left: 0;
+    }
+    .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+} 

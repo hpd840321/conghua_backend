@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.CrowdStatisticsMapper">
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.model.CrowdStatistics">
+        <id column="ID" property="id"/>
+        <result column="DEVICE_CODE" property="deviceCode"/>
+        <result column="DEVICE_NAME" property="deviceName"/>
+        <result column="TOURISM_NAME" property="tourismName"/>
+        <result column="COUNT" property="count"/>
+        <result column="DENSITY" property="density"/>
+        <result column="RECORD_TIME" property="recordTime"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+
+    <!-- 基础列名 -->
+    <sql id="Base_Column_List">
+        ID, DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, COUNT, DENSITY, RECORD_TIME, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <!-- 通用查询条件 -->
+    <sql id="Common_Conditions">
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+        <if test="deviceCode != null and deviceCode != ''">
+            AND DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test="startTime != null">
+            AND RECORD_TIME &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND RECORD_TIME &lt;= #{endTime}
+        </if>
+    </sql>
+
+    <!-- 密度阈值条件 -->
+    <sql id="Density_Threshold_Condition">
+        AND DENSITY &gt;= 0.8
+    </sql>
+
+    <!-- 基础查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE ID = #{id}
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_RECORD_TIME) */
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        ORDER BY RECORD_TIME DESC
+        OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    </select>
+
+    <!-- 统计查询 -->
+    <select id="selectCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+    </select>
+
+    <!-- 密度分布查询 -->
+    <select id="selectDensityDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN DENSITY &lt;= 0.2 THEN '0-0.2'
+                WHEN DENSITY &lt;= 0.4 THEN '0.2-0.4'
+                WHEN DENSITY &lt;= 0.6 THEN '0.4-0.6'
+                WHEN DENSITY &lt;= 0.8 THEN '0.6-0.8'
+                ELSE '0.8-1.0'
+            END as density_range,
+            COUNT(*) as count,
+            ROUND(AVG(COUNT), 2) as avg_count,
+            ROUND(AVG(DENSITY), 4) as avg_density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        GROUP BY density_range
+        ORDER BY density_range
+    </select>
+
+    <!-- 人数分布查询 -->
+    <select id="selectCountDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN COUNT &lt;= 10 THEN '0-10'
+                WHEN COUNT &lt;= 30 THEN '10-30'
+                WHEN COUNT &lt;= 50 THEN '30-50'
+                WHEN COUNT &lt;= 100 THEN '50-100'
+                ELSE '100+'
+            END as count_range,
+            COUNT(*) as count,
+            ROUND(AVG(DENSITY), 4) as avg_density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        GROUP BY count_range
+        ORDER BY count_range
+    </select>
+
+    <!-- 时间分布查询 -->
+    <select id="selectTimeDistribution" resultType="java.util.Map">
+        SELECT 
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00:00') as time_slot,
+            ROUND(AVG(COUNT), 2) as avg_count,
+            ROUND(AVG(DENSITY), 4) as avg_density,
+            MAX(COUNT) as max_count,
+            MIN(COUNT) as min_count
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00:00')
+        ORDER BY time_slot
+    </select>
+
+    <!-- 概览统计查询 -->
+    <select id="selectOverview" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_records,
+            COUNT(DISTINCT DEVICE_CODE) as device_count,
+            ROUND(AVG(DENSITY), 4) as avg_density,
+            MAX(DENSITY) as max_density,
+            MIN(DENSITY) as min_density,
+            ROUND(AVG(COUNT), 2) as avg_count,
+            MAX(COUNT) as max_count,
+            MIN(COUNT) as min_count,
+            COUNT(CASE WHEN DENSITY &gt;= 0.8 THEN 1 END) as high_density_count
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+    </select>
+
+    <!-- 高密度区域查询 -->
+    <select id="selectHighDensityAreas" resultType="java.util.Map">
+        SELECT /*+ INDEX(CROWD_STATISTICS IDX_CROWD_DENSITY) */
+            DEVICE_CODE,
+            DEVICE_NAME,
+            COUNT(*) as occurrences,
+            ROUND(AVG(DENSITY), 4) as avg_density,
+            MAX(DENSITY) as max_density,
+            MIN(DENSITY) as min_density,
+            ROUND(AVG(COUNT), 2) as avg_count,
+            MAX(COUNT) as max_count
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+            <include refid="Density_Threshold_Condition"/>
+        </where>
+        GROUP BY DEVICE_CODE, DEVICE_NAME
+        ORDER BY avg_density DESC
+        <if test="limit != null">
+            FETCH FIRST #{limit} ROWS ONLY
+        </if>
+    </select>
+
+    <!-- 设备最新数据查询 -->
+    <select id="selectLatestByDevice" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.CROWD_STATISTICS
+        WHERE DEVICE_CODE = #{deviceCode}
+        ORDER BY RECORD_TIME DESC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
+    <!-- 密度统计查询 -->
+    <select id="selectDensityStats" resultType="java.util.Map">
+        SELECT 
+            ROUND(AVG(DENSITY), 4) as avg_density,
+            MAX(DENSITY) as max_density,
+            MIN(DENSITY) as min_density
+        FROM CLOUDWALK.CROWD_STATISTICS
+        <where>
+            <include refid="Common_Conditions"/>
+        </where>
+    </select>
+</mapper> 

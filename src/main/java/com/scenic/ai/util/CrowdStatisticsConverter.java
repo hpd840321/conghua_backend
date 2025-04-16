@@ -3,6 +3,7 @@ package com.scenic.ai.util;
 import com.scenic.ai.domain.model.CrowdStatisticsDomain;
 import com.scenic.ai.entity.CrowdStatistics;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,7 @@ public class CrowdStatisticsConverter {
                 entity.getDeviceName(),
                 entity.getTourismName(),
                 entity.getCount(),
-                entity.getDensity(),
+                entity.getDensity() != null ? BigDecimal.valueOf(entity.getDensity()) : null,
                 entity.getAlgName(),
                 entity.getTaskCode(),
                 entity.getImageUrl(),
@@ -45,7 +46,7 @@ public class CrowdStatisticsConverter {
         entity.setDeviceName(domain.getDeviceName());
         entity.setTourismName(domain.getTourismName());
         entity.setCount(domain.getCount());
-        entity.setDensity(domain.getDensity());
+        entity.setDensity(domain.getDensity() != null ? domain.getDensity().doubleValue() : null);
         entity.setAlgName(domain.getAlgName());
         entity.setTaskCode(domain.getTaskCode());
         entity.setImageUrl(domain.getImageUrl());

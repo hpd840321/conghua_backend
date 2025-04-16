@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.DeviceMapper">
+    
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.model.Device">
+        <id column="ID" property="id"/>
+        <result column="DEVICE_CODE" property="deviceCode"/>
+        <result column="DEVICE_NAME" property="deviceName"/>
+        <result column="DEVICE_TYPE" property="deviceType"/>
+        <result column="TOURISM_NAME" property="tourismName"/>
+        <result column="STATUS" property="status"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, DEVICE_CODE, DEVICE_NAME, DEVICE_TYPE, TOURISM_NAME, STATUS, CREATE_TIME, UPDATE_TIME
+    </sql>
+    
+    <!-- 查询条件 -->
+    <sql id="Query_Condition">
+        <where>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.deviceName != null and params.deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND STATUS = #{params.status}
+            </if>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.startTime != null and params.startTime != ''">
+                AND CREATE_TIME >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND CREATE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 查询设备总数 -->
+    <select id="countDevices" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM CLOUDWALK.DEVICE
+        <include refid="Query_Condition"/>
+    </select>
+    
+    <!-- 查询设备列表 -->
+    <select id="selectDevices" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        <include refid="Query_Condition"/>
+        <if test="params.sortField != null and params.sortField != ''">
+            ORDER BY ${params.sortField} ${params.sortOrder}
+        </if>
+        OFFSET #{params.current} ROWS FETCH NEXT #{params.pageSize} ROWS ONLY
+    </select>
+    
+    <!-- 根据ID查询设备 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE ID = #{id}
+    </select>
+    
+    <!-- 根据景区名称查询设备列表 -->
+    <select id="selectByTourismName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        ORDER BY CREATE_TIME DESC
+    </select>
+    
+    <!-- 根据设备状态查询设备列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
+    </select>
+    
+    <!-- 批量更新设备状态 -->
+    <update id="updateStatusBatch">
+        <foreach collection="deviceCodes" item="deviceCode" separator=";">
+            UPDATE CLOUDWALK.DEVICE 
+            SET STATUS = #{status},
+                UPDATE_TIME = SYSTIMESTAMP
+            WHERE DEVICE_CODE = #{deviceCode}
+        </foreach>
+    </update>
+    
+    <!-- 条件分页查询 -->
+    <select id="findByConditions" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        <where>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.deviceName != null and params.deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{params.deviceName} || '%'
+            </if>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND STATUS = #{params.status}
+            </if>
+            <if test="params.startTime != null">
+                AND CREATE_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND CREATE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+        ORDER BY CREATE_TIME DESC
+        OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM DEVICE
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND DEVICE_CODE = #{deviceCode}
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                AND DEVICE_NAME LIKE '%' || #{deviceName} || '%'
+            </if>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="status != null and status != ''">
+                AND STATUS = #{status}
+            </if>
+        </where>
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备编码查询 -->
+    <select id="selectByDeviceCode" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM DEVICE
+        WHERE DEVICE_CODE = #{deviceCode}
+    </select>
+
+    <!-- 查询在线设备数量 -->
+    <select id="countOnlineDevices" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM DEVICE
+        WHERE STATUS = 'ONLINE'
+        <if test="tourismName != null and tourismName != ''">
+            AND TOURISM_NAME = #{tourismName}
+        </if>
+    </select>
+
+    <!-- 查询设备状态分布 -->
+    <select id="selectStatusDistribution" resultType="java.util.Map">
+        SELECT 
+            STATUS as status,
+            COUNT(*) as count
+        FROM DEVICE
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+        </where>
+        GROUP BY STATUS
+    </select>
+
+    <!-- 查询景区设备分布 -->
+    <select id="selectTourismDistribution" resultType="java.util.Map">
+        SELECT 
+            TOURISM_NAME as tourism_name,
+            COUNT(*) as total_count,
+            COUNT(CASE WHEN STATUS = 'ONLINE' THEN 1 END) as online_count,
+            COUNT(CASE WHEN STATUS = 'OFFLINE' THEN 1 END) as offline_count
+        FROM DEVICE
+        GROUP BY TOURISM_NAME
+    </select>
+
+    <!-- 更新设备状态 -->
+    <update id="updateStatus">
+        UPDATE DEVICE
+        SET STATUS = #{status},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE = #{deviceCode}
+    </update>
+
+    <!-- 批量更新设备状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE DEVICE
+        SET STATUS = #{status},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE IN
+        <foreach collection="deviceCodes" item="code" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </update>
+
+    <!-- 插入设备 -->
+    <insert id="insert" parameterType="com.scenic.ai.model.Device">
+        INSERT INTO DEVICE (
+            DEVICE_CODE, DEVICE_NAME, TOURISM_NAME, STATUS
+        ) VALUES (
+            #{deviceCode}, #{deviceName}, #{tourismName}, #{status}
+        )
+    </insert>
+
+    <!-- 更新设备信息 -->
+    <update id="update" parameterType="com.scenic.ai.model.Device">
+        UPDATE DEVICE
+        SET DEVICE_NAME = #{deviceName},
+            TOURISM_NAME = #{tourismName},
+            STATUS = #{status},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE = #{deviceCode}
+    </update>
+
+    <!-- 根据景区名称查询设备列表 -->
+    <select id="selectByTourism" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备类型查询设备列表 -->
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE DEVICE_TYPE = #{deviceType}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 统计各景区设备数量 -->
+    <select id="countByTourism" resultType="java.util.Map">
+        SELECT TOURISM_NAME as tourismName, COUNT(*) as count
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME IS NOT NULL
+        GROUP BY TOURISM_NAME
+    </select>
+
+    <!-- 统计各类型设备数量 -->
+    <select id="countByType" resultType="java.util.Map">
+        SELECT DEVICE_TYPE as deviceType, COUNT(*) as count
+        FROM CLOUDWALK.DEVICE
+        GROUP BY DEVICE_TYPE
+    </select>
+
+    <!-- 统计各状态设备数量 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT STATUS as status, COUNT(*) as count
+        FROM CLOUDWALK.DEVICE
+        GROUP BY STATUS
+    </select>
+
+    <!-- 查询记录总数 -->
+    <select id="countRecords" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM CLOUDWALK.DEVICE
+        <where>
+            <if test="params.tourismName != null and params.tourismName != ''">
+                AND TOURISM_NAME = #{params.tourismName}
+            </if>
+            <if test="params.deviceCode != null and params.deviceCode != ''">
+                AND DEVICE_CODE = #{params.deviceCode}
+            </if>
+            <if test="params.deviceType != null and params.deviceType != ''">
+                AND DEVICE_TYPE = #{params.deviceType}
+            </if>
+            <if test="params.status != null">
+                AND STATUS = #{params.status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据景区名称和设备类型查询设备列表 -->
+    <select id="selectByTourismAndType" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        AND DEVICE_TYPE = #{deviceType}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据景区名称和设备状态查询设备列表 -->
+    <select id="selectByTourismAndStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE TOURISM_NAME = #{tourismName}
+        AND STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 根据设备类型和状态查询设备列表 -->
+    <select id="selectByTypeAndStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.DEVICE
+        WHERE DEVICE_TYPE = #{deviceType}
+        AND STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 更新设备名称 -->
+    <update id="updateDeviceName">
+        UPDATE CLOUDWALK.DEVICE
+        SET DEVICE_NAME = #{deviceName},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE = #{deviceCode}
+    </update>
+
+    <!-- 更新景区名称 -->
+    <update id="updateTourismName">
+        UPDATE CLOUDWALK.DEVICE
+        SET TOURISM_NAME = #{tourismName},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE DEVICE_CODE = #{deviceCode}
+    </update>
+
+</mapper> 

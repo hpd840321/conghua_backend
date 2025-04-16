@@ -54,7 +54,7 @@ public class ValidationUtils {
      */
     public static void validateId(Long id) {
         if (id == null || id <= 0) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "ID不能为空且必须大于0");
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "ID不能为空且必须大于0");
         }
     }
 

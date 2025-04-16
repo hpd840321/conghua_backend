@@ -1,7 +1,6 @@
 package com.scenic.ai.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scenic.ai.common.core.domain.AjaxResult;
 import com.scenic.ai.entity.Alert;
 import com.scenic.ai.entity.AlertHandleRecord;
@@ -12,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class AlertController {
     @GetMapping("/{alertId}/records")
     public AjaxResult getHandleRecords(@PathVariable Long alertId) {
         logger.debug("获取告警处理记录，告警ID: {}", alertId);
-        List<AlertHandleRecord> records = alertService.getHandleRecords(alertId);
+        List<AlertHandleRecord> records = alertService.listHandleRecords(alertId);
         return AjaxResult.success(records);
     }
 
@@ -99,12 +100,20 @@ public class AlertController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
         logger.debug("分页查询告警信息，页码: {}, 每页大小: {}, 设备编码: {}, 景区名称: {}, 告警类型: {}, 告警级别: {}, 告警状态: {}, 开始时间: {}, 结束时间: {}",
                 pageNum, pageSize, deviceCode, tourismName, alertType, alertLevel, alertStatus, startTime, endTime);
-        List<Alert> alerts = alertService.page(pageNum, pageSize, deviceCode, tourismName, alertType, alertLevel,
-                alertStatus, startTime, endTime);
-        int total = alertService.count(deviceCode, tourismName, alertType, alertLevel, alertStatus, startTime, endTime);
+
+        LocalDateTime startDateTime = startTime != null
+                ? startTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : null;
+        LocalDateTime endDateTime = endTime != null
+                ? endTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : null;
+
+        IPage<Alert> pageResult = alertService.pageByConditions(pageNum, pageSize, tourismName, deviceCode,
+                alertType, alertLevel, alertStatus, startDateTime, endDateTime);
+
         Map<String, Object> result = Map.of(
-                "list", alerts,
-                "total", total);
+                "list", pageResult.getRecords(),
+                "total", pageResult.getTotal());
         return AjaxResult.success(result);
     }
 
@@ -136,7 +145,8 @@ public class AlertController {
     @GetMapping("/types")
     public AjaxResult getAlertTypes() {
         logger.debug("获取告警类型列表");
-        List<Map<String, Object>> types = alertService.getAlertTypes();
+        List<Map<String, Object>> types = alertService.countTypeDistribution(
+                LocalDateTime.now().minusDays(30), LocalDateTime.now());
         return AjaxResult.success(types);
     }
 

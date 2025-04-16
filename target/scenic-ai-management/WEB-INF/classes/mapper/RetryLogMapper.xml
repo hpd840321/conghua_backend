@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scenic.ai.mapper.RetryLogMapper">
+    
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.scenic.ai.model.RetryLog">
+        <id column="ID" property="id"/>
+        <result column="BUSINESS_TYPE" property="businessType"/>
+        <result column="BUSINESS_ID" property="businessId"/>
+        <result column="RETRY_COUNT" property="retryCount"/>
+        <result column="MAX_RETRY_COUNT" property="maxRetryCount"/>
+        <result column="STATUS" property="status"/>
+        <result column="ERROR_MESSAGE" property="errorMessage"/>
+        <result column="NEXT_RETRY_TIME" property="nextRetryTime"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, BUSINESS_TYPE, BUSINESS_ID, RETRY_COUNT, MAX_RETRY_COUNT, STATUS,
+        ERROR_MESSAGE, NEXT_RETRY_TIME, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <!-- 插入重试日志 -->
+    <insert id="insert" parameterType="com.scenic.ai.model.RetryLog">
+        INSERT INTO CLOUDWALK.RETRY_LOG (
+            BUSINESS_TYPE, BUSINESS_ID, RETRY_COUNT, MAX_RETRY_COUNT,
+            STATUS, ERROR_MESSAGE, NEXT_RETRY_TIME
+        ) VALUES (
+            #{businessType}, #{businessId}, #{retryCount}, #{maxRetryCount},
+            #{status}, #{errorMessage}, #{nextRetryTime}
+        )
+    </insert>
+
+    <!-- 更新重试日志 -->
+    <update id="update" parameterType="com.scenic.ai.model.RetryLog">
+        UPDATE CLOUDWALK.RETRY_LOG
+        <set>
+            <if test="retryCount != null">RETRY_COUNT = #{retryCount},</if>
+            <if test="status != null">STATUS = #{status},</if>
+            <if test="errorMessage != null">ERROR_MESSAGE = #{errorMessage},</if>
+            <if test="nextRetryTime != null">NEXT_RETRY_TIME = #{nextRetryTime},</if>
+            UPDATE_TIME = SYSTIMESTAMP
+        </set>
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 根据业务类型和业务ID查询重试日志 -->
+    <select id="findByBusinessTypeAndId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE BUSINESS_TYPE = #{businessType}
+        AND BUSINESS_ID = #{businessId}
+    </select>
+
+    <!-- 查询待重试的任务 -->
+    <select id="findPendingRetries" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE STATUS = 'PENDING'
+        AND RETRY_COUNT &lt; MAX_RETRY_COUNT
+        AND NEXT_RETRY_TIME &lt;= #{currentTime}
+        ORDER BY NEXT_RETRY_TIME ASC
+    </select>
+
+    <!-- 查询超过最大重试次数的任务 -->
+    <select id="findMaxRetriesExceeded" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE STATUS = 'PENDING'
+        AND RETRY_COUNT >= MAX_RETRY_COUNT
+    </select>
+
+    <!-- 根据状态查询重试日志 -->
+    <select id="findByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE STATUS = #{status}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!-- 查询需要重试的任务 -->
+    <select id="findRetryTasks" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE STATUS = #{status}
+        AND NEXT_RETRY_TIME &lt;= #{nextRetryTime}
+        AND RETRY_COUNT &lt; MAX_RETRY_COUNT
+        ORDER BY NEXT_RETRY_TIME ASC
+    </select>
+
+    <!-- 统计各业务类型的重试情况 -->
+    <select id="countByBusinessType" resultType="java.util.Map">
+        SELECT 
+            BUSINESS_TYPE,
+            COUNT(*) as total,
+            COUNT(CASE WHEN STATUS = 'SUCCESS' THEN 1 END) as success,
+            COUNT(CASE WHEN STATUS = 'FAILED' THEN 1 END) as failed,
+            COUNT(CASE WHEN STATUS = 'PENDING' THEN 1 END) as pending
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY BUSINESS_TYPE
+    </select>
+
+    <!-- 统计重试次数分布 -->
+    <select id="countByRetryCount" resultType="java.util.Map">
+        SELECT 
+            RETRY_COUNT,
+            COUNT(*) as count
+        FROM CLOUDWALK.RETRY_LOG
+        WHERE CREATE_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY RETRY_COUNT
+        ORDER BY RETRY_COUNT
+    </select>
+
+    <!-- 条件分页查询 -->
+    <select id="findByConditions" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM CLOUDWALK.RETRY_LOG
+        <where>
+            <if test="params.businessType != null">
+                AND BUSINESS_TYPE = #{params.businessType}
+            </if>
+            <if test="params.businessId != null">
+                AND BUSINESS_ID = #{params.businessId}
+            </if>
+            <if test="params.status != null">
+                AND STATUS = #{params.status}
+            </if>
+            <if test="params.startTime != null">
+                AND CREATE_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND CREATE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+        ORDER BY CREATE_TIME DESC
+        <if test="params.offset != null and params.limit != null">
+            OFFSET #{params.offset} ROWS FETCH NEXT #{params.limit} ROWS ONLY
+        </if>
+    </select>
+
+    <!-- 查询重试日志总数 -->
+    <select id="countRecords" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM CLOUDWALK.RETRY_LOG
+        <where>
+            <if test="params.businessType != null">
+                AND BUSINESS_TYPE = #{params.businessType}
+            </if>
+            <if test="params.businessId != null">
+                AND BUSINESS_ID = #{params.businessId}
+            </if>
+            <if test="params.status != null">
+                AND STATUS = #{params.status}
+            </if>
+            <if test="params.startTime != null">
+                AND CREATE_TIME &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND CREATE_TIME &lt;= #{params.endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 删除成功的重试日志 -->
+    <delete id="deleteSuccessLogs">
+        DELETE FROM CLOUDWALK.RETRY_LOG
+        WHERE STATUS = 'SUCCESS'
+        AND CREATE_TIME &lt; #{beforeTime}
+    </delete>
+</mapper> 

@@ -10,17 +10,17 @@ public enum ErrorCode {
     /**
      * 成功
      */
-    SUCCESS(200, "操作成功"),
+    SUCCESS(0, "成功"),
 
     /**
      * 系统错误
      */
-    SYSTEM_ERROR(500, "系统错误"),
+    SYSTEM_ERROR(50000, "系统内部错误"),
 
     /**
      * 参数错误
      */
-    PARAM_INVALID(400, "参数错误"),
+    PARAM_ERROR(40000, "参数错误"),
 
     /**
      * 未授权
@@ -35,7 +35,7 @@ public enum ErrorCode {
     /**
      * 资源不存在
      */
-    NOT_FOUND(404, "资源不存在"),
+    NOT_FOUND_ERROR(40400, "资源不存在"),
 
     /**
      * 分页参数错误
@@ -225,7 +225,52 @@ public enum ErrorCode {
     /**
      * 下次重试时间不能为空
      */
-    NEXT_RETRY_TIME_EMPTY(400, "下次重试时间不能为空");
+    NEXT_RETRY_TIME_EMPTY(400, "下次重试时间不能为空"),
+
+    /**
+     * 业务错误
+     */
+    BUSINESS_ERROR(40001, "业务错误"),
+
+    /**
+     * 告警状态错误
+     */
+    ALERT_STATUS_ERROR(40002, "告警状态错误"),
+
+    /**
+     * 设备编码无效
+     */
+    DEVICE_CODE_INVALID(40003, "设备编码无效"),
+
+    /**
+     * 景区名称无效
+     */
+    TOURISM_NAME_INVALID(40004, "景区名称无效"),
+
+    /**
+     * 时间范围无效
+     */
+    TIME_RANGE_INVALID(40005, "时间范围无效"),
+
+    /**
+     * 页码无效
+     */
+    PAGE_NUM_INVALID(40006, "页码无效"),
+
+    /**
+     * 每页大小无效
+     */
+    PAGE_SIZE_INVALID(40007, "每页大小无效"),
+
+    /**
+     * 告警已处理
+     */
+    ALERT_ALREADY_HANDLED(400, "告警已处理"),
+
+    /**
+     * 告警处理失败
+     */
+    ALERT_HANDLE_FAILED(500, "告警处理失败");
 
     /**
      * 错误码

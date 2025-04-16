@@ -14,65 +14,65 @@ public interface CrowdCountService {
     /**
      * 分页查询人群统计数据
      *
-     * @param page 分页参数
+     * @param page        分页参数
      * @param tourismName 景区名称
-     * @param deviceCode 设备编码
-     * @param algName 算法类型
-     * @param startTime 开始时间
-     * @param endTime 结束时间
+     * @param deviceCode  设备编码
+     * @param algName     算法类型
+     * @param startTime   开始时间
+     * @param endTime     结束时间
      * @return 分页结果
      */
     Page<CrowdCount> getPage(Page<CrowdCount> page, String tourismName, String deviceCode,
-                            String algName, LocalDateTime startTime, LocalDateTime endTime);
-    
+            String algName, LocalDateTime startTime, LocalDateTime endTime);
+
     /**
      * 获取详情分页数据
      *
-     * @param page 分页参数
-     * @param deviceCode 设备编码
-     * @param algName 算法类型
+     * @param page            分页参数
+     * @param deviceCode      设备编码
+     * @param algName         算法类型
      * @param recordBeginDate 记录开始时间
-     * @param recordEndDate 记录结束时间
+     * @param recordEndDate   记录结束时间
      * @return 分页结果
      */
     Page<CrowdCount> getDetailsPage(Page<CrowdCount> page, String deviceCode, String algName,
-                                  LocalDateTime recordBeginDate, LocalDateTime recordEndDate);
-    
+            LocalDateTime recordBeginDate, LocalDateTime recordEndDate);
+
     /**
      * 根据时间范围查询人群计数记录
      */
     List<CrowdCount> findByTimeRange(String deviceCode, LocalDateTime startTime, LocalDateTime endTime);
-    
+
     /**
      * 计算指定时间范围内的平均人数
      */
     Double calculateAverageCount(String deviceCode, LocalDateTime startTime, LocalDateTime endTime);
-    
+
     /**
      * 查询指定时间范围内的最大人数
      */
     Integer findMaxCount(String deviceCode, LocalDateTime startTime, LocalDateTime endTime);
-    
+
     /**
      * 计算区域密度
      */
     Double calculateDensity(String deviceCode, LocalDateTime time);
-    
+
     /**
      * 分析人群趋势
      */
     List<CrowdCount> analyzeTrend(String deviceCode, LocalDateTime startTime, LocalDateTime endTime);
-    
+
     /**
      * 获取实时计数
      */
     CrowdCount getRealTimeCount(String deviceCode);
-    
+
     /**
      * 设置告警阈值
      */
     void setThreshold(String deviceCode, int threshold);
-    
+
     /**
      * 获取告警阈值
      */
@@ -96,13 +96,13 @@ public interface CrowdCountService {
     /**
      * 查找超过阈值的计数记录
      */
-    List<AlertDomain> findExceedThresholdCounts();
+    List<AlertDomain> listExceedThresholdCounts();
 
     /**
      * 查找高密度区域
      */
     List<CrowdCount> findHighDensityAreas(String deviceCode, int threshold,
-                                         LocalDateTime startTime, LocalDateTime endTime);
+            LocalDateTime startTime, LocalDateTime endTime);
 
     /**
      * 计算平均密度
@@ -128,4 +128,4 @@ public interface CrowdCountService {
      * 查找最大值
      */
     Integer findMax(String deviceCode, LocalDateTime startTime, LocalDateTime endTime);
-} 
+}

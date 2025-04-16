@@ -1,0 +1,338 @@
+/* 告警中心样式 */
+.alert-center-container {
+    padding: 20px;
+}
+
+/* 筛选条件区域 */
+.filter-section {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.filter-section .form-group {
+    margin-bottom: 15px;
+}
+
+.filter-section .btn-group {
+    margin-top: 10px;
+}
+
+/* 统计卡片区域 */
+.statistics-section {
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    height: 100%;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .stat-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.stat-card .stat-title {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-card .stat-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.stat-card.total-alerts {
+    border-left: 4px solid #1890ff;
+}
+
+.stat-card.pending-alerts {
+    border-left: 4px solid #faad14;
+}
+
+.stat-card.high-priority {
+    border-left: 4px solid #f5222d;
+}
+
+.stat-card.today-alerts {
+    border-left: 4px solid #52c41a;
+}
+
+/* 图表区域 */
+.chart-section {
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    height: 400px;
+}
+
+.chart-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 告警列表区域 */
+.alert-list-section {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.alert-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.alert-list-title {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.alert-table th {
+    background-color: #f5f5f5;
+}
+
+.alert-level-1 {
+    color: #52c41a;
+}
+
+.alert-level-2 {
+    color: #faad14;
+}
+
+.alert-level-3 {
+    color: #f5222d;
+}
+
+.alert-status-0 {
+    color: #faad14;
+}
+
+.alert-status-1 {
+    color: #52c41a;
+}
+
+/* 分页区域 */
+.pagination-section {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+/* 告警详情模态框 */
+.alert-detail-modal .modal-body {
+    padding: 20px;
+}
+
+.alert-detail-modal .detail-item {
+    margin-bottom: 15px;
+}
+
+.alert-detail-modal .detail-label {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.alert-detail-modal .detail-value {
+    color: #333;
+}
+
+.alert-detail-modal .detail-image {
+    max-width: 100%;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 15px;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+}
+
+/* 卡片样式 */
+.card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    margin-bottom: 1rem;
+    color: #333;
+    font-weight: 500;
+}
+
+/* 筛选条件卡片 */
+.filter-card {
+    background-color: #fff;
+}
+
+.filter-card .form-group {
+    margin-bottom: 1rem;
+}
+
+.filter-card label {
+    font-weight: 500;
+    color: #666;
+}
+
+.filter-card .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.btn-primary:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+.btn-default {
+    background-color: #fff;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+.btn-default:hover {
+    background-color: #f5f5f5;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+/* 表格样式 */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table th {
+    background-color: #fafafa;
+    font-weight: 500;
+    color: #333;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #fafafa;
+}
+
+/* 告警状态样式 */
+.alert-status {
+    padding: .25rem .5rem;
+    border-radius: .25rem;
+    font-size: .875rem;
+}
+
+.alert-status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.alert-status-handled {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* 分页样式优化 */
+.page-link {
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.page-link:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* 模态框样式优化 */
+.modal-content {
+    border-radius: .3rem;
+    border: none;
+}
+
+/* 图片预览样式 */
+#previewImage {
+    max-width: 100%;
+    height: auto;
+}
+
+/* 复选框样式 */
+.custom-checkbox {
+    padding-left: 1.5rem;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: #007bff;
+    background-color: #007bff;
+}
+
+/* 时间选择器样式 */
+.daterangepicker {
+    border: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.175);
+}
+
+.daterangepicker .calendar-table {
+    border: none;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .btn {
+        width: 100%;
+        margin-bottom: .5rem;
+    }
+    
+    .card-tools {
+        margin-top: .5rem;
+        float: none !important;
+    }
+    
+    .table-responsive {
+        border: 0;
+    }
+} 

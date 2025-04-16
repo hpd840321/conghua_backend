@@ -93,7 +93,7 @@
     </select>
     
     <!-- 统计告警类型分布 -->
-    <select id="getTypeDistribution" resultType="java.util.Map">
+    <select id="countTypeDistribution" resultType="java.util.Map">
         SELECT 
             ALERT_TYPE as type,
             COUNT(*) as count
@@ -103,20 +103,20 @@
     </select>
     
     <!-- 统计告警时段分布 -->
-    <select id="countByHour" resultType="java.util.Map">
+    <select id="countTimeDistribution" resultType="java.util.Map">
         SELECT 
-            EXTRACT(HOUR FROM RECORD_TIME) as hour, 
+            TO_CHAR(RECORD_TIME, 'HH24:00') as time,
             COUNT(*) as count
         FROM ALERT
-        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
-        GROUP BY EXTRACT(HOUR FROM RECORD_TIME)
-        ORDER BY hour
+        <include refid="Base_Where_Clause"/>
+        GROUP BY TO_CHAR(RECORD_TIME, 'HH24:00')
+        ORDER BY time
     </select>
     
     <!-- 批量更新告警状态 -->
-    <update id="updateStatusBatch">
+    <update id="handleBatchStatus">
         UPDATE ALERT
-        SET ALERT_STATUS = #{status},
+        SET ALERT_STATUS = #{alertStatus},
             UPDATE_TIME = SYSTIMESTAMP
         WHERE ID IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">
@@ -163,7 +163,7 @@
     </select>
     
     <!-- 获取告警级别分布 -->
-    <select id="getLevelDistribution" resultType="java.util.Map">
+    <select id="countLevelDistribution" resultType="java.util.Map">
         SELECT 
             ALERT_LEVEL as level,
             COUNT(*) as count
@@ -173,14 +173,17 @@
     </select>
 
     <!-- 获取告警趋势 -->
-    <select id="getAlertTrend" resultType="java.util.Map">
-        SELECT 
-            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00') as time,
-            COUNT(*) as count
+    <select id="getTrend" resultType="java.util.Map">
+        SELECT
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD') as date,
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_LEVEL = 1 THEN 1 ELSE 0 END) as level1,
+            SUM(CASE WHEN ALERT_LEVEL = 2 THEN 1 ELSE 0 END) as level2,
+            SUM(CASE WHEN ALERT_LEVEL = 3 THEN 1 ELSE 0 END) as level3
         FROM ALERT
-        <include refid="Base_Where_Clause"/>
-        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD HH24:00')
-        ORDER BY time
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD')
+        ORDER BY date
     </select>
 
     <!-- 删除历史数据 -->
@@ -245,4 +248,293 @@
         </if>
     </select>
     
+    <!-- 获取告警趋势数据 -->
+    <select id="getTrend" resultType="java.util.Map">
+        SELECT
+            TO_CHAR(RECORD_TIME, 'YYYY-MM-DD') as date,
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_LEVEL = 1 THEN 1 ELSE 0 END) as level1,
+            SUM(CASE WHEN ALERT_LEVEL = 2 THEN 1 ELSE 0 END) as level2,
+            SUM(CASE WHEN ALERT_LEVEL = 3 THEN 1 ELSE 0 END) as level3
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY TO_CHAR(RECORD_TIME, 'YYYY-MM-DD')
+        ORDER BY date
+    </select>
+    
+    <!-- 根据告警级别和状态统计数量 -->
+    <select id="countByLevelAndStatus" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM ALERT
+        <where>
+            <if test="alertLevel != null">
+                AND ALERT_LEVEL = #{alertLevel}
+            </if>
+            <if test="alertStatus != null">
+                AND ALERT_STATUS = #{alertStatus}
+            </if>
+        </where>
+    </select>
+    
+    <!-- 根据告警类型和时间范围统计数量 -->
+    <select id="countByTypeAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            ALERT_TYPE as type,
+            COUNT(*) as count
+        FROM ALERT
+        <where>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY ALERT_TYPE
+        ORDER BY count DESC
+    </select>
+    
+    <!-- 根据告警状态和时间范围统计数量 -->
+    <select id="countByStatusAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            ALERT_STATUS as status,
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY ALERT_STATUS
+        ORDER BY ALERT_STATUS
+    </select>
+    
+    <!-- 根据设备编码和时间范围统计数量 -->
+    <select id="countByDeviceAndTimeRange" resultType="java.util.Map">
+        SELECT
+            DEVICE_CODE as device,
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY DEVICE_CODE
+        ORDER BY COUNT(*) DESC
+    </select>
+    
+    <!-- 查询所有告警类型 -->
+    <select id="selectAlertTypes" resultType="java.lang.String">
+        SELECT DISTINCT ALERT_TYPE
+        FROM ALERT
+        ORDER BY ALERT_TYPE
+    </select>
+    
+    <!-- 获取设备分布数据 -->
+    <select id="getDeviceDistribution" resultType="java.util.Map">
+        SELECT
+            DEVICE_CODE,
+            DEVICE_NAME,
+            COUNT(*) AS count
+        FROM ALERT
+        <where>
+            <if test="tourismName != null and tourismName != ''">
+                AND TOURISM_NAME = #{tourismName}
+            </if>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY DEVICE_CODE, DEVICE_NAME
+        ORDER BY count DESC
+    </select>
+    
+    <!-- 获取景区分布数据 -->
+    <select id="getTourismDistribution" resultType="java.util.Map">
+        SELECT
+            TOURISM_NAME,
+            COUNT(*) AS count
+        FROM ALERT
+        <where>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY TOURISM_NAME
+        ORDER BY count DESC
+    </select>
+    
+    <!-- 批量更新告警 -->
+    <update id="updateBatchById">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE ALERT
+            <set>
+                <if test="item.alertStatus != null">
+                    ALERT_STATUS = #{item.alertStatus},
+                </if>
+                <if test="item.handleUser != null">
+                    HANDLE_USER = #{item.handleUser},
+                </if>
+                <if test="item.handleTime != null">
+                    HANDLE_TIME = #{item.handleTime},
+                </if>
+                UPDATE_TIME = SYSTIMESTAMP
+            </set>
+            WHERE ID = #{item.id}
+        </foreach>
+    </update>
+    
+    <!-- 根据告警级别和时间范围统计数量 -->
+    <select id="countByLevelAndTimeRange" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM ALERT
+        <where>
+            <if test="startTime != null">
+                AND RECORD_TIME >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND RECORD_TIME &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="countByTourismAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            tourism_name as tourismName,
+            COUNT(*) as count
+        FROM alert
+        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY tourism_name
+    </select>
+
+    <!-- 根据时间范围统计告警类型分布 -->
+    <select id="countByTypeAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            ALERT_TYPE as type,
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY ALERT_TYPE
+        ORDER BY ALERT_TYPE
+    </select>
+
+    <!-- 根据时间范围统计告警级别分布 -->
+    <select id="countByLevelAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            ALERT_LEVEL as level,
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY ALERT_LEVEL
+        ORDER BY ALERT_LEVEL
+    </select>
+
+    <!-- 根据时间范围统计景区告警分布 -->
+    <select id="countByTourismAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            TOURISM_NAME as tourism,
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY TOURISM_NAME
+        ORDER BY COUNT(*) DESC
+    </select>
+
+    <!-- 根据时间范围统计设备告警分布 -->
+    <select id="countByDeviceAndTimeRange" resultType="java.util.Map">
+        SELECT 
+            DEVICE_CODE as device,
+            COUNT(*) as count
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY DEVICE_CODE
+        ORDER BY COUNT(*) DESC
+    </select>
+
+    <!-- 获取告警详情 -->
+    <select id="getDetail" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM ALERT
+        WHERE ID = #{id}
+    </select>
+
+    <!-- 获取设备告警统计 -->
+    <select id="getDeviceStatistics" resultType="java.util.Map">
+        SELECT 
+            DEVICE_CODE as deviceCode,
+            DEVICE_NAME as deviceName,
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN ALERT_STATUS = 1 THEN 1 ELSE 0 END) as handled
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY DEVICE_CODE, DEVICE_NAME
+        ORDER BY total DESC
+    </select>
+
+    <!-- 获取景区告警统计 -->
+    <select id="getTourismStatistics" resultType="java.util.Map">
+        SELECT 
+            TOURISM_NAME as tourismName,
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN ALERT_STATUS = 1 THEN 1 ELSE 0 END) as handled
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY TOURISM_NAME
+        ORDER BY total DESC
+    </select>
+
+    <!-- 获取告警类型统计 -->
+    <select id="getTypeStatistics" resultType="java.util.Map">
+        SELECT 
+            ALERT_TYPE as alertType,
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN ALERT_STATUS = 1 THEN 1 ELSE 0 END) as handled
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY ALERT_TYPE
+        ORDER BY total DESC
+    </select>
+
+    <!-- 获取告警级别统计 -->
+    <select id="getLevelStatistics" resultType="java.util.Map">
+        SELECT 
+            ALERT_LEVEL as alertLevel,
+            COUNT(*) as total,
+            SUM(CASE WHEN ALERT_STATUS = 0 THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN ALERT_STATUS = 1 THEN 1 ELSE 0 END) as handled
+        FROM ALERT
+        WHERE RECORD_TIME BETWEEN #{startTime} AND #{endTime}
+        GROUP BY ALERT_LEVEL
+        ORDER BY alertLevel
+    </select>
+
+    <!-- 更新告警处理信息 -->
+    <update id="updateHandleInfo">
+        UPDATE ALERT
+        SET 
+            ALERT_STATUS = #{alertStatus},
+            HANDLE_TIME = SYSTIMESTAMP,
+            HANDLE_USER = #{handleUser},
+            HANDLE_RESULT = #{handleResult},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 批量更新告警处理信息 -->
+    <update id="updateBatchHandleInfo">
+        UPDATE ALERT
+        SET 
+            ALERT_STATUS = #{alertStatus},
+            HANDLE_TIME = SYSTIMESTAMP,
+            HANDLE_USER = #{handleUser},
+            HANDLE_RESULT = #{handleResult},
+            UPDATE_TIME = SYSTIMESTAMP
+        WHERE ID IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper> 

@@ -1,0 +1,204 @@
+/**
+ * 告警统计页面样式
+ * 
+ * @author AI
+ * @date 2023-05-20
+ */
+
+/* 图表容器样式 */
+.chart-container {
+    position: relative;
+    min-height: 300px;
+    transition: all 0.3s ease;
+}
+
+/* 加载状态样式 */
+.chart-container.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chart-container.loading::after {
+    content: '加载中...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 11;
+    font-size: 14px;
+    color: #666;
+}
+
+/* 概览盒子样式 */
+.info-box {
+    min-height: 100px;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    position: relative;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.info-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+}
+
+.info-box-icon {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    font-size: 30px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #fff;
+}
+
+.info-box-content {
+    padding: 5px 10px;
+    flex: 1;
+}
+
+.info-box-text {
+    display: block;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #666;
+}
+
+.info-box-number {
+    display: block;
+    font-weight: 700;
+    font-size: 24px;
+    color: #333;
+}
+
+/* 进度条样式 */
+.progress {
+    height: 5px;
+    margin-top: 5px;
+    background-color: #f5f5f5;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: #409EFF;
+    transition: width 0.6s ease;
+}
+
+/* 卡片样式 */
+.card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    border: 0;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    padding: 0.75rem 1.25rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #333;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    border-radius: 0.25rem;
+    border: 1px solid #ced4da;
+    padding: 0.375rem 0.75rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+    background-color: #409EFF;
+    border-color: #409EFF;
+}
+
+.btn-primary:hover {
+    background-color: #66b1ff;
+    border-color: #66b1ff;
+}
+
+.btn-default {
+    background-color: #f4f4f4;
+    border-color: #ddd;
+    color: #333;
+}
+
+.btn-default:hover {
+    background-color: #e7e7e7;
+    border-color: #adadad;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .info-box {
+        margin-bottom: 1rem;
+    }
+    
+    .info-box-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .info-box-number {
+        font-size: 18px;
+    }
+    
+    .chart-container {
+        min-height: 250px;
+    }
+} 

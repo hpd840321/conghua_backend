@@ -1,5 +1,6 @@
 package com.scenic.ai.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.scenic.ai.entity.AlertHandleRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,7 +12,7 @@ import java.util.Map;
  * 告警处理记录Mapper接口
  */
 @Mapper
-public interface AlertHandleRecordMapper {
+public interface AlertHandleRecordMapper extends BaseMapper<AlertHandleRecord> {
 
         /**
          * 根据告警ID查询处理记录

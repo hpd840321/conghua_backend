@@ -21,6 +21,8 @@ public class Alert implements Serializable {
     private LocalDateTime recordTime;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private String handler;
+    private LocalDateTime handleTime;
 
     // Getters and Setters
     public Long getId() {
@@ -117,5 +119,21 @@ public class Alert implements Serializable {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public String getHandler() {
+        return handler;
+    }
+
+    public void setHandler(String handler) {
+        this.handler = handler;
+    }
+
+    public LocalDateTime getHandleTime() {
+        return handleTime;
+    }
+
+    public void setHandleTime(LocalDateTime handleTime) {
+        this.handleTime = handleTime;
     }
 }

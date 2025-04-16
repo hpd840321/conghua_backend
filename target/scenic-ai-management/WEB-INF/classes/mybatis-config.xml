@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- 全局配置 -->
+    <settings>
+        <!-- 打印查询语句 -->
+        <setting name="logImpl" value="SLF4J"/>
+    </settings>
+
+    <!-- 类型处理器 -->
+    <typeHandlers>
+        <!-- LocalDateTime类型处理器 -->
+        <typeHandler handler="org.apache.ibatis.type.LocalDateTimeTypeHandler"/>
+        <!-- LocalDate类型处理器 -->
+        <typeHandler handler="org.apache.ibatis.type.LocalDateTypeHandler"/>
+        <!-- LocalTime类型处理器 -->
+        <typeHandler handler="org.apache.ibatis.type.LocalTimeTypeHandler"/>
+    </typeHandlers>
+
+    <!-- 插件配置 -->
+    <plugins>
+        <!-- MyBatis Plus分页插件 -->
+        <plugin interceptor="com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor">
+            <property name="@page" value="com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor"/>
+        </plugin>
+    </plugins>
+</configuration>

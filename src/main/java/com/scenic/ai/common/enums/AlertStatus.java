@@ -1,40 +1,54 @@
 package com.scenic.ai.common.enums;
 
 /**
- * 告警状态枚举
+ * 告警状态枚举类
  * 
  * @author AI
  * @date 2024-04-15
  */
 public enum AlertStatus {
+    /**
+     * 待处理
+     */
     PENDING(0, "待处理"),
-    PROCESSING(1, "处理中"),
-    COMPLETED(2, "已完成"),
-    IGNORED(3, "已忽略"),
-    FAILED(4, "处理失败");
 
-    private final int value;
+    /**
+     * 处理中
+     */
+    PROCESSING(1, "处理中"),
+
+    /**
+     * 已处理
+     */
+    HANDLED(2, "已处理"),
+
+    /**
+     * 已忽略
+     */
+    IGNORED(3, "已忽略");
+
+    private final int code;
     private final String description;
 
-    AlertStatus(int value, String description) {
-        this.value = value;
+    AlertStatus(int code, String description) {
+        this.code = code;
         this.description = description;
     }
 
-    public int getValue() {
-        return value;
+    public int getCode() {
+        return code;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public static AlertStatus fromValue(int value) {
-        for (AlertStatus status : AlertStatus.values()) {
-            if (status.value == value) {
+    public static AlertStatus getByCode(int code) {
+        for (AlertStatus status : values()) {
+            if (status.getCode() == code) {
                 return status;
             }
         }
-        throw new IllegalArgumentException("Invalid alert status value: " + value);
+        return null;
     }
 }
